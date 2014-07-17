@@ -33,13 +33,36 @@ and the binaries of the constituent solvers that should be installed separately.
 Some of the main requirements are:
 
 + MiniZinc 1.6 suite:
-	http://www.minizinc.org/
+  http://www.minizinc.org/
 
-+ Gecode solver:
-        http://www.gecode.org/
++ mzn2feat-1.0 feature extractor:
+  http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
+  
+Note that the commands of these two tools (e.g., mzn2fzn, flatzinc, mzn2feat)   
+should be include in the PATH system variable.
         
-+ MinisatID solver:
-        http://dtai.cs.kuleuven.be/krr/software/minisatid
+The external solvers used in the portfolio, i.e., those that are not included 
+in the MiniZinc suite,  have to be installed in the 'solvers' directory.
+Following the rule convention used in the MiniZinc challenge, to install a 
+solver XXX you have to:
+* Install required packages for XXX.
+* Install XXX in the directory 'solvers/XXX'.
+* A FlatZinc executable named 'fzn-exec' is expected in the 'solvers/XXX' 
+  directory
+* The directory 'solvers/mzn-lib' must contains the solver MiniZinc
+  globals/redefinition file.
+  
+  
+INSTALL
+=============
+
+To be properly launched sunny-cp requires the setting of the variable 
+SUNNY_HOME to the directory containing the program
+
+If <install-dir> is the directory containing the code please add the following 
+line to ~/.bashrc
+
+export SUNNY_HOME="<install-dir>"
 	
 
 FURTHER INFORMATION
