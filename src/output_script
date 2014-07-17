@@ -1,0 +1,9 @@
+#!/bin/bash
+# Scripts that process the output of the flatzinc solver
+
+OZN=$1
+
+while read line
+do
+  echo $line | grep -v "o__b__j__v__a__r\|=====" | solns2out $OZN
+done
