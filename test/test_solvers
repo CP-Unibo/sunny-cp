@@ -20,6 +20,7 @@ for s in `find . -maxdepth 1 -type d`
 do
   if [ -f "$s/fzn-exec" ]; then
     solver=`basename $s`
+    echo "################################"
     echo "Found solver $solver"
     
     SOLVER_DIR="$SUNNY_HOME/solvers/$solver"    
@@ -32,7 +33,7 @@ do
     fi
     
     if [ -d "$SOLVER_DIR/std-lib" ]; then
-      STDLIB="-I $SOLVER_DIR/stdlib"
+      STDLIB="-I $SOLVER_DIR/std-lib"
       echo "stdlib global definiton detected"
     fi
     
