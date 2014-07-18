@@ -16,6 +16,9 @@ CP_DZN_PATH="$SUNNY_HOME/benchmarks/mario/mario_easy_2.dzn"
 
 cd $SUNNY_HOME/solvers
 
+# exit after SIGINT
+trap "exit" INT
+
 for s in `find . -maxdepth 1 -type d`
 do
   if [ -f "$s/fzn-exec" ]; then
