@@ -13,6 +13,6 @@ for p in `ls $PROB_DIR`
       MOD=`ls *.mzn`
       for i in `find . -maxdepth 1 -type f -name '*.dzn' | sort`
         do
-          echo "$PROB_DIR/$p/$MOD $PROB_DIR/$p/`basename $i`"
+          echo "$PROB_DIR/$p/$MOD $PROB_DIR/$p/`basename $i`" >> $LISTFILE
         done
 done
