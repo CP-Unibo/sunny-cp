@@ -8,9 +8,11 @@ DZN=$3
 FZN=$4
 OZN=$5
 OUT=$6
+TYPE=$7
 
 OUTPUT_SCRIPT="$SUNNY_HOME/src/output_script"
 SOLVERS_DIR="$SUNNY_HOME/solvers"
+ADDITIONAL_PARAM=""
 
 # No .dzn file is provided.
 if 
@@ -19,6 +21,18 @@ then
   DZN=''
 fi
 
+# If file is a COP call the solver with -a parameter
+if 
+  [ "$DZN" == 'NODATA' ]
+then
+  DZN=''
+fi
+
+if 
+  [ "$TYPE" == 'COP' ]
+then
+  ADDITIONAL_PARAM="-a $ADDITIONAL_PARAM"
+fi
 # For each constituent solver execute the corresponding commands: first the .mzn 
 # is converted to the specific .fzn, and then the .fzn is run. 
 # FIXME: Note that currently the output of each solver is 'commented' (by 
@@ -39,7 +53,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc -a -b mip $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
+  { flatzinc $ADDITIONAL_PARAM -b mip $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
 elif
   [ $SOLVER == "g12cpx" ]
 then
@@ -51,7 +65,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { fzn_cpx -a $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
+  { fzn_cpx $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
 elif
   [ $SOLVER == "g12fd" ]
 then
@@ -63,7 +77,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc -a $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
+  { flatzinc $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
 elif
   [ $SOLVER == "g12lazyfd" ]
 then
@@ -75,7 +89,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc -a -b lazy $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
+  { flatzinc $ADDITIONAL_PARAM -b lazy $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
 else 
 ################################################################
 # Commands to run other solvers of the MiniZinc suite
@@ -108,6 +122,6 @@ installation." >&2
     echo "MiniZinc model not converted!" >&2
     exit $ret
   else
-    { $SOLVER_DIR/fzn-exec -a $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
+    { $SOLVER_DIR/fzn-exec $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN | grep -v "o__b__j__v__a__r"
   fi
 fi

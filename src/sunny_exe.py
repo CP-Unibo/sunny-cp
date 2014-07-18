@@ -10,7 +10,6 @@ import tempfile
 
 # Path of the bash files containing the solvers instructions for solving a 
 # given CSP/COP.
-EXE_CSP = os.environ['SUNNY_HOME'] + '/src/exe_csp'
 EXE_COP = os.environ['SUNNY_HOME'] + '/src/exe_cop'
 # If SAT is True, the problem has at least a solution (for COPs).
 SAT = False
@@ -124,7 +123,7 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
   timeout = int(round(timeout))
   # Exploit the bash timeout.
   cmd = 'timeout ' + str(timeout) + ' bash ' + EXE_COP + ' ' + solver   + ' ' \
-      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out
+      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " COP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.'
   proc = Popen(cmd.split())
   PID = proc.pid
@@ -150,7 +149,7 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
           while line:
             if OBJ_VAR in line:
               obj_bound = replace(line.split(' = ')[1], ';', '')
-              print OBJ_VAR + ' = ' + obj_bound
+              print "% " + OBJ_VAR + ' = ' + obj_bound
               break
             line = next(reversed_output, False)
         else:
@@ -159,7 +158,7 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
     elif OBJ_VAR in line:
       SAT = True
       obj_bound = replace(line.split(' = ')[1], ';', '')
-      print OBJ_VAR + ' = ' + obj_bound
+      print "% " + OBJ_VAR + ' = ' + obj_bound
       break
   print '% Search not yet completed.'
   return obj_bound
@@ -170,8 +169,8 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   """
   global EXE_CSP, PID
   timeout = int(round(timeout))
-  cmd = 'timeout ' + str(timeout) + ' bash ' + EXE_CSP + ' ' + solver   + ' ' \
-      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out
+  cmd = 'timeout ' + str(timeout) + ' bash ' + EXE_COP + ' ' + solver   + ' ' \
+      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " CSP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.' 
   proc = Popen(cmd.split())
   PID = proc.pid
@@ -184,8 +183,9 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   for line in reversed_output:
     line = replace(replace(line, '\n', ''), ';', '')
     # FIXME: =====UNBOUNDED===== ignored.
-    if line in ['% ==========', '% =====UNSATISFIABLE=====', '% ----------']:
-      print line[2 : len(line)]
+    if line in ['==========', '=====UNSATISFIABLE=====', '----------']:
+      if line in ['==========', '=====UNSATISFIABLE=====']:
+	print line
       print '% Search completed by ' + solver
       raise SearchCompleted
   print '% Search not yet completed.'
