@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-TIMEOUT=20
+TIMEOUT=600
 PROB_DIR="$SUNNY_HOME/benchmarks"
 LISTFILE="$SUNNY_HOME/test/benchmarks.list"
 RESULTS_DIR="$SUNNY_HOME/test/results"

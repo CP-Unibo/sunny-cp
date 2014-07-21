@@ -17,6 +17,7 @@ DATA_NAME=${DATA_NAME%.dzn}
 
 ERR="$RESULTS_DIR/$MODEL_NAME-$$.err"
 OUT="$RESULTS_DIR/$MODEL_NAME-$$.out"
+TMP_FZN="$RESULTS_DIR/$MODEL_NAME-$$.fzn"
 TMP_MODEL="$RESULTS_DIR/$MODEL_NAME-$$.mzn"
 
 # if [[ $DATA = "NODATA" ]];
@@ -41,6 +42,13 @@ if
   [ $ret -eq 124 ]
 then
   echo "ERROR: the command '$CMD' took more than $TIMEOUT seconds" 1>&2
+  if [ -f "$OUT" ]; then
+      rm $OUT
+  fi
+
+  if [ -f "$ERR" ]; then
+      rm $ERR
+  fi
 elif
   [ $ret -ne 0 ]
 then
@@ -99,27 +107,39 @@ else
 	  solns2dzn -l $OUT >> $TMP_MODEL
 	  curdir=$(pwd)
 	  cd $RESULTS_DIR
-	  if minizinc -G g12_fd $TMP_MODEL $DATA | grep -q "\-\-\-\-\-\-\-\-\-" 
-	  then
-	      echo "Test Ok"
-	  else
-	      echo "ERROR: Output '$CMD' not consistent: invalid output or incorrect solution detected" 1>&2
+	  # sometimes minizinc gives error while separating the computation is ok 
+	  # minizinc -G g12
+	  mzn2fzn $TMP_MODEL $DATA -o $TMP_FZN --no-output-ozn 2> /dev/null;
+	  ret=$?
+	  if [ $ret -ne 0 ]; then
+	    echo "WARNING: '$CMD' + output is not a valid minizinc model. Ignoring checking correctness solution"  1>&2
+	  else	  
+	    if flatzinc $TMP_FZN | grep -q "\-\-\-\-\-\-\-\-\-" 
+	    then
+		echo "Test Ok"
+	    else
+		echo "ERROR: Output '$CMD' not consistent: invalid output or incorrect solution detected" 1>&2
+	    fi
 	  fi
 	  cd $curdir
     fi
   fi
 
-  if [ -f "$OUT" ]; then
-      rm $OUT
-  fi
-
-  if [ -f "$ERR" ]; then
-      rm $ERR
-  fi
-    
-  if [ -f "$TMP_MODEL" ]; then
-      rm $TMP_MODEL
-  fi
+#   if [ -f "$OUT" ]; then
+#       rm $OUT
+#   fi
+# 
+#   if [ -f "$ERR" ]; then
+#       rm $ERR
+#   fi
+#     
+#   if [ -f "$TMP_MODEL" ]; then
+#       rm $TMP_MODEL
+#   fi
+#   
+#   if [ -f "$TMP_FZNL" ]; then
+#       rm $TMP_FZN
+#   fi
 
 fi
 
