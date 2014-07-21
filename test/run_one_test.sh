@@ -66,21 +66,28 @@ else
 
     if grep -Fq "==========" $OUT
     then
-	PROVEN_OPT=`grep -F objective $OUT | tail -n 1 | awk -F" " '{print $3}'`
-	PROVEN_OPT=${PROVEN_OPT%;}
 	BEST_SOL=`grep  "$MODEL_NAME $DATA_NAME" $OPT_LIST`
 	if [ -n "$BEST_SOL" ];
 	then
+	  PROVEN_OPT=`grep -F "o__b__j__v__a__r" $OUT | tail -n 1 | awk -F" " '{print $4}'`
 	  TYPE_SOL=`echo $BEST_SOL | awk -F" " '{print $1}'`
 	  BEST_SOL=`echo $BEST_SOL | awk -F" " '{print $4}'`
-	  if [ "$TYPE_SOL" = "MIN" ] && [ "$PROVEN_OPT" -lt "$BEST_SOL" ];
-	  then
-	    echo ": WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
-	  elif
-	    [ "$TYPE_SOL" = "MAX" ] && [ "$PROVEN_OPT" -gt "$BEST_SOL" ];
-	  then
-	    echo ": WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
-	  fi	  
+	  if [ "$PROVEN_OPT" -eq "$PROVEN_OPT" ] 2> /dev/null; then
+	    if [ "$BEST_SOL" -eq "$BEST_SOL" ] 2> /dev/null; then
+	      if [ "$TYPE_SOL" = "MIN" ] && [ "$PROVEN_OPT" -lt "$BEST_SOL" ];
+	      then
+		echo "WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
+	      elif
+		[ "$TYPE_SOL" = "MAX" ] && [ "$PROVEN_OPT" -gt "$BEST_SOL" ];
+	      then
+		echo "WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
+	      fi
+	    else
+	      echo "WARNING: when parsing the known best solution file, found non integer value $BEST_SOL for instance $MODEL_NAME $DATA_NAME"  1>&2
+	    fi
+	  else
+	    echo "WARNING: '$CMD' found objective value that is not a number. Expected integer, found $PROVEN_OPT"  1>&2
+	  fi
 	fi
     fi
     NSOL=`grep -c "\-\-\-\-\-\-\-\-\-\-" $OUT`
@@ -101,16 +108,18 @@ else
 	  cd $curdir
     fi
   fi
+
+  if [ -f "$OUT" ]; then
+      rm $OUT
+  fi
+
+  if [ -f "$ERR" ]; then
+      rm $ERR
+  fi
+    
+  if [ -f "$TMP_MODEL" ]; then
+      rm $TMP_MODEL
+  fi
+
 fi
 
-if [ -f "$OUT" ]; then
-    rm $OUT
-fi
-
-if [ -f "$ERR" ]; then
-    rm $ERR
-fi
-  
-if [ -f "$TMP_MODEL" ]; then
-    rm $TMP_MODEL
-fi

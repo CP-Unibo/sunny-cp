@@ -66,7 +66,7 @@ def update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var):
   """
   global OBJ_VAR
   shutil.copyfile(mzn, tmp_mzn)
-  out_expr = 'output [show(' + OBJ_VAR + '), "\\n" ] ++ '
+  out_expr = 'output [ "% ' + OBJ_VAR + ' = ", show(' + OBJ_VAR + '), "\\n" ] ++ '
   if mzn == out_mzn:
     with open(mzn, 'r') as infile:
       with open(tmp_mzn, 'w') as outfile:
@@ -122,7 +122,7 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
   global EXE_COP, PID, OBJ_VAR, SAT
   timeout = int(round(timeout))
   # Exploit the bash timeout.
-  cmd = 'timeout ' + str(timeout) + ' bash ' + EXE_COP + ' ' + solver   + ' ' \
+  cmd = 'timeout ' + str(timeout) + ' unbuffer bash ' + EXE_COP + ' ' + solver   + ' ' \
       + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " COP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.'
   proc = Popen(cmd.split())
@@ -169,7 +169,7 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   """
   global EXE_CSP, PID
   timeout = int(round(timeout))
-  cmd = 'timeout ' + str(timeout) + ' bash ' + EXE_COP + ' ' + solver   + ' ' \
+  cmd = 'timeout ' + str(timeout) + ' unbuffer bash ' + EXE_COP + ' ' + solver   + ' ' \
       + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " CSP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.' 
   proc = Popen(cmd.split())

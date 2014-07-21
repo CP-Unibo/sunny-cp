@@ -6,6 +6,8 @@ OUT=$1
 
 while read line
 do
+#   if [ $line = "----------" ]
+#   then
   echo $line | grep "o__b__j__v__a__r\|=====\|----------" >> $OUT 
-  echo $line | grep -v "o__b__j__v__a__r\|====="
+  echo $line | grep -v "====="
 done
