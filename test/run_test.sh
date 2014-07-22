@@ -7,6 +7,10 @@ source $SUNNY_HOME/test/test_env.sh
 # exit after SIGINT
 trap "exit" INT
 
+if [ ! -d "$SUNNY_HOME/tmp" ]; then
+  mkdir $SUNNY_HOME/tmp
+fi
+
 if [ ! -d "$RESULTS_DIR" ]; then
   mkdir $RESULTS_DIR
 fi

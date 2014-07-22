@@ -29,7 +29,7 @@ TMP_MODEL="$RESULTS_DIR/$MODEL_NAME-$$.mzn"
 # fi
 
 CMD="$SUNNY_HOME/bin/sunny-cp -T $TIMEOUT $SOLVER $MODEL $DATA"
-echo "`date`: $CMD"
+echo "`date`: Running $CMD"
 ABORTED=""
 START_TIME=`date '+%s%N'`
 
@@ -42,11 +42,13 @@ if
   [ $ret -eq 124 ]
 then
   echo "ERROR: the command '$CMD' took more than $TIMEOUT seconds" 1>&2
-  if [ -f "$OUT" ]; then
+  if [ -f "$OUT" ]
+  then
       rm $OUT
   fi
 
-  if [ -f "$ERR" ]; then
+  if [ -f "$ERR" ]
+  then
       rm $ERR
   fi
 elif
@@ -75,18 +77,18 @@ else
     if grep -Fq "==========" $OUT
     then
 	BEST_SOL=`grep  "$MODEL_NAME $DATA_NAME" $OPT_LIST`
-	if [ -n "$BEST_SOL" ];
+	if [ -n "$BEST_SOL" ]
 	then
 	  PROVEN_OPT=`grep -F "o__b__j__v__a__r" $OUT | tail -n 1 | awk -F" " '{print $4}'`
 	  TYPE_SOL=`echo $BEST_SOL | awk -F" " '{print $1}'`
 	  BEST_SOL=`echo $BEST_SOL | awk -F" " '{print $4}'`
 	  if [ "$PROVEN_OPT" -eq "$PROVEN_OPT" ] 2> /dev/null; then
 	    if [ "$BEST_SOL" -eq "$BEST_SOL" ] 2> /dev/null; then
-	      if [ "$TYPE_SOL" = "MIN" ] && [ "$PROVEN_OPT" -lt "$BEST_SOL" ];
+	      if [ "$TYPE_SOL" = "MIN" ] && [ "$PROVEN_OPT" -lt "$BEST_SOL" ]
 	      then
 		echo "WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
 	      elif
-		[ "$TYPE_SOL" = "MAX" ] && [ "$PROVEN_OPT" -gt "$BEST_SOL" ];
+		[ "$TYPE_SOL" = "MAX" ] && [ "$PROVEN_OPT" -gt "$BEST_SOL" ]
 	      then
 		echo "WARNING: '$CMD' found solution with objective $PROVEN_OPT, but best know solution $BEST_SOL" 1>&2
 	      fi
@@ -109,12 +111,13 @@ else
 	  cd $RESULTS_DIR
 	  # sometimes minizinc gives error while separating the computation is ok 
 	  # minizinc -G g12
-	  mzn2fzn $TMP_MODEL $DATA -o $TMP_FZN --no-output-ozn 2> /dev/null;
+	  mzn2fzn $TMP_MODEL $DATA -o $TMP_FZN --no-output-ozn 2> /dev/null
 	  ret=$?
-	  if [ $ret -ne 0 ]; then
-	    echo "WARNING: '$CMD' + output is not a valid minizinc model. Ignoring checking correctness solution"  1>&2
+	  if [ $ret -ne 0 ]
+	  then
+	    echo "WARNING: '$CMD' + output is not a valid minizinc model. Mizinc conversion returned with error $ret. Ignoring checking correctness solution"  1>&2
 	  else	  
-	    if flatzinc $TMP_FZN | grep -q "\-\-\-\-\-\-\-\-\-" 
+	    if flatzinc $TMP_FZN | grep -q "\-\-\-\-\-\-\-\-\-" 2> /dev/null
 	    then
 		echo "Test Ok"
 	    else
@@ -125,21 +128,21 @@ else
     fi
   fi
 
-#   if [ -f "$OUT" ]; then
-#       rm $OUT
-#   fi
-# 
-#   if [ -f "$ERR" ]; then
-#       rm $ERR
-#   fi
-#     
-#   if [ -f "$TMP_MODEL" ]; then
-#       rm $TMP_MODEL
-#   fi
-#   
-#   if [ -f "$TMP_FZNL" ]; then
-#       rm $TMP_FZN
-#   fi
+  if [ -f "$OUT" ]; then
+      rm $OUT
+  fi
+
+  if [ -f "$ERR" ]; then
+      rm $ERR
+  fi
+    
+  if [ -f "$TMP_MODEL" ]; then
+      rm $TMP_MODEL
+  fi
+  
+  if [ -f "$TMP_FZNL" ]; then
+      rm $TMP_FZN
+  fi
 
 fi
 
