@@ -53,7 +53,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc $ADDITIONAL_PARAM -b mip $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN 
+  flatzinc $ADDITIONAL_PARAM -b mip $FZN > $OUT 2> /dev/null
 elif
   [ $SOLVER == "g12cpx" ]
 then
@@ -65,7 +65,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { fzn_cpx $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN 
+  fzn_cpx $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
 elif
   [ $SOLVER == "g12fd" ]
 then
@@ -77,7 +77,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN 
+  flatzinc $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
 elif
   [ $SOLVER == "g12lazyfd" ]
 then
@@ -89,7 +89,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  { flatzinc $ADDITIONAL_PARAM -b lazy $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN 
+  flatzinc $ADDITIONAL_PARAM -b lazy $FZN > $OUT 2> /dev/null
 else 
 ################################################################
 # Commands to run other solvers of the MiniZinc suite
@@ -122,6 +122,6 @@ installation." >&2
     echo "MiniZinc model not converted!" >&2
     exit $ret
   else
-    { $SOLVER_DIR/fzn-exec $ADDITIONAL_PARAM $FZN 2> /dev/null; } | $OUTPUT_SCRIPT $OUT | solns2out $OZN
+    $SOLVER_DIR/fzn-exec $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
   fi
 fi

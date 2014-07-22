@@ -2,15 +2,20 @@
 Module for executing the scheduled solvers on a given CP problem.
 """
 from string import replace
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
+import subprocess as sp
 import sys
 import os
 import shutil
 import tempfile
+import time
+
 
 # Path of the bash files containing the solvers instructions for solving a 
 # given CSP/COP.
 EXE_COP = os.environ['SUNNY_HOME'] + '/src/exe_cop'
+EXE_GET_SOL = os.environ['SUNNY_HOME'] + '/src/get_solution'
+EXE_PRINT_SOL = os.environ['SUNNY_HOME'] + '/src/output_script'
 # If SAT is True, the problem has at least a solution (for COPs).
 SAT = False
 # PID is the process ID of the running command.
@@ -42,21 +47,36 @@ def exe_schedule(schedule, mzn, dzn, obj, obj_var, obj_bound, tmp_id, out_mzn):
   tmp_fzn = tmp_id + '.fzn'
   tmp_ozn = tmp_id + '.ozn'
   tmp_out = tmp_id + '.out'
+  tmp_sol = tmp_id + '.sol'
   if obj_var:
     tmp_mzn = tmp_id + '.mzn'
     tmp_inc = tmp_id + '.inc'
     if not os.path.exists(tmp_mzn):
       update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var)
   # Execute solver s for t seconds.
+  
+  # time not used by the previous solver due to a failure
+  additional_time = 0 
+  
   for (s, t) in schedule:
+    t = t + additional_time
+    additional_time = 0
     if obj_var:
       if obj_bound:
 	# A partial solution is found: the model must be updated accordingly.
 	SAT = True
 	add_constraint(tmp_mzn, obj, obj_var, obj_bound, tmp_id)
-      obj_bound = exe_solver_cop(s, t, tmp_mzn, dzn, tmp_fzn, tmp_ozn, tmp_out)
+      time1 = time.time()
+      obj_bound = exe_solver_cop(s, t, tmp_mzn, dzn, tmp_fzn, tmp_ozn, tmp_out,tmp_sol)
+      time2 = time.time()
+      if (time2 - time1) < t:
+	additional_time = t - (time2 - time1)
     else:
-      exe_solver_csp(s, t, mzn, dzn, tmp_fzn, tmp_ozn, tmp_out)
+      time1 = time.time()
+      exe_solver_csp(s, t, mzn, dzn, tmp_fzn, tmp_ozn, tmp_out,tmp_sol)
+      time2 = time.time()
+      if (time2 - time1) < t:
+	additional_time = t - (time2 - time1)
   return obj_bound
   
 def update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var):
@@ -112,8 +132,35 @@ def add_constraint(tmp_mzn, obj, obj_var, obj_bound, tmp_id):
     for line in mznfile:
       tmp_con.write(line)
   shutil.move(tmp_name, tmp_mzn)
+  
+def print_solution(out,sol,ozn):
+  assert(os.path.exists(out))
+  
+  proc = Popen(['bash', '-c', EXE_GET_SOL + " " + out + " " + sol])
+  proc.wait()
+  rv = proc.returncode
+  if rv != 0:
+    print "% Impossible to found last solution: solns2dzn -l returned with value " + str(rv)
+    return False
+  proc = Popen(['bash', '-c',EXE_PRINT_SOL + ' ' + ozn + ' ' + sol + ' ' + out])
+  proc.wait()
+  rv = proc.returncode
+  if rv != 0:
+    print "% Impossible to print solution: solns2out returned with value " + str(rv)
+    return False
+  output = open(out, 'r').readlines()
+  for line in output:
+    line = replace(line, '\n', '')
+    print line
+  return True
 
-def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
+def get_objective_value(out):
+  output = open(out, 'r').readlines()
+  for line in output:
+    if OBJ_VAR in line:
+      return replace(line.split(' = ')[1], ';', '')
+
+def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out,tmp_sol):
   """
   Executes a single solver on a COP for a given time limit. If the solver is not 
   able to complete the solving process, the function returns the best objective 
@@ -127,7 +174,9 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.'
   proc = Popen(cmd.split())
   PID = proc.pid
-  proc.communicate()
+  proc.wait()
+  rv = proc.returncode
+  print "% The execution of solver " + solver + " finished with return value " + str(rv)
   obj_bound = None
   # Read the output from the end to the begin, assuming the monotonicity of the 
   # printed solutions.
@@ -137,33 +186,30 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
   for line in reversed_output:
     line = replace(replace(line, '\n', ''), ';', '')
     # FIXME: =====UNBOUNDED===== ignored.
-    if '==========' in line or '=====UNSATISFIABLE=====' in line:
-      print '% Search completed by ' + solver
+    if '==========' in line:
+      if print_solution(out,tmp_sol,ozn):
+	 print '% Search completed by ' + solver
+	 print '=========='
+	 raise SearchCompleted
+      else:
+	print "% Optimal solution by solver " + solver + "can not be printed. Skip solver"
+    elif '=====UNSATISFIABLE=====' in line:     
       if SAT:
+	print '% Search completed by ' + solver
 	print '=========='
       else:
-        # Search completed by the first solver.
-        if '==========' in line:
-          print '=========='
-          line = next(reversed_output, False)
-          while line:
-            if OBJ_VAR in line:
-              obj_bound = replace(line.split(' = ')[1], ';', '')
-              print "% " + OBJ_VAR + ' = ' + obj_bound
-              break
-            line = next(reversed_output, False)
-        else:
-          print '=====UNSATISFIABLE====='
-      raise SearchCompleted
-    elif OBJ_VAR in line:
-      SAT = True
-      obj_bound = replace(line.split(' = ')[1], ';', '')
-      print "% " + OBJ_VAR + ' = ' + obj_bound
-      break
+	print '% Search completed by ' + solver
+        print '=====UNSATISFIABLE====='
+        raise SearchCompleted
+    elif '----------' in line:
+      if print_solution(out,tmp_sol,ozn):
+	obj_bound = get_objective_value(out)
+	print '% New bound found: ' + obj_bound
+	SAT = True
   print '% Search not yet completed.'
   return obj_bound
 
-def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
+def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out, tmp_sol):
   """
   Executes a single solver on a CSP for a given time limit.
   """
@@ -175,6 +221,8 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   proc = Popen(cmd.split())
   PID = proc.pid
   proc.communicate()
+  rv = proc.returncode
+  print "% The execution of solver " + solver + " finished with return value " + str(rv)
   # Read the output from the end to the begin, assuming the monotonicity of the 
   # printed solutions.
   reversed_output = []
@@ -183,10 +231,18 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   for line in reversed_output:
     line = replace(replace(line, '\n', ''), ';', '')
     # FIXME: =====UNBOUNDED===== ignored.
-    if line in ['==========', '=====UNSATISFIABLE=====', '----------']:
-      if line in ['==========', '=====UNSATISFIABLE=====']:
-	print line
+    if line in ['=====UNSATISFIABLE=====']:
+      print line
       print '% Search completed by ' + solver
       raise SearchCompleted
+    elif line in ['==========']:
+      if print_solution(out,tmp_sol,ozn):
+	print line
+	print '% Search completed by ' + solver
+	raise SearchCompleted
+    elif line in ['----------']:
+      if print_solution(out,tmp_sol,ozn):
+	print '% Search completed by ' + solver
+	raise SearchCompleted
   print '% Search not yet completed.'
   return None

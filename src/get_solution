@@ -1,0 +1,10 @@
+#!/bin/bash
+
+OUT=$1
+SOL=$2
+
+echo "% Retriving last solution"
+solns2dzn -l $OUT > $SOL 2> /dev/null
+ret=$?
+echo "----------" >> $SOL
+exit $ret

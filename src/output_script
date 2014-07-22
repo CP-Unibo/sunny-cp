@@ -1,13 +1,9 @@
 #!/bin/bash
 # Scripts that process the output of the flatzinc solver
 
-OUT=$1
-# OZN=$2
+OZN=$1
+SOL=$2
+OUT=$3
 
-while read line
-do
-#   if [ $line = "----------" ]
-#   then
-  echo $line | grep "o__b__j__v__a__r\|=====\|----------" >> $OUT 
-  echo $line | grep -v "====="
-done
+echo "% Converting FlatZinc output into MiniZinc output" 
+solns2out $OZN $SOL --output-to-file $OUT > /dev/null 2> /dev/null

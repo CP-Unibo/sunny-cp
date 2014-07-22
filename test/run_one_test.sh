@@ -36,7 +36,7 @@ START_TIME=`date '+%s%N'`
 EXTENDED_TIMEOUT=$(($TIMEOUT + 10))
 
 # run sunny-cp with maximum TIMEOUT + 10 seconds
-timeout $EXTENDED_TIMEOUT $CMD >$OUT 2>$ERR
+timeout $EXTENDED_TIMEOUT $CMD >$OUT #2>$ERR
 ret=$?
 if
   [ $ret -eq 124 ]
@@ -140,7 +140,7 @@ else
       rm $TMP_MODEL
   fi
   
-  if [ -f "$TMP_FZNL" ]; then
+  if [ -f "$TMP_FZN" ]; then
       rm $TMP_FZN
   fi
 
