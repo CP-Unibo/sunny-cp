@@ -158,6 +158,7 @@ def get_objective_value(out):
   output = open(out, 'r').readlines()
   for line in output:
     if OBJ_VAR in line:
+      line = replace(line, '\n', '')
       return replace(line.split(' = ')[1], ';', '')
 
 def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out,tmp_sol):
@@ -206,6 +207,7 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out,tmp_sol):
 	obj_bound = get_objective_value(out)
 	print '% New bound found: ' + obj_bound
 	SAT = True
+	break
   print '% Search not yet completed.'
   return obj_bound
 
