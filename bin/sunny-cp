@@ -21,6 +21,8 @@ Options:
     portfolio will be executed for T seconds following a default ordering. 
     The default value is T = 1800, while the default 'backup' ordering is:
       Chuffed, CPX, MinisatID, Gecode, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC
+    If no solution is found after this round then the first solver of the
+    portfolio is executed for 1 day.
   
   -k <size>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
@@ -373,7 +375,10 @@ def main(args):
     print '% Extracting features...'
     feat_vector = extract_features(mzn, dzn)
     
-    T = T - int(time.time() - start_time)
+    # The time windows is reduced considering the feture extractin time
+    # Another second is reduced to allow also the last solver to print its
+    # solutions
+    T = T - int(time.time() - start_time) - 1
     
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
@@ -393,6 +398,8 @@ def main(args):
       others = [
 	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
       ]
+      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
+      others = [ (pfolio[0], 43200) ]
       exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
   except SearchCompleted:
     # Everything went well.

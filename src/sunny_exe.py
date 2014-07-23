@@ -12,7 +12,7 @@ import time
 
 
 # Path of the bash files containing the solvers instructions for solving a 
-# given CSP/COP.
+# given CSP/COP and for checking if a solution is valid
 EXE_COP = os.environ['SUNNY_HOME'] + '/src/exe_cop'
 EXE_GET_SOL = os.environ['SUNNY_HOME'] + '/src/get_solution'
 EXE_PRINT_SOL = os.environ['SUNNY_HOME'] + '/src/output_script'
