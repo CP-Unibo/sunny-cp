@@ -53,11 +53,11 @@ def exe_schedule(schedule, mzn, dzn, obj, obj_var, obj_bound, tmp_id, out_mzn):
     tmp_inc = tmp_id + '.inc'
     if not os.path.exists(tmp_mzn):
       update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var)
-  # Execute solver s for t seconds.
   
-  # time not used by the previous solver due to a failure
+  # Time not used by the previous solver due to a failure.
   additional_time = 0 
   
+  # Execute solver s for t seconds.
   for (s, t) in schedule:
     t = t + additional_time
     additional_time = 0
@@ -67,7 +67,9 @@ def exe_schedule(schedule, mzn, dzn, obj, obj_var, obj_bound, tmp_id, out_mzn):
 	SAT = True
 	add_constraint(tmp_mzn, obj, obj_var, obj_bound, tmp_id)
       time1 = time.time()
-      obj_bound = exe_solver_cop(s, t, tmp_mzn, dzn, tmp_fzn, tmp_ozn, tmp_out,tmp_sol)
+      obj_bound = exe_solver_cop(
+        s, t, tmp_mzn, dzn, tmp_fzn, tmp_ozn, tmp_out, tmp_sol
+      )
       time2 = time.time()
       if (time2 - time1) < t:
 	additional_time = t - (time2 - time1)
@@ -86,7 +88,8 @@ def update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var):
   """
   global OBJ_VAR
   shutil.copyfile(mzn, tmp_mzn)
-  out_expr = 'output [ "% ' + OBJ_VAR + ' = ", show(' + OBJ_VAR + '), "\\n" ] ++ '
+  out_expr = \
+    'output [ "% ' + OBJ_VAR + ' = ", show(' + OBJ_VAR + '), "\\n" ] ++ '
   if mzn == out_mzn:
     with open(mzn, 'r') as infile:
       with open(tmp_mzn, 'w') as outfile:
@@ -140,9 +143,13 @@ def print_solution(out,sol,ozn):
   proc.wait()
   rv = proc.returncode
   if rv != 0:
-    print "% Impossible to found last solution: solns2dzn -l returned with value " + str(rv)
+    print \
+    "% Impossible to found last solution: solns2dzn -l returned with value " + \
+    str(rv)
     return False
-  proc = Popen(['bash', '-c',EXE_PRINT_SOL + ' ' + ozn + ' ' + sol + ' ' + out])
+  proc = Popen(
+    ['bash', '-c', EXE_PRINT_SOL + ' ' + ozn + ' ' + sol + ' ' + out]
+  )
   proc.wait()
   rv = proc.returncode
   if rv != 0:

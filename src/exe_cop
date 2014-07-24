@@ -114,7 +114,6 @@ installation." >&2
   fi
   
   mzn2fzn $MZNLIB $STDLIB $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  cp $OZN ~/log.log
   ret=$?
   if 
     [ $ret -ne 0 ]

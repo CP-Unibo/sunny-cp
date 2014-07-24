@@ -236,7 +236,8 @@ def main(args):
           include = True
         # Looking for included models.
         if include and token[-1] == '"' or token[-1] == '";':
-	  include = replace(replace(replace(token, 'include"', ''),'"', ''), "'", '')
+	  include = replace(replace(replace(
+	    token, 'include"', ''),'"', ''), "'", '')
 	  include_list.append(include)
           include = False
 	elif token.endswith('satisfy'):
@@ -374,11 +375,12 @@ def main(args):
     
     print '% Extracting features...'
     feat_vector = extract_features(mzn, dzn)
-    
-    # The time windows is reduced considering the feture extractin time
-    # Another second is reduced to allow also the last solver to print its
-    # solutions
-    T = T - int(time.time() - start_time) - 1
+
+    # FIXME: Useless
+    ## The time windows is reduced considering the feture extractin time
+    ## Another second is reduced to allow also the last solver to print its
+    ## solutions
+    #T = T - int(time.time() - start_time) - 1
     
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
@@ -399,7 +401,8 @@ def main(args):
 	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
       ]
       exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
-      others = [ (pfolio[0], 43200) ]
+      # FIXME: What is this???
+      others = [ (backup, 43200) ]
       exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
   except SearchCompleted:
     # Everything went well.
