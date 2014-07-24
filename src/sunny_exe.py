@@ -144,8 +144,8 @@ def print_solution(out,sol,ozn):
   rv = proc.returncode
   if rv != 0:
     print \
-    "% Impossible to found last solution: solns2dzn -l returned with value " + \
-    str(rv)
+      "% Impossible to found last solution: solns2dzn -l returned with value " + \
+      str(rv)
     return False
   proc = Popen(
     ['bash', '-c', EXE_PRINT_SOL + ' ' + ozn + ' ' + sol + ' ' + out]
@@ -180,41 +180,48 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out,tmp_sol):
   cmd = 'timeout ' + str(timeout) + ' unbuffer bash ' + EXE_COP + ' ' + solver   + ' ' \
       + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " COP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.'
-  proc = Popen(cmd.split())
-  PID = proc.pid
-  proc.wait()
-  rv = proc.returncode
-  print "% The execution of solver " + solver + " finished with return value " + str(rv)
+  
   obj_bound = None
-  # Read the output from the end to the begin, assuming the monotonicity of the 
-  # printed solutions.
-  reversed_output = []
-  if os.path.exists(out):
-    reversed_output = reversed(open(out, 'r').readlines())
-  for line in reversed_output:
-    line = replace(replace(line, '\n', ''), ';', '')
-    # FIXME: =====UNBOUNDED===== ignored.
-    if '==========' in line:
-      if print_solution(out,tmp_sol,ozn):
-	 print '% Search completed by ' + solver
-	 print '=========='
-	 raise SearchCompleted
-      else:
-	print "% Optimal solution by solver " + solver + "can not be printed. Skip solver"
-    elif '=====UNSATISFIABLE=====' in line:     
-      if SAT:
-	print '% Search completed by ' + solver
-	print '=========='
-      else:
-	print '% Search completed by ' + solver
-        print '=====UNSATISFIABLE====='
-        raise SearchCompleted
-    elif '----------' in line:
-      if print_solution(out,tmp_sol,ozn):
-	obj_bound = get_objective_value(out)
-	print '% New bound found: ' + obj_bound
-	SAT = True
-	break
+  sol_file = open(out, 'w')
+  
+  proc = Popen(cmd.split(),stdout=PIPE)
+     
+  # Poll process for new output until finished
+  while True:
+    line = proc.stdout.readline()
+    if line == '' and proc.poll() != None:
+      break
+    else:
+        if '==========' in line:
+	  print '% Search completed by ' + solver
+	  print replace(line, '\n', '')
+	  raise SearchCompleted
+	elif '=====UNSATISFIABLE=====' in line:     
+	  if SAT:
+	    print '% Search completed by ' + solver
+	    print '=========='
+	  else:
+	    print '% Search completed by ' + solver
+	    print replace(line, '\n', '')
+	  raise SearchCompleted
+	elif '----------' in line:
+	  sol_file.write(line)
+	  sol_file.close()
+	  if print_solution(out,tmp_sol,ozn):
+	    SAT = True
+	    sol_file = open(out, 'w')
+	elif OBJ_VAR in line:
+	  sol_file.write(line)
+	  obj_bound = replace(replace(line.split(' = ')[1], ';', ''),'\n', '')
+	  print '% New bound found: ' + obj_bound
+	else:
+	  sol_file.write(line)
+  
+  sol_file.close()
+  proc.communicate()[0]
+  rv = proc.returncode
+  
+  print "% The execution of solver " + solver + " finished with return value " + str(rv)
   print '% Search not yet completed.'
   return obj_bound
 
