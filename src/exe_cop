@@ -109,8 +109,8 @@ installation." >&2
     MZNLIB="-I $SOLVER_DIR/mzn-lib"
   fi
   
-  if [ -d "$SOLVER_DIR/stdlib" ]; then
-    STDLIB="-I $SOLVER_DIR/stdlib"
+  if [ -d "$SOLVER_DIR/std-lib" ]; then
+    STDLIB="-I $SOLVER_DIR/std-lib"
   fi
   
   mzn2fzn $MZNLIB $STDLIB $MZN $DZN -o $FZN --output-ozn-to-file $OZN
