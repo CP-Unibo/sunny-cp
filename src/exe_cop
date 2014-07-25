@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Run the proper commands for executing a constituent solver on a given COP.
 
 SOLVER=$1
@@ -9,19 +8,18 @@ FZN=$4
 OZN=$5
 OUT=$6
 TYPE=$7
+OUTPUT_TYPE=$8
 
 OUTPUT_SCRIPT="$SUNNY_HOME/src/output_script"
 SOLVERS_DIR="$SUNNY_HOME/solvers"
-ADDITIONAL_PARAM=""
+
+MZN2FZN_PARAM=""
+SOLVER_EXE="flatzinc"
+SOLVER_PARAM=""
+MZNLIB=""
+STDLIB=""
 
 # No .dzn file is provided.
-if 
-  [ "$DZN" == 'NODATA' ]
-then
-  DZN=''
-fi
-
-# If file is a COP call the solver with -a parameter
 if 
   [ "$DZN" == 'NODATA' ]
 then
@@ -31,68 +29,37 @@ fi
 if 
   [ "$TYPE" == 'COP' ]
 then
-  ADDITIONAL_PARAM="-a $ADDITIONAL_PARAM"
+  SOLVER_PARAM="-a $SOLVER_PARAM"
 fi
+
 # For each constituent solver execute the corresponding commands: first the .mzn 
 # is converted to the specific .fzn, and then the .fzn is run. 
-# FIXME: Note that currently the output of each solver is 'commented' (by 
-# prepending a % character) and redirected to a file using tee, for later being 
-# properly processed by sunny-cp.
 
 ################################################################
-# Commands to run the solvers of the MiniZinc suite
+# Parameters to run the solvers of the MiniZinc suite
 ################################################################
 if
   [ $SOLVER == "g12cbc" ]
 then
-  mzn2fzn -G linear $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  ret=$?
-  if 
-    [ $ret -ne 0 ]
-  then
-    echo "MiniZinc model not converted!" >&2
-    exit $ret
-  fi
-  flatzinc $ADDITIONAL_PARAM -b mip $FZN   2> /dev/null
+  MZN2FZN_PARAM="-G linear $MZN2FZN_PARAM"
+  SOLVER_PARAM="-b mip $SOLVER_PARAM"
 elif
   [ $SOLVER == "g12cpx" ]
 then
-  mzn2fzn -G g12_cpx $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  ret=$?
-  if 
-    [ $ret -ne 0 ]
-  then
-    echo "MiniZinc model not converted!" >&2
-    exit $ret
-  fi
-  fzn_cpx $ADDITIONAL_PARAM $FZN   2> /dev/null
+  MZN2FZN_PARAM="-G g12_cpx $MZN2FZN_PARAM"
+  SOLVER_EXE="fzn_cpx"
 elif
   [ $SOLVER == "g12fd" ]
 then
-  mzn2fzn -G g12_fd $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  ret=$?
-  if 
-    [ $ret -ne 0 ]
-  then
-    echo "MiniZinc model not converted!" >&2
-    exit $ret
-  fi
-  flatzinc $ADDITIONAL_PARAM $FZN   2> /dev/null
+  MZN2FZN_PARAM="-G g12_fd $MZN2FZN_PARAM"
 elif
   [ $SOLVER == "g12lazyfd" ]
 then
-  mzn2fzn -G g12_lazyfd $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  ret=$?
-  if 
-    [ $ret -ne 0 ]
-  then
-    echo "MiniZinc model not converted!" >&2
-    exit $ret
-  fi
-  flatzinc $ADDITIONAL_PARAM -b lazy $FZN 2> /dev/null
+  MZN2FZN_PARAM="-G g12_lazyfd $MZN2FZN_PARAM"
+  SOLVER_PARAM="-b lazy $SOLVER_PARAM"
 else 
 ################################################################
-# Commands to run other solvers of the MiniZinc suite
+# Parameters to run other solvers of the MiniZinc suite
 ################################################################
   SOLVER_DIR=$SOLVERS_DIR/$SOLVER
   
@@ -101,10 +68,7 @@ else
 installation." >&2
     exit 1
   fi
-  
-  MZNLIB=""
-  STDLIB=""
-  
+    
   if [ -d "$SOLVER_DIR/mzn-lib" ]; then
     MZNLIB="-I $SOLVER_DIR/mzn-lib"
   fi
@@ -113,14 +77,29 @@ installation." >&2
     STDLIB="-I $SOLVER_DIR/std-lib"
   fi
   
-  mzn2fzn $MZNLIB $STDLIB $MZN $DZN -o $FZN --output-ozn-to-file $OZN
-  ret=$?
-  if 
-    [ $ret -ne 0 ]
+  SOLVER_EXE="$SOLVER_DIR/fzn-exec"
+fi
+
+################################################################
+# MiniZinc conversion into FlatZinc
+################################################################
+mzn2fzn $MZNLIB $STDLIB $MZN $DZN -o $FZN --output-ozn-to-file $OZN > /dev/null 2> /dev/null
+ret=$?
+if 
+  [ $ret -ne 0 ]
+then
+  echo "MiniZinc model not converted (return value $ret)" >&2
+  exit $ret
+else
+################################################################
+# Run FlatZinc solver
+################################################################
+  if [ "$OUTPUT_TYPE" == "minizinc" ]
   then
-    echo "MiniZinc model not converted!" >&2
-    exit $ret
+    $SOLVER_EXE $SOLVER_PARAM $FZN 2> /dev/null | grep " = \|==========\|----------\|=====UNSAT\|=====UNBO" | solns2out $OZN
+    exit ${PIPESTATUS[0]}    
   else
-    $SOLVER_DIR/fzn-exec $ADDITIONAL_PARAM $FZN   2> /dev/null
+    $SOLVER_EXE $SOLVER_PARAM $FZN 2> /dev/null | grep " = \|==========\|----------\|=====UNSAT\|=====UNBO"
+    exit ${PIPESTATUS[0]}
   fi
 fi

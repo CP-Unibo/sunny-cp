@@ -64,6 +64,10 @@ Options:
     solver will be put. The default directory is $SUNNY_HOME/tmp, and by default 
     such files are deleted after sunny-cp execution
     
+  --consistent-output
+    Activate the modality that prints the output only if it is validated. An
+    output is consistent if the solns2out program terminates without errors.
+    
   --keep
     Do not erase the temporary files created by the solver and stored in the 
     specified directory. This option is unset by default.
@@ -82,17 +86,11 @@ import time
 # SUNNY_HOME environment variable must be set.
 SUNNY_HOME = os.environ['SUNNY_HOME']
 sys.path.append(SUNNY_HOME + '/src')
+
+import globals
 from sunny_alg  import *
 from sunny_exe  import *
 
-# If KEEP == True, do not remove temporary files.
-KEEP = False
-# Directory where temporary files will put.
-TMP_DIR = SUNNY_HOME + '/tmp'
-# Unique identifier of temporary files.
-TMP_ID = TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
-# Variable artificially introduced for keeping track of the objective function.
-OBJ_VAR = 'o__b__j__v__a__r'
 
 def handler(signum = None, frame = None):
   """
@@ -110,18 +108,17 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  global KEEP, TMP_DIR, TMP_ID
-  pid = get_pid()
+  pid = globals.PID
   if pid:
     try:
       os.killpg(pid, signal.SIGKILL)
     except OSError:
       pass
-  name = os.path.splitext(os.path.basename(TMP_ID))[0]
-  if not KEEP:
-    for f in os.listdir(TMP_DIR):
-      if os.path.splitext(f)[0] == os.path.basename(TMP_ID):
-	os.remove(TMP_DIR + '/' + f)  
+  name = os.path.splitext(os.path.basename(globals.TMP_ID))[0]
+  if not globals.KEEP:
+    for f in os.listdir(globals.TMP_DIR):
+      if os.path.splitext(f)[0] == os.path.basename(globals.TMP_ID):
+	os.remove(globals.TMP_DIR + '/' + f)  
   sys.stdout.close() 
 
 def extract_features(mzn, dzn):
@@ -143,7 +140,7 @@ def extract_features(mzn, dzn):
 def main(args):
   
   start_time = time.time()
-  global SUNNY_HOME, KEEP, TMP_DIR, TMP_ID
+  global SUNNY_HOME
   # Default values. It is still possible to differentiate between CSPs and COPs.
   dzn = ''
   k_csp = 70
@@ -170,7 +167,7 @@ def main(args):
   # Getting arguments.
   try:
     opts, args = getopt.getopt(
-      args, 'hT:k:P:b:K:s:d:', ['help', 'keep']
+      args, 'hT:k:P:b:K:s:d:', ['help', 'keep', 'consistent-output']
     )
   except getopt.error, msg:
     print msg
@@ -336,11 +333,13 @@ def main(args):
 	sys.exit(2)
       name = [token for token in a.split('/') if token][-1]
       if a[-1] == '/':
-	TMP_DIR = a[0 : -1]
+	globals.TMP_DIR = a[0 : -1]
       else:
-	TMP_DIR = a
+	globals.TMP_DIR = a
     elif o == '--keep':
-      KEEP = True
+      globals.KEEP = True
+    elif o == '--consistent-output':
+      globals.OUTPUT_TYPE = "flatzinc"
   # Additional checks.
   if backup not in pfolio:
     print >> sys.stderr, \
@@ -368,7 +367,7 @@ def main(args):
     print >> sys.stderr, \
     'Error! Static schedule allocated time exceeds the timeout'
     print >> sys.stderr, 'For help use --help'
-  TMP_ID = TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
+  globals.TMP_ID = globals.TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
   
   # NOTE: Here the solving process starts.
   try:
@@ -385,7 +384,7 @@ def main(args):
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       schedule = [(s, T) for s in pfolio]
-      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn)
+      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, globals.TMP_ID, out_mzn)
     else:
       print '% Computing solvers schedule (T = ' + str(T) + ')'
       schedule = get_schedule(
@@ -394,16 +393,16 @@ def main(args):
       print '% Resulting schedule:',schedule
       print '% Executing solvers...'
       obj_bound = exe_schedule(
-	schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn
+	schedule, mzn, dzn, obj, obj_var, None, globals.TMP_ID, out_mzn
       )
       print '% Search not completed by scheduled solvers! Trying others.'
       others = [
 	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
       ]
-      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
+      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, globals.TMP_ID, out_mzn)
       # FIXME: What is this???
       others = [ (backup, 43200) ]
-      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn)
+      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, globals.TMP_ID, out_mzn)
   except SearchCompleted:
     # Everything went well.
     clean()
