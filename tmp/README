@@ -1,1 +1,2 @@
-By default temporary files are put into this folder, and later deleted.
+By default temporary files are put into this folder, and later deleted by 
+sunny-cp once the solving process is terminated.
