@@ -32,7 +32,8 @@ def get_pid():
   global PID
   return PID
 
-def exe_schedule(schedule, mzn, dzn, obj, obj_var, obj_bound, tmp_id, out_mzn, T):
+def exe_schedule(
+  schedule, mzn, dzn, obj, obj_var, obj_bound, tmp_id, out_mzn, T):
   """
   Executes the scheduled solvers according to the specified order.
   """
