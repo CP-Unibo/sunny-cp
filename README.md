@@ -59,10 +59,10 @@ INSTALLATION
 =============
 
 To properly execute sunny-cp, the environment variable SUNNY_HOME must to be set 
-to the directory where the tool was decompressed. If "sunny-cp" is that folder,
+to the directory where the tool was decompressed. If "sunny-dir" is that folder,
 then please add the following line to your .bashrc file:
 
-  export SUNNY_HOME="<sunny-dir"
+  export SUNNY_HOME="sunny-dir"
 
 Moreover, it may be useful to add sunny-cp executables to your PATH:
 
