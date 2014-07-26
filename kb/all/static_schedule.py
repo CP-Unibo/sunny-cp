@@ -1,13 +1,9 @@
-"""
-Module for computing the static schedule of COPs.
-"""
-
 import sys
 import csv
 from gurobipy import *
 
 def main(args):
-  path = os.environ['SUNNY_HOME'] + '/kb/all/schedules' 
+  path = os.environ['SUNNY_HOME'] + '/schedules' #'/kb/all/schedules' 
   reader = csv.reader(open(path, 'r'), delimiter = '|')
   y = []
   C = 180

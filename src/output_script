@@ -1,9 +1,0 @@
-#!/bin/bash
-# Scripts that process the output of the flatzinc solver
-
-OZN=$1
-SOL=$2
-OUT=$3
-
-echo "% Converting FlatZinc output into MiniZinc output" 
-solns2out $OZN $SOL --output-to-file $OUT > /dev/null 2> /dev/null

@@ -15,31 +15,38 @@ where:
           with f'_i in [-1, 1] for i = 1, ..., n'
   - info: is a dictionary of the form {s_1: I_1, ..., s_m: I_m} where:
       s_1, ..., s_m: are the solvers of the portfolio
-      I_1, ..., I_m: are the infos of the solver s_i on the instance inst (i.e. 
-                     the solver answer and the solving time)
+      I_1, ..., I_m: are the infos of the solver s_i on the instance inst, that 
+                     is the solver answer and the solving time. The answer can 
+                     be either 'sat' (satisfiable), 'uns' (unsatisfiable), 'opt' 
+                     (the optimality of the solution is proven) or 'unk' 
+                     (unknown). The solving time (in seconds) should be set to 
+                     the solving timeout if the answer is 'unk' (or 'sat' for 
+                     optimization problems).
 
 The second pair of files, lims_csp_<KB> and lims_cops_<KB>, are instead python 
 dictionaries of the form:
   {1: [min_1, max_1], ..., n: [min_n, max_n]}
 where min_i and max_i are respectively the minimum and the maximum value of the 
 i-th non-normalized feature over all the training instances of the corresponding 
-knowledge base. If f_i is constant, the corresponding value in the dictionary is 
-null. Note that n' = n - c, where c is the number of constants features.
+knowledge base. If a feature f_i is constant over all the knowledge base, then 
+f_i = null. Note that n' < n since the normalized feature vectors of the 
+knowledge base don't contain constant features: if c is the number of constant 
+features, then n = n' + c.
 
-The purpose of these files is to scale the features values of a 
-new incoming instance in the range [-1, 1] avoiding to recompute for every new 
-problem the minimum and the maximum value for each feature. Note that for every 
-new problem, if the value of one of its extracted features f_i is:
+The purpose of these files is to scale the feature values of a new incoming 
+instance in the range [-1, 1] avoiding to recompute for every new problem the 
+minimum and the maximum value for each feature. Note that for every new problem 
+if the value of one of its extracted features f_i is:
 
-  > max_i or +inf, we set the corresponding normalized feature f'_i to 1
-  < min_i or -inf, we set the corresponding normalized feature f'_i to -1
-              NaN, we set the corresponding normalized feature f'_i to -1
+  >= max_i, we set the corresponding normalized feature f'_i to 1
+  <= min_i, we set the corresponding normalized feature f'_i to -1
+       NaN, we set the corresponding normalized feature f'_i to -1
+       
+Moreover, if f_i is a feature that is constant in the knowledge base it will be 
+simply discarded, regardless of its value. 
 
-This design choice has been made for avoiding the re-normalization of the 
-knowledge base if the value of a new feature f_i is not in [min_i, max_i].
-This folder contains the default knowledge base kb_all.
-
-kb_all is the 'original' knowledge base we retrieved, consisting of 5524 CSPs 
+This folder already contains the default knowledge base 'all'. This is the 
+'original' knowledge base we retrieved, consisting of 5524 CSPs 
 instances (4276 from Constraint Solving Competition 2008, 1233 from MiniZinc 1.6 
 benchmarks, 3 from MiniZinc Challenge 2012, 12 from MiniZinc Challenge 2013) and 
 4864 COPs (4763 from MiniZinc 1.6 benchmarks, 54 from MiniZinc Challenge 2012, 

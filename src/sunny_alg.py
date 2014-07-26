@@ -119,6 +119,8 @@ def csp_schedule(neighborhood, infos, k, T, pfolio, backup):
   # Compute the schedule and sort it by number of solved instances.
   for solver in best_pfolio:
     ns = len(solved[solver])
+    if ns == 0 or round(T / n * ns) == 0:
+      continue
     schedule[solver] = T / n * ns
   tot_time = sum(schedule.values())
   # Allocate to the backup solver the (eventual) remaining time.
@@ -186,7 +188,7 @@ def cop_schedule(neighborhood, infos, k, T, pfolio, backup, static):
   # compute the schedule and sort it by number of solved instances.
   for solver in best_pfolio:
     ns = sum(scores[solver])
-    if ns == 0:
+    if ns == 0 or round(T / n * ns) == 0:
       continue
     schedule[solver] = T / n * ns
   tot_time = sum(schedule.values())

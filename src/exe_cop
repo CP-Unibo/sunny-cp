@@ -8,11 +8,6 @@ DZN=$3
 FZN=$4
 OZN=$5
 OUT=$6
-TYPE=$7
-
-OUTPUT_SCRIPT="$SUNNY_HOME/src/output_script"
-SOLVERS_DIR="$SUNNY_HOME/solvers"
-ADDITIONAL_PARAM=""
 
 # No .dzn file is provided.
 if 
@@ -21,28 +16,24 @@ then
   DZN=''
 fi
 
-# If file is a COP call the solver with -a parameter
-if 
-  [ "$DZN" == 'NODATA' ]
-then
-  DZN=''
-fi
-
-if 
-  [ "$TYPE" == 'COP' ]
-then
-  ADDITIONAL_PARAM="-a $ADDITIONAL_PARAM"
-fi
 # For each constituent solver execute the corresponding commands: first the .mzn 
 # is converted to the specific .fzn, and then the .fzn is run. 
-# FIXME: Note that currently the output of each solver is 'commented' (by 
-# prepending a % character) and redirected to a file using tee, for later being 
-# properly processed by sunny-cp.
-
-################################################################
-# Commands to run the solvers of the MiniZinc suite
-################################################################
+# Note that the output is also redirected to $OUT file for detecting the 
+# termination of the search process, and extracting the objective value.
 if
+  [ $SOLVER == "chuffed" ]
+then
+  MZNLIB=$HOME'/solvers/chuffed/mznlib'
+  mzn2fzn  $MZN $DZN -I $MZNLIB -o $FZN --output-ozn-to-file $OZN
+  ret=$?
+  if 
+    [ $ret -ne 0 ]
+  then
+    echo "MiniZinc model not converted!" >&2
+    exit $ret
+  fi
+  unbuffer fzn_chuffed -a $FZN | fix_cop_output $OUT
+elif
   [ $SOLVER == "g12cbc" ]
 then
   mzn2fzn -G linear $MZN $DZN -o $FZN --output-ozn-to-file $OZN
@@ -53,7 +44,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  flatzinc $ADDITIONAL_PARAM -b mip $FZN > $OUT 2> /dev/null
+  unbuffer flatzinc -a -b mip $FZN | fix_cop_output $OUT
 elif
   [ $SOLVER == "g12cpx" ]
 then
@@ -65,7 +56,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  fzn_cpx $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
+  unbuffer fzn_cpx -a $FZN | fix_cop_output $OUT
 elif
   [ $SOLVER == "g12fd" ]
 then
@@ -77,7 +68,22 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  flatzinc $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
+  unbuffer flatzinc -a $FZN | fix_cop_output $OUT
+elif
+  [ $SOLVER == "g12gurobi" ]
+then
+  mznlib=$HOME"/solvers/g12gur/lib/minizinc/linear"
+  stdlib=$HOME"/solvers/g12gur/lib/minizinc/std"
+  flatzinc=$HOME"/solvers/g12gur/bin/flatzinc"
+  mzn2fzn -I $mznlib -I $stdlib $MZN $DZN -o $FZN --output-ozn-to-file $OZN
+  ret=$?
+  if 
+    [ $ret -ne 0 ]
+  then
+    echo "MiniZinc model not converted!" >&2
+    exit $ret
+  fi
+  unbuffer flatzinc -a -b mip $FZN | fix_cop_output $OUT
 elif
   [ $SOLVER == "g12lazyfd" ]
 then
@@ -89,38 +95,46 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  flatzinc $ADDITIONAL_PARAM -b lazy $FZN > $OUT 2> /dev/null
-else 
-################################################################
-# Commands to run other solvers of the MiniZinc suite
-################################################################
-  SOLVER_DIR=$SOLVERS_DIR/$SOLVER
-  
-  if [ ! -f "$SOLVER_DIR/fzn-exec" ]; then
-    echo "The solver $SOLVER/fzn-exec was not found. Please verify its 
-installation." >&2
-    exit 1
-  fi
-  
-  MZNLIB=""
-  STDLIB=""
-  
-  if [ -d "$SOLVER_DIR/mzn-lib" ]; then
-    MZNLIB="-I $SOLVER_DIR/mzn-lib"
-  fi
-  
-  if [ -d "$SOLVER_DIR/std-lib" ]; then
-    STDLIB="-I $SOLVER_DIR/std-lib"
-  fi
-  
-  mzn2fzn $MZNLIB $STDLIB $MZN $DZN -o $FZN --output-ozn-to-file $OZN
+  unbuffer flatzinc -a -b lazy $FZN | fix_cop_output $OUT
+elif
+  [ $SOLVER == "gecode" ]
+then
+  MZNLIB=$HOME'/solvers/gecode-4.2.1/gecode/flatzinc/mznlib'
+  mzn2fzn $MZN $DZN -I $MZNLIB -o $FZN --output-ozn-to-file $OZN
   ret=$?
   if 
     [ $ret -ne 0 ]
   then
     echo "MiniZinc model not converted!" >&2
     exit $ret
-  else
-    $SOLVER_DIR/fzn-exec $ADDITIONAL_PARAM $FZN > $OUT 2> /dev/null
   fi
+  unbuffer fzn-gecode -a $FZN | fix_cop_output $OUT
+elif
+  [ $SOLVER == "minisatid" ]
+then
+  mzn2fzn $MZN $DZN -o $FZN --output-ozn-to-file $OZN
+  ret=$?
+  if 
+    [ $ret -ne 0 ]
+  then
+    echo "MiniZinc model not converted!" >&2
+    exit $ret
+  fi
+  unbuffer minisatid-3.10.0 -a -f=fz $FZN | fix_cop_output $OUT
+# elif
+#   [ $SOLVER == "<solver name>" ]
+# then
+#   MZNLIB=<global redefinitions>
+#   mzn2fzn $MZN $DZN -I $MZNLIB -o $FZN --output-ozn-to-file $OZN
+#   ret=$?
+#   if 
+#     [ $ret -ne 0 ]
+#   then
+#     echo "MiniZinc model not converted!" >&2
+#     exit $ret
+#   fi
+#   unbuffer <solver command> -a $FZN | fix_cop_output $OUT
+else
+  echo "Error: undefined solver!" >&2
+  exit 1
 fi

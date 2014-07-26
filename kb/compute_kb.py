@@ -1,6 +1,6 @@
 """
 From info and features files computes a corresponding knowledge base and the 
-limits of each feature (i.e. the min/max value for each non-constant feature).
+limits of each feature (i.e. the min/max value for each feature).
 """
 
 import json
@@ -10,16 +10,12 @@ from math import isnan
 from os import environ
 
 prefix = environ['SUNNY_HOME'] + '/kb/'
-# Create a KB named kb_<suffix>_<kb>.
 suffix = 'csp'
 kb = 'mznc'
-# Input files.
 infos_file = prefix + kb + '/infos_' + suffix + '_' + kb
 feat_file  = prefix + 'all/features_' + suffix + '_all'
-# Output files.
 kb_file    = prefix + kb + '/kb_'       + suffix + '_' + kb
 lim_file   = prefix + kb + '/lims_'     + suffix + '_' + kb
-# Default bounds.
 LB      = -1
 UB      =  1
 DEF_VAL = -1
@@ -28,7 +24,7 @@ with open(infos_file, 'r') as infile:
 feat_reader = csv.reader(open(feat_file, 'r'), delimiter = '|')
 
 '''
-Associate to each problem the corrisponding feature vector and compute the 
+Associate to each problem the corrisponding features vector and compute the 
 min/max value for every feature.
 '''
 print 'Computing features limits'
@@ -44,7 +40,6 @@ for row in feat_reader:
   nan = float('nan')
   fv = [v for (k, v) in sorted(feat_dict.items())]
   if n == 0:
-    # Initialization.
     n = len(fv)
     for i in range(0, n):
       if isnan(fv[i]):
@@ -90,7 +85,6 @@ for (inst, feat_vect) in features.items():
   for solver in infos[inst].keys():
     pb_infos[solver] = {}
     if suffix == 'cop':
-      # area is used by SUNNY for breaking further ties.
       pb_infos[solver]['area']  = infos[inst][solver]['area']
       pb_infos[solver]['score'] = infos[inst][solver]['score']
       pb_infos[solver]['otime'] = infos[inst][solver]['otime']
