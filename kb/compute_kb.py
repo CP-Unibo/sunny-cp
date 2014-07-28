@@ -10,7 +10,7 @@ from math import isnan
 from os import environ
 
 prefix = environ['SUNNY_HOME'] + '/kb/'
-suffix = 'csp'
+suffix = 'cop'
 kb = 'all'
 infos_file = prefix + kb + '/infos_' + suffix + '_' + kb
 feat_file  = prefix + 'all/features_' + suffix + '_all'
