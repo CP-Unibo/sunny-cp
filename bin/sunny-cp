@@ -64,9 +64,8 @@ Options:
     solver will be put. The default directory is $SUNNY_HOME/tmp, and by default 
     such files are deleted after sunny-cp execution
     
-  --consistent-output
-    Activate the modality that prints the output only if it is validated. An
-    output is consistent if the solns2out program terminates without errors.
+  --flatzinc-output
+    Activate the modality that prints the output in flatzinc.
     
   --keep
     Do not erase the temporary files created by the solver and stored in the 
@@ -167,7 +166,7 @@ def main(args):
   # Getting arguments.
   try:
     opts, args = getopt.getopt(
-      args, 'hT:k:P:b:K:s:d:', ['help', 'keep', 'consistent-output']
+      args, 'hT:k:P:b:K:s:d:', ['help', 'keep', 'flatzinc-output']
     )
   except getopt.error, msg:
     print msg
@@ -338,7 +337,7 @@ def main(args):
 	globals.TMP_DIR = a
     elif o == '--keep':
       globals.KEEP = True
-    elif o == '--consistent-output':
+    elif o == '--flatzinc-output':
       globals.OUTPUT_TYPE = "flatzinc"
   # Additional checks.
   if backup not in pfolio:

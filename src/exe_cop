@@ -8,7 +8,6 @@ FZN=$4
 OZN=$5
 OUT=$6
 TYPE=$7
-OUTPUT_TYPE=$8
 
 OUTPUT_SCRIPT="$SUNNY_HOME/src/output_script"
 SOLVERS_DIR="$SUNNY_HOME/solvers"
@@ -94,12 +93,6 @@ else
 ################################################################
 # Run FlatZinc solver
 ################################################################
-  if [ "$OUTPUT_TYPE" == "minizinc" ]
-  then
-    $SOLVER_EXE $SOLVER_PARAM $FZN 2> /dev/null | grep " = \|==========\|----------\|=====UNSAT\|=====UNBO" | solns2out $OZN
-    exit ${PIPESTATUS[0]}    
-  else
-    $SOLVER_EXE $SOLVER_PARAM $FZN 2> /dev/null | grep " = \|==========\|----------\|=====UNSAT\|=====UNBO"
-    exit ${PIPESTATUS[0]}
-  fi
+  $SOLVER_EXE $SOLVER_PARAM $FZN 2> /dev/null | grep " = \|==========\|----------\|=====UNSAT\|=====UNBO"
+  exit ${PIPESTATUS[0]}    
 fi

@@ -167,14 +167,14 @@ def exe_solver_cop(solver, timeout, mzn, dzn, fzn, ozn, out):
   # Exploit the bash timeout.
   cmd = 'timeout ' + str(timeout) + ' unbuffer bash ' + globals.EXE_COP + ' ' + \
       solver   + ' ' + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + \
-      " COP " + globals.OUTPUT_TYPE
+      " COP "
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.'
   
   obj_bound = None
   proc = Popen(cmd.split(),stdout=PIPE)
   globals.PID = proc.pid
   
-  if globals.OUTPUT_TYPE != 'minizinc':
+  if globals.OUTPUT_TYPE == 'minizinc':
     # process output in flatzinc
     sol_file = open(out, 'w')
     while True:
@@ -254,12 +254,12 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
   global EXE_CSP
   timeout = int(round(timeout))
   cmd = 'timeout ' + str(timeout) + ' unbuffer bash ' + globals.EXE_COP + ' ' + solver   + ' ' \
-      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " CSP" + globals.OUTPUT_TYPE
+      + mzn + ' ' + dzn + ' ' + fzn + ' ' + ozn + ' ' + out + " CSP"
   print '% Executing ' + solver + ' for ' + str(timeout) + ' seconds.' 
   proc = Popen(cmd.split(),stdout=PIPE)
   globals.PID = proc.pid
   
-  if globals.OUTPUT_TYPE != 'minizinc':
+  if globals.OUTPUT_TYPE == 'minizinc':
     # process output in flatzinc
     sol_file = open(out, 'w')
     while True:
