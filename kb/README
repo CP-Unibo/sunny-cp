@@ -46,9 +46,6 @@ Moreover, if f_i is a feature that is constant in the knowledge base it will be
 simply discarded, regardless of its value. 
 
 This folder already contains the default knowledge base 'all'. This is the 
-'original' knowledge base we retrieved, consisting of 5524 CSPs 
-instances (4276 from Constraint Solving Competition 2008, 1233 from MiniZinc 1.6 
-benchmarks, 3 from MiniZinc Challenge 2012, 12 from MiniZinc Challenge 2013) and 
-4864 COPs (4763 from MiniZinc 1.6 benchmarks, 54 from MiniZinc Challenge 2012, 
-and 47 from MiniZinc Challenge 2013). The solvers infos have been computed by 
-considering a solving timeout of 1800 seconds.
+'original' knowledge base we retrieved, consisting of 5519 CSPs and 4860 COPs. 
+The solvers infos have been computed by considering a solving timeout of 1800 
+seconds.
