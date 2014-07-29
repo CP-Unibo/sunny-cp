@@ -46,6 +46,6 @@ Moreover, if f_i is a feature that is constant in the knowledge base it will be
 simply discarded, regardless of its value. 
 
 This folder already contains the default knowledge base 'all'. This is the 
-'original' knowledge base we retrieved, consisting of 5519 CSPs and 4860 COPs. 
+'original' knowledge base we retrieved, consisting of 5419 CSPs and 4860 COPs. 
 The solvers infos have been computed by considering a solving timeout of 1800 
 seconds.
