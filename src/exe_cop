@@ -121,6 +121,7 @@ then
     exit $ret
   fi
   unbuffer minisatid-3.10.0 -a -f=fz $FZN | fix_cop_output $OUT
+# FIXME: Add here a new constituent solver.
 # elif
 #   [ $SOLVER == "<solver name>" ]
 # then

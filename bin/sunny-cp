@@ -7,6 +7,7 @@ sunny-cp: a CP portfolio solver consisting of 8 constituent solvers:
 Note that the MiniZinc model in input MUST NOT contain the reserved keyword
 o__b__j__v__a__r and the output produced is not formatted (in this regard, is 
 possible to use the solns2out tool of MiniZinc suite for formatting the output).
+Don't forget to properly set the SUNNY_HOME environmente variable!!!
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
@@ -23,7 +24,7 @@ Options:
     Anyway, note that none of the solvers will be executed for more than T 
     seconds.
     The default value is T = 1800, while the default 'backup' ordering is:
-      Chuffed, CPX, MinisatID, Gecode, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC
+      chuffed, g12cpx, minisatid, gecode, g12lazyfd, g12fd, g12gurobi, g12cbc    
   
   -k <size>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
@@ -39,12 +40,12 @@ Options:
     of the solvers in case of failures
   
   -b <solver>
-    Set the backup solver of the portfolio. The default backup solver is Chuffed
+    Set the backup solver of the portfolio. The default backup solver is chuffed
     
   -K <path>
     Absolute path of the folder which contains the knowledge bases. The default 
-    knowledge bases are in $SUNNY_HOME/kb/all. For more details, see the 
-    README file in $SUNNY_HOME/kb folder
+    knowledge bases are in SUNNY_HOME/kb/all. For more details, see the README 
+    file in SUNNY_HOME/kb folder
   
   -s <schedule>
     Specifies a static schedule to be run before executing the SUNNY algorithm 
@@ -62,7 +63,7 @@ Options:
     
   -d <path> 
     Absolute path of the folder in which the temporary files created by the 
-    solver will be put. The default directory is $SUNNY_HOME/tmp, and by default 
+    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
     such files are deleted after sunny-cp execution
     
   --keep
