@@ -83,7 +83,7 @@ then
     echo "MiniZinc model not converted!" >&2
     exit $ret
   fi
-  unbuffer flatzinc -b mip $FZN | fix_csp_output $OUT
+  unbuffer $flatzinc -b mip $FZN | fix_csp_output $OUT
 elif
   [ $SOLVER == "g12lazyfd" ]
 then
