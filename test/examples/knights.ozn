@@ -1,3 +1,0 @@
-set of int: sq = 1 .. 36;
-array[1 .. 36] of var sq: p;
-output [ "p = " ++ (show(p) ++ ";\n") ];

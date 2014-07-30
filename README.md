@@ -64,7 +64,7 @@ then please add the following line to your .bashrc file:
 
   export SUNNY_HOME="sunny-dir"
 
-Moreover, it may be useful to add sunny-cp executables to your PATH:
+Moreover, please add the sunny-cp executables to your PATH:
 
   export PATH="${PATH}:${SUNNY_HOME}/bin"
 	

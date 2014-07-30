@@ -4,10 +4,13 @@ sunny-cp: a CP portfolio solver consisting of 8 constituent solvers:
 
   Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, MinisatID
 
+*******************************************************************************
 Note that the MiniZinc model in input MUST NOT contain the reserved keyword
 o__b__j__v__a__r and the output produced is not formatted (in this regard, is 
-possible to use the solns2out tool of MiniZinc suite for formatting the output).
-Don't forget to properly set the SUNNY_HOME environmente variable!!!
+possible to use the solns2out tool of MiniZinc suite for formatting the output)
+*******************************************************************************
+Don't forget to properly set the SUNNY_HOME and PATH environment variables!!!
+*******************************************************************************
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
@@ -405,8 +408,8 @@ def main(args):
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
-    traceback.print_exc()
-    print e
+    #traceback.print_exc()
+    #print e
     return 1
   clean()
   

@@ -201,6 +201,8 @@ def exe_solver_csp(solver, timeout, mzn, dzn, fzn, ozn, out):
     line = replace(replace(line, '\n', ''), ';', '')
     # FIXME: =====UNBOUNDED===== ignored.
     if line in ['==========', '=====UNSATISFIABLE=====', '----------']:
+      if '=' in line:
+        print line
       print '% Search completed by ' + solver
       raise SearchCompleted
   print '% Search not yet completed.'

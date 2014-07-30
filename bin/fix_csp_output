@@ -5,8 +5,8 @@ OUT=$1
 
 while read line
 do
-  # On std output print the solutions and the solver outcome.
-  echo $line | grep " = \|==========\|=====UNSATISFIABLE=====\|---------"
+  # On std output print the solution.
+  echo $line | grep " = \|---------"
   # On output file we need just the solver outcome.
   echo $line | grep "==========\|=====UNSATISFIABLE=====\|---------" >> $OUT
 done
