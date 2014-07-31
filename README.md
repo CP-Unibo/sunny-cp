@@ -67,6 +67,25 @@ then please add the following line to your .bashrc file:
 Moreover, please add the sunny-cp executables to your PATH:
 
   export PATH="${PATH}:${SUNNY_HOME}/bin"
+
+Once the variables are set, type the command: 
+
+  sunny-cp --help
+
+for printing the help page.
+
+TESTING
+=======
+
+In test/examples there is a number of simple MiniZinc models. You can run them 
+individually, e.g.
+
+  test/examples:~$ sunny-cp zebra.mzn
+
+or alternatively you can test all the models of the folder by typing:
+
+  test/examples:~$ ./run_examples 
+
 	
 FURTHER INFORMATION
 ===================
