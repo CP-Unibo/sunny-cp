@@ -176,7 +176,7 @@ def main(args):
   # Getting arguments.
   try:
     opts, args = getopt.getopt(
-      args, 'hT:k:P:b:K:s:d:', ['help', 'keep']
+      args, 'ahT:k:P:b:K:s:d:p:', ['help', 'keep']
     )
   except getopt.error, msg:
     print msg
@@ -280,6 +280,13 @@ def main(args):
     if o in ('-h', '--help'):
       print __doc__
       return
+    # FIXME: Manage better -a and -p options:
+    elif o == '-a':
+      if obj == 'sat':
+	print >> sys.stderr, 'Warning: ignoring -a option'
+    elif o == '-p':
+      print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
+                           'not yet implemented, -p is fixed to 1)'
     elif o == '-k':
       k = int(a)
       if k < 0:
