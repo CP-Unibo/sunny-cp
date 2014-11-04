@@ -1,21 +1,16 @@
-"""
+'''
 Module for computing the solvers schedule of SUNNY algorithm on a given problem,
 differentiating between CSPs and COPs.
-"""
+'''
 
-import json
 import csv
-from math import sqrt, isnan
+from math import sqrt
 from combinations import *
 
 def get_schedule(feat_vector, k, T, pfolio, backup, kb, lims, obj, static = []):
   """
   Returns the schedule of solvers computed by SUNNY algorithm.
   """
-  with open(lims, 'r') as infile:
-    l = json.load(infile)
-  feat_norm = normalize_features(feat_vector, l)
-  
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
   feat_vectors = {}
   infos = {}
@@ -23,38 +18,12 @@ def get_schedule(feat_vector, k, T, pfolio, backup, kb, lims, obj, static = []):
     inst = row[0]
     feat_vectors[inst] = eval(row[1])
     infos[inst] = eval(row[2])
-  neighbours = find_neighbours(feat_norm, feat_vectors, k)
+  neighbours = find_neighbours(feat_vector, feat_vectors, k)
   
   if obj == 'sat':
     return csp_schedule(neighbours, infos, k, T, pfolio, backup)
   else:
     return cop_schedule(neighbours, infos, k, T, pfolio, backup, static)
-
-def normalize_features(feat_vector, lims, lb = -1, ub = 1, def_value = -1):
-  """
-  Given a features vector, it returns a normalized one in which constant 
-  features are removed and features values are scaled in [lb, ub] by 
-  exploiting the information already computed in lims dictionary.
-  """
-  norm_vector = []
-  for i in range(0, len(feat_vector)):
-    j = str(i)
-    if lims[j][0] != lims[j][1]:
-      val = float(feat_vector[i])
-      if isnan(val):
-        val = def_value
-      min_val = float(lims[j][0])
-      max_val = float(lims[j][1])
-      if val <= min_val:
-        norm_val = lb
-      elif val >= max_val:
-        norm_val = ub
-      else:
-        x = (val - min_val) / (max_val - min_val)
-        norm_val = (ub - lb) * x + lb
-        assert lb <= norm_val <= ub
-      norm_vector.append(norm_val)
-  return norm_vector
 
 def find_neighbours(fv, feat_vectors, k):
   """
