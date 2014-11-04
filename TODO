@@ -1,0 +1,28 @@
+- impl classe Problem in problem.py:
+    better(v1, v2)
+    mzn = 
+    dzn = 
+    fzn = 
+    ozn = 
+    solve = 
+    obj_mzn = 
+    obj_fzn = 
+    
+- impl classi x ogni solvers.py:
+    minizinc
+    flatzinc
+    mzn2fzn
+    mznlib = 
+    fzn_exec = 
+    inject_bound
+    
+  automaticamente da cartella solvers
+  (inizialmente contiene solo un comm di intestaz)
+  
+- impl install.py x controllo:
+    minizinc
+    mzn2feat
+    python (x creare pyc)
+    solvers (e creare solvers.py)
+    
+- parallelizzare e documentare
