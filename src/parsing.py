@@ -71,15 +71,34 @@ Options:
     solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
     such files are deleted after sunny-cp execution
     
+  -e <extractor>
+    Features extractor used by sunny-cp. By default is mzn2feat, but it can be 
+    changed by defining a corresponding class in SUNNY_HOME/src/features.py
+    
+  -p <n>
+    The number of cores to use in the solving process. By default, is the number 
+    of CPUs in the system.
+    
   --keep
     Do not erase the temporary files created by the solver and stored in the 
     specified directory. This option is unset by default.
+    
+  --csp-<option> <value>
+    Allows to set the specific option only if the input problem is a CSP. 
+    For example, --csp-T 900 set the T parameter to 900 only if the problem is a 
+    CSP, while such option is ignored for COPs.
+    
+  --cop-<option> <value>
+    Allows to set the specific option only if the input problem is a COP. 
+    For example, --cop-T 900 set the T parameter to 900 only if the problem is a 
+    COP, while such option is ignored for CSPs.
 '''
 
 import sys
 import getopt
 from string import replace
 from defaults import *
+from features import *
   
 def parse_arguments(args):
   """
@@ -90,19 +109,25 @@ def parse_arguments(args):
   mzn, dzn, opts = get_args(args)
   k, T, pfolio, backup, kb, lims, \
   static, obj, obj_var, out_mzn = parse_model(mzn)
- 
+  extractor = eval(DEF_extractor)
+  cores = DEF_cores
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
       print __doc__
       sys.exit(0)
-    # FIXME: Manage better -a and -p options:
-    elif o == '-a':
-      if obj == 'sat':
-	print >> sys.stderr, 'Warning: ignoring -a option'
     elif o == '-p':
+      n = int(a)
+      if n < 1:
+	print >> sys.stderr, 'Warning: -p parameter set to 1.'
+	cores = 1
+      if n > cores:
+	print >> sys.stderr, 'Warning: -p parameter set to',cores
+      # FIXME: Change this.
       print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
                            'not yet implemented, -p is fixed to 1)'
+    elif o == '-e':
+      extractor = eval(a)
     elif o == '-k':
       k = int(a)
       if k < 0:
@@ -170,7 +195,10 @@ def parse_arguments(args):
 	TMP_DIR = a
     elif o == '--keep':
       KEEP = True
-      
+    elif o.startswith('--csp') and obj == 'sat' or \
+         o.startswith('--cop') and obj != 'sat':
+           opts.append([o[5 : len(o)], a])
+           
   # Additional checks.
   if backup not in pfolio:
     print >> sys.stderr, \
@@ -198,7 +226,8 @@ def parse_arguments(args):
     print >> sys.stderr, \
     'Error! Static schedule allocated time exceeds the timeout'
     print >> sys.stderr, 'For help use --help'
-  return mzn, dzn, obj, obj_var, out_mzn, k, T, pfolio, backup, kb, lims, static
+  return mzn, dzn, obj, obj_var, out_mzn, k, T, pfolio, backup, kb, lims, \
+         static, extractor, cores
 
 def get_args(args):
   """
@@ -206,8 +235,11 @@ def get_args(args):
   """
   dzn = ''
   try:
+    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e']
+    csp_opts = ['csp-' + o + '=' for o in options]
+    cop_opts = ['cop-' + o + '=' for o in options]
     opts, args = getopt.getopt(
-      args, 'ahT:k:P:b:K:s:d:p:', ['help', 'keep']
+      args, 'hT:k:P:b:K:s:d:p:e:', ['help', 'keep'] + csp_opts + cop_opts 
     )
   except getopt.error, msg:
     print msg

@@ -50,17 +50,19 @@ def clean():
 
 def main(args):
   # Parsing input arguments
-  mzn, dzn, obj, obj_var, out_mzn, \
-  k, T, pfolio, backup, kb, lims, static = parse_arguments(args)
+  mzn, dzn, obj, obj_var, out_mzn, k, T, pfolio, backup, kb, lims, static, \
+  extractor, cores = parse_arguments(args)
   
   # Here the solving process starts.
   try:
     print '% Extracting features...'
-    feat_vector = mzn2feat.extract_features([mzn, dzn, lims])
+    feat_vector = extractor.extract_features([mzn, dzn, lims])
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       schedule = [(s, T) for s in pfolio]
-      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, DEF_TMP_ID, out_mzn, T)
+      exe_schedule(
+	schedule, mzn, dzn, obj, obj_var, None, DEF_TMP_ID, out_mzn, T
+      )
     else:
       print '% Computing solvers schedule...'
       schedule = get_schedule(

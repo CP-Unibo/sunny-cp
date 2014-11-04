@@ -33,6 +33,11 @@ DEF_lims_cop = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
 DEF_static_csp = []
 DEF_static_cop = []
 
+DEF_extractor = 'mzn2feat'
+
+from multiprocessing import cpu_count
+DEF_cores = cpu_count()
+
 # If KEEP == True, do not remove temporary files.
 DEF_KEEP = False
 
