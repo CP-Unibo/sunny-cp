@@ -1,6 +1,0 @@
-In this directory please insall the solvers of the portfolio (excpet the ones already provided by the MiniZinc Suite).
-
-To install the solver XXX create a directory named XXX that shoud contain an executable fzn-exec.
-fzn-exec should be able to process an input in FlatZinc form and support an option -a to search for all the possible solutions.
-In case global ridefinition of global constraint are needed plese create a directroy XXX/mznlib containing the global redefinitions.
-

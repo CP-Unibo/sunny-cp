@@ -4,8 +4,13 @@ sunny-cp: a CP portfolio solver consisting of 8 constituent solvers:
 
   Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, MinisatID
 
+*******************************************************************************
 Note that the MiniZinc model in input MUST NOT contain the reserved keyword
-o__b__j__v__a__r
+o__b__j__v__a__r and the output produced is not formatted (in this regard, is 
+possible to use the solns2out tool of MiniZinc suite for formatting the output)
+*******************************************************************************
+Don't forget to properly set the SUNNY_HOME and PATH environment variables!!!
+*******************************************************************************
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
@@ -19,10 +24,10 @@ Options:
     of the whole solving process: if the instance is still not solved within T 
     seconds by the scheduled solvers, the others non-scheduled solvers of the 
     portfolio will be executed for T seconds following a default ordering. 
+    Anyway, note that none of the solvers will be executed for more than T 
+    seconds.
     The default value is T = 1800, while the default 'backup' ordering is:
-      Chuffed, CPX, MinisatID, Gecode, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC
-    If no solution is found after this round then the first solver of the
-    portfolio is executed for 1 day.
+      chuffed, g12cpx, minisatid, gecode, g12lazyfd, g12fd, g12gurobi, g12cbc    
   
   -k <size>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
@@ -38,12 +43,12 @@ Options:
     of the solvers in case of failures
   
   -b <solver>
-    Set the backup solver of the portfolio. The default backup solver is Chuffed
+    Set the backup solver of the portfolio. The default backup solver is chuffed
     
   -K <path>
-    Absolute path of the folder which contains the knowledge bases. The default 
-    knowledge bases are in $SUNNY_HOME/kb/all. For more details, see the 
-    README file in $SUNNY_HOME/kb folder
+    Absolute path of the folder which contains the knowledge base. The default 
+    knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
+    README file in SUNNY_HOME/kb folder
   
   -s <schedule>
     Specifies a static schedule to be run before executing the SUNNY algorithm 
@@ -61,11 +66,8 @@ Options:
     
   -d <path> 
     Absolute path of the folder in which the temporary files created by the 
-    solver will be put. The default directory is $SUNNY_HOME/tmp, and by default 
+    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
     such files are deleted after sunny-cp execution
-    
-  --flatzinc-output
-    Activate the modality that prints the output in flatzinc.
     
   --keep
     Do not erase the temporary files created by the solver and stored in the 
@@ -80,16 +82,21 @@ import traceback
 from subprocess import Popen, PIPE
 from socket     import gethostname
 from string	import replace
-import time
 
-# SUNNY_HOME environment variable must be set.
+# SUNNY_HOME environment variable must be set!!!
 SUNNY_HOME = os.environ['SUNNY_HOME']
 sys.path.append(SUNNY_HOME + '/src')
-
-import globals
 from sunny_alg  import *
 from sunny_exe  import *
 
+# If KEEP == True, do not remove temporary files.
+KEEP = False
+# Directory where temporary files will put.
+TMP_DIR = SUNNY_HOME + '/tmp'
+# Unique identifier of temporary files.
+TMP_ID = TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
+# Variable artificially introduced for keeping track of the objective function.
+OBJ_VAR = 'o__b__j__v__a__r'
 
 def handler(signum = None, frame = None):
   """
@@ -107,17 +114,20 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  pid = globals.PID
+  global KEEP, TMP_DIR, TMP_ID
+  # Get the PID of the solver currently in execution (see sunny_exe.py).
+  pid = get_pid()
   if pid:
     try:
       os.killpg(pid, signal.SIGKILL)
     except OSError:
       pass
-  name = os.path.splitext(os.path.basename(globals.TMP_ID))[0]
-  if not globals.KEEP:
-    for f in os.listdir(globals.TMP_DIR):
-      if os.path.splitext(f)[0] == os.path.basename(globals.TMP_ID):
-	os.remove(globals.TMP_DIR + '/' + f)  
+  name = os.path.splitext(os.path.basename(TMP_ID))[0]
+  # Possibly remove temporary files.
+  if not KEEP:
+    for f in os.listdir(TMP_DIR):
+      if os.path.splitext(f)[0] == os.path.basename(TMP_ID):
+	os.remove(TMP_DIR + '/' + f)  
   sys.stdout.close() 
 
 def extract_features(mzn, dzn):
@@ -130,6 +140,7 @@ def extract_features(mzn, dzn):
     cmd += ' -d ' + dzn
   proc = Popen(cmd.split(), stdout = PIPE)
   (out, err) = proc.communicate()
+  # Failure in features extraction.
   if proc.returncode != 0:
     return None
   features = out.split(",")
@@ -137,10 +148,9 @@ def extract_features(mzn, dzn):
   return feat_vector
 
 def main(args):
-  
-  start_time = time.time()
-  global SUNNY_HOME
-  # Default values. It is still possible to differentiate between CSPs and COPs.
+  global SUNNY_HOME, KEEP, TMP_DIR, TMP_ID
+  # Default values. Despite default values are the same for both CSPs and COPs, 
+  # it is however possible to differentiate them.
   dzn = ''
   k_csp = 70
   k_cop = 70
@@ -156,17 +166,17 @@ def main(args):
   ]
   backup_csp = 'chuffed'
   backup_cop = 'chuffed'
-  kb_csp = SUNNY_HOME + '/kb/all/kb_csp_all'
-  kb_cop = SUNNY_HOME + '/kb/all/kb_cop_all'
-  lims_csp = SUNNY_HOME + '/kb/all/lims_csp_all'
-  lims_cop = SUNNY_HOME + '/kb/all/lims_cop_all'
+  kb_csp   = SUNNY_HOME + '/kb/all_T1800/all_T1800_csp'
+  kb_cop   = SUNNY_HOME + '/kb/all_T1800/all_T1800_cop'
+  lims_csp = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_csp'
+  lims_cop = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
   static = []
   obj_var = ''
   
   # Getting arguments.
   try:
     opts, args = getopt.getopt(
-      args, 'hT:k:P:b:K:s:d:', ['help', 'keep', 'flatzinc-output']
+      args, 'ahT:k:P:b:K:s:d:p:', ['help', 'keep']
     )
   except getopt.error, msg:
     print msg
@@ -206,7 +216,7 @@ def main(args):
   output_item = False
   include_list = [mzn]
   out_mzn = None
-  # Possibly extract solve and output items for COPs.
+  # Possibly extract solve and output items (for COPs).
   while include_list and not (solve_item and output_item):
     model = include_list.pop()
     if os.path.exists(model):
@@ -232,8 +242,8 @@ def main(args):
           include = True
         # Looking for included models.
         if include and token[-1] == '"' or token[-1] == '";':
-	  include = replace(replace(replace(
-	    token, 'include"', ''),'"', ''), "'", '')
+	  include = \
+	    replace(replace(replace(token, 'include"', ''),'"', ''), "'", '')
 	  include_list.append(include)
           include = False
 	elif token.endswith('satisfy'):
@@ -270,6 +280,13 @@ def main(args):
     if o in ('-h', '--help'):
       print __doc__
       return
+    # FIXME: Manage better -a and -p options:
+    elif o == '-a':
+      if obj == 'sat':
+	print >> sys.stderr, 'Warning: ignoring -a option'
+    elif o == '-p':
+      print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
+                           'not yet implemented, -p is fixed to 1)'
     elif o == '-k':
       k = int(a)
       if k < 0:
@@ -332,13 +349,12 @@ def main(args):
 	sys.exit(2)
       name = [token for token in a.split('/') if token][-1]
       if a[-1] == '/':
-	globals.TMP_DIR = a[0 : -1]
+	TMP_DIR = a[0 : -1]
       else:
-	globals.TMP_DIR = a
+	TMP_DIR = a
     elif o == '--keep':
-      globals.KEEP = True
-    elif o == '--flatzinc-output':
-      globals.OUTPUT_TYPE = "flatzinc"
+      KEEP = True
+      
   # Additional checks.
   if backup not in pfolio:
     print >> sys.stderr, \
@@ -366,42 +382,32 @@ def main(args):
     print >> sys.stderr, \
     'Error! Static schedule allocated time exceeds the timeout'
     print >> sys.stderr, 'For help use --help'
-  globals.TMP_ID = globals.TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
   
-  # NOTE: Here the solving process starts.
+  # Here the solving process starts.
   try:
-    
     print '% Extracting features...'
     feat_vector = extract_features(mzn, dzn)
-
-    # FIXME: Useless
-    ## The time windows is reduced considering the feture extractin time
-    ## Another second is reduced to allow also the last solver to print its
-    ## solutions
-    #T = T - int(time.time() - start_time) - 1
-    
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       schedule = [(s, T) for s in pfolio]
-      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, globals.TMP_ID, out_mzn)
+      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn, T)
     else:
-      print '% Computing solvers schedule (T = ' + str(T) + ')'
+      print '% Computing solvers schedule...'
       schedule = get_schedule(
 	feat_vector, k, T, pfolio, backup, kb, lims, obj, static
       )
       print '% Resulting schedule:',schedule
       print '% Executing solvers...'
       obj_bound = exe_schedule(
-	schedule, mzn, dzn, obj, obj_var, None, globals.TMP_ID, out_mzn
+	schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn, T
       )
       print '% Search not completed by scheduled solvers! Trying others.'
       others = [
 	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
       ]
-      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, globals.TMP_ID, out_mzn)
-      # FIXME: What is this???
-      others = [ (backup, 43200) ]
-      exe_schedule(others, mzn, dzn, obj, obj_var, obj_bound, globals.TMP_ID, out_mzn)
+      exe_schedule(
+        others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn, T
+      )
   except SearchCompleted:
     # Everything went well.
     clean()
@@ -410,7 +416,7 @@ def main(args):
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
     traceback.print_exc()
-    print e
+    #print e
     return 1
   clean()
   
