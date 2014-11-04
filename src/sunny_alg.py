@@ -39,7 +39,7 @@ def normalize_features(feat_vector, lims, lb = -1, ub = 1, def_value = -1):
   norm_vector = []
   for i in range(0, len(feat_vector)):
     j = str(i)
-    if lims[j]:
+    if lims[j][0] != lims[j][1]:
       val = float(feat_vector[i])
       if isnan(val):
         val = def_value
@@ -119,6 +119,8 @@ def csp_schedule(neighborhood, infos, k, T, pfolio, backup):
   # Compute the schedule and sort it by number of solved instances.
   for solver in best_pfolio:
     ns = len(solved[solver])
+    if ns == 0 or round(T / n * ns) == 0:
+      continue
     schedule[solver] = T / n * ns
   tot_time = sum(schedule.values())
   # Allocate to the backup solver the (eventual) remaining time.
@@ -186,7 +188,7 @@ def cop_schedule(neighborhood, infos, k, T, pfolio, backup, static):
   # compute the schedule and sort it by number of solved instances.
   for solver in best_pfolio:
     ns = sum(scores[solver])
-    if ns == 0:
+    if ns == 0 or round(T / n * ns) == 0:
       continue
     schedule[solver] = T / n * ns
   tot_time = sum(schedule.values())
