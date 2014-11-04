@@ -158,11 +158,13 @@ def main(args):
   T_cop = 1800
   pfolio_csp = [
     'chuffed',  'g12cpx', 'minisatid', 'gecode',
-    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc'
+    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc',
+    'haifacsp', 'ortools', 'choco', 'izplus'
   ]
   pfolio_cop = [
     'chuffed',  'g12cpx', 'minisatid', 'gecode',
-    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc'
+    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc',
+    'haifacsp', 'ortools', 'choco', 'izplus'
   ]
   backup_csp = 'chuffed'
   backup_cop = 'chuffed'

@@ -153,7 +153,7 @@ def cop_schedule(neighborhood, infos, k, T, pfolio, backup, static):
   for inst in neighborhood:
     for solver in pfolio:
       scores[solver].append(infos[inst][solver]['score']) 
-      times[solver] += infos[inst][solver]['otime']
+      times[solver] += infos[inst][solver]['time']
       areas[solver] += infos[inst][solver]['area']
   max_score = 0
   min_time = 1000000000
