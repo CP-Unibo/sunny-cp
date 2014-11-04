@@ -25,4 +25,4 @@
     python (x creare pyc)
     solvers (e creare solvers.py)
     
-- parallelizzare e documentare
+- parallelizzare (static schedule?), testare (cartella test) e documentare
