@@ -16,6 +16,9 @@ from features  import *
 from sunny_alg import *
 from sunny_exe import *
 
+# Global variable keeping track of the current problem.
+PROBLEM = None
+
 def handler(signum = None, frame = None):
   """
   Handles termination signals.
@@ -32,7 +35,7 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  global DEF_KEEP, DEF_TMP_DIR, DEF_TMP_ID
+  global PROBLEM
   # Get the PID of the solver currently in execution (see sunny_exe.py).
   pid = get_pid()
   if pid:
@@ -40,29 +43,35 @@ def clean():
       os.killpg(pid, signal.SIGKILL)
     except OSError:
       pass
-  name = os.path.splitext(os.path.basename(DEF_TMP_ID))[0]
   # Possibly remove temporary files.
-  if not DEF_KEEP:
-    for f in os.listdir(DEF_TMP_DIR):
-      if os.path.splitext(f)[0] == os.path.basename(DEF_TMP_ID):
-	os.remove(DEF_TMP_DIR + '/' + f)
+  if not PROBLEM.keep:
+    if PROBLEM.mzn_copy:
+      os.remove(PROBLEM.mzn_copy)
+    for f in PROBLEM.fzns.values():
+      os.remove(f)
+    if PROBLEM.ozn:
+      os.remove(PROBLEM.ozn)
   sys.stdout.close()
 
 def main(args):
   # Parsing input arguments
-  mzn, dzn, obj, obj_var, out_mzn, k, T, pfolio, backup, kb, lims, static, \
-  extractor, cores = parse_arguments(args)
+  pb, k, T, pfolio, backup, kb, lims, static, extractor, cores = \
+    parse_arguments(args)
+  
+  global PROBLEM
+  PROBLEM = pb
   
   # Here the solving process starts.
   try:
     print '% Extracting features...'
-    feat_vector = extractor.extract_features([mzn, dzn, lims])
+    feat_vector = extractor.extract_features([pb, lims])
+    print '*** WORK IN PROGRESS ***'
+    # FIXME: From here refactoring is needed.
+    return
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       schedule = [(s, T) for s in pfolio]
-      exe_schedule(
-	schedule, mzn, dzn, obj, obj_var, None, DEF_TMP_ID, out_mzn, T
-      )
+      exe_schedule(schedule, pb, T)
     else:
       print '% Computing solvers schedule...'
       schedule = get_schedule(
@@ -70,26 +79,22 @@ def main(args):
       )
       print '% Resulting schedule:',schedule
       print '% Executing solvers...'
-      obj_bound = exe_schedule(
-	schedule, mzn, dzn, obj, obj_var, None, DEF_TMP_ID, out_mzn, T
-      )
+      obj_bound = exe_schedule(schedule, pb, T)
       print '% Search not completed by scheduled solvers! Trying others.'
       others = [
 	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
       ]
-      exe_schedule(
-        others, mzn, dzn, obj, obj_var, obj_bound, DEF_TMP_ID, out_mzn, T
-      )
+      exe_schedule(others, pb, T, obj_bound)
   except SearchCompleted:
     # Everything went well.
     clean()
-    return 0
+    sys.exit(0)
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
     traceback.print_exc()
     #print e
-    return 1
+    sys.exit(1)
   clean()
   
 if __name__ == '__main__':
