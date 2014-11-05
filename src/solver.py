@@ -8,28 +8,30 @@ class Solver:
   Solver is the abstraction of a constituent solver of the portfolio.
   """
     
-  def mzn2fzn_cmd(pb):
+  def mzn2fzn_cmd(self, pb):
     '''
     Returns the command for converting the given MiniZinc model to FlatZinc.
     '''
     fzn = pb.TMP_ID + '.' + self.name + '.fzn'
-    ozn = pb.TMP_ID + '.' + self.name + '.ozn'
+    ozn = pb.TMP_ID + '.ozn'
     pb.fzns[self.name] = fzn
     pb.ozn = ozn
-    cmd = ['mzn2fzn', '-I ', mznlib, pb.mzn, pb.dzn, '-o', fzn, 
-           '--output-ozn-to-file', ozn]
-    return cmd
+    cmd = ['mzn2fzn', '-I', self.mznlib, pb.mzn]
+    if pb.dzn:
+      return cmd + [pb.dzn, '-o', fzn, '--output-ozn-to-file', ozn]
+    else:
+      return cmd + ['-o', fzn, '--output-ozn-to-file', ozn]
     
-  def flatzinc_cmd(pb):
+  def flatzinc_cmd(self, pb):
     '''
     Returns the command for executing the given FlatZinc model.
     '''
     if pb.isCSP():
-      return [self.fzn_exec, pb.fzn]
+      return [self.fzn_exec, pb.fzns[self.name]]
     else:
-      return [self.fzn_exec, '-a', pb.fzn]
+      return [self.fzn_exec, '-a', pb.fzns[self.name]]
     
-  def inject_bound(pb, bound):
+  def inject_bound(self, pb, bound):
     '''
     Inject a new bound to the problem.
     '''

@@ -5,16 +5,19 @@ sunny-cp executable module.
 
 import os
 import sys
+import time
 import signal
 import traceback
 from subprocess import Popen, PIPE
 
 SUNNY_HOME = os.environ['SUNNY_HOME']
 sys.path.append(SUNNY_HOME + '/src')
-from parsing   import *
-from features  import *
-from sunny_alg import *
-from sunny_exe import *
+from problem        import *
+from parsing        import *
+from features       import *
+from sunny_alg      import *
+from sunny_exe      import *
+from pfolio_solvers import *
 
 # Global variable keeping track of the current problem.
 PROBLEM = None
@@ -44,12 +47,13 @@ def clean():
     except OSError:
       pass
   # Possibly remove temporary files.
-  if not PROBLEM.keep:
-    if PROBLEM.mzn_copy:
+  if PROBLEM and not PROBLEM.keep:
+    if os.path.exists(PROBLEM.mzn_copy):
       os.remove(PROBLEM.mzn_copy)
     for f in PROBLEM.fzns.values():
-      os.remove(f)
-    if PROBLEM.ozn:
+      if os.path.exists(f):
+        os.remove(f)
+    if os.path.exists(PROBLEM.ozn):
       os.remove(PROBLEM.ozn)
   sys.stdout.close()
 
@@ -60,14 +64,28 @@ def main(args):
   
   global PROBLEM
   PROBLEM = pb
+  pfolio = [eval(s + '()') for s in pfolio]
+  static = [(eval(s + '()'), t) for (s, t) in static]
   
   # Here the solving process starts.
   try:
     print '% Extracting features...'
     feat_vector = extractor.extract_features([pb, lims])
+    
+    # FIXME: From here refactoring is needed. This is just a dummy test.
+    
+    schedule = [(s, 2) for s in pfolio]
+    
+    for (s, t) in schedule:
+      print 'Executing',s.name
+      Popen(s.mzn2fzn_cmd(pb)).wait()
+      Popen(s.flatzinc_cmd(pb), stdout = PIPE).wait()
+       
+    
     print '*** WORK IN PROGRESS ***'
-    # FIXME: From here refactoring is needed.
+    clean()
     return
+  
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       schedule = [(s, T) for s in pfolio]

@@ -11,6 +11,7 @@ DEF_K_COP = 70
 DEF_T_CSP = 1800
 DEF_T_COP = 1800
 
+# FIXME: Change this ordering.
 DEF_PFOLIO_CSP = [
   'chuffed',  'g12cpx', 'minisatid', 'gecode',
   'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc',
@@ -28,7 +29,7 @@ DEF_BACKUP_COP = 'chuffed'
 DEF_KB_CSP   = SUNNY_HOME + '/kb/all_T1800/all_T1800_csp'
 DEF_KB_COP   = SUNNY_HOME + '/kb/all_T1800/all_T1800_cop'
 DEF_LIMS_CSP = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_csp'
-DEF_LIMS_cop = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
+DEF_LIMS_COP = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
 
 DEF_STATIC_CSP = []
 DEF_STATIC_COP = []

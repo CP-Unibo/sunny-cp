@@ -39,14 +39,14 @@ class Problem:
   
   # Absolute path of the copy of the original MiniZinc model. This copy is got 
   # from the original model by adding the OBJ_VAR output variable.
-  mzn_copy = None
+  mzn_copy = ''
   
   # Identifier of the folder where temporary files (i.e., mzn_copy, the FlatZinc
   # models in fzns and ozn) are possibly put.
-  tmp_dir = None
+  tmp_dir = ''
   
   # Unique identifier for temporary files.
-  TMP_ID = None
+  TMP_ID = ''
   
   # If keep, do not remove temporary files.
   keep = None
