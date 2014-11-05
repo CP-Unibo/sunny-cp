@@ -96,9 +96,10 @@ Options:
 
 import sys
 import getopt
-from string import replace
+from string   import replace
 from defaults import *
 from features import *
+from problem  import *
   
 def parse_arguments(args):
   """
@@ -108,9 +109,11 @@ def parse_arguments(args):
   # Get the arguments and parse the input model to get auxiliary information. 
   mzn, dzn, opts = get_args(args)
   k, T, pfolio, backup, kb, lims, \
-  static, obj, obj_var, out_mzn = parse_model(mzn)
-  extractor = eval(DEF_extractor)
-  cores = DEF_cores
+  static, solve, obj_mzn, mzn_out = parse_model(mzn)
+  extractor = eval(DEF_EXTRACTOR)
+  cores = DEF_CORES
+  tmp_dir = DEF_TMP_DIR
+  keep = DEF_KEEP
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
@@ -119,10 +122,10 @@ def parse_arguments(args):
     elif o == '-p':
       n = int(a)
       if n < 1:
-	print >> sys.stderr, 'Warning: -p parameter set to 1.'
-	cores = 1
+        print >> sys.stderr, 'Warning: -p parameter set to 1.'
+        cores = 1
       if n > cores:
-	print >> sys.stderr, 'Warning: -p parameter set to',cores
+        print >> sys.stderr, 'Warning: -p parameter set to',cores
       # FIXME: Change this.
       print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
                            'not yet implemented, -p is fixed to 1)'
@@ -165,7 +168,7 @@ def parse_arguments(args):
 	path = a + '/'
       else:
 	path = a
-      if obj in ['min', 'max']:
+      if solve in ['min', 'max']:
 	pb = 'cop'
       else:
         pb = 'csp'
@@ -190,13 +193,13 @@ def parse_arguments(args):
 	sys.exit(2)
       name = [token for token in a.split('/') if token][-1]
       if a[-1] == '/':
-	TMP_DIR = a[0 : -1]
+	tmp_dir = a[0 : -1]
       else:
-	TMP_DIR = a
+	tmp_dir = a
     elif o == '--keep':
-      KEEP = True
-    elif o.startswith('--csp') and obj == 'sat' or \
-         o.startswith('--cop') and obj != 'sat':
+      keep = True
+    elif o.startswith('--csp') and solve == 'sat' or \
+         o.startswith('--cop') and solve != 'sat':
            opts.append([o[5 : len(o)], a])
            
   # Additional checks.
@@ -226,8 +229,9 @@ def parse_arguments(args):
     print >> sys.stderr, \
     'Error! Static schedule allocated time exceeds the timeout'
     print >> sys.stderr, 'For help use --help'
-  return mzn, dzn, obj, obj_var, out_mzn, k, T, pfolio, backup, kb, lims, \
-         static, extractor, cores
+    
+  problem = Problem(mzn, dzn, solve, obj_mzn, mzn_out, tmp_dir, keep)
+  return problem, k, T, pfolio, backup, kb, lims, static, extractor, cores
 
 def get_args(args):
   """
@@ -273,20 +277,20 @@ def parse_model(mzn):
   Parse the input model to get auxiliary information (e.g., objective function).
   """
   # Set default arguments.
-  k = DEF_k_csp
-  T = DEF_T_csp
-  pfolio = DEF_pfolio_csp
-  backup = DEF_backup_csp
-  kb = DEF_kb_csp
-  lims = DEF_lims_csp
-  static = DEF_static_csp
-  obj = 'sat'
+  k = DEF_K_CSP
+  T = DEF_T_CSP
+  pfolio = DEF_PFOLIO_CSP
+  backup = DEF_BACKUP_CSP
+  kb = DEF_KB_CSP
+  lims = DEF_LIMS_CSP
+  static = DEF_STATIC_CSP
+  solve = 'sat'
   solve_item = False
   output_item = False
   include_list = [mzn]
-  out_mzn = None
+  mzn_out = None
   static = []
-  obj_var = ''
+  obj_mzn = ''
   mzn_dir = os.path.dirname(mzn)
   
   # Possibly extract solve and output items (for COPs).
@@ -327,28 +331,28 @@ def parse_model(mzn):
 	  break
 	elif token in ['minimize', 'maximize']:
 	  solve_item = True
-	  k = DEF_k_cop
-	  T = DEF_T_cop
-	  pfolio = DEF_pfolio_cop
-	  backup = DEF_backup_cop
-	  kb = DEF_kb_cop
-	  lims = DEF_lims_cop
-	  static = DEF_static_cop
+	  k = DEF_K_COP
+	  T = DEF_T_COP
+	  pfolio = DEF_PFOLIO_COP
+	  backup = DEF_BACKUP_COP
+	  kb = DEF_KB_COP
+	  lims = DEF_LIMS_COP
+	  static = DEF_STATIC_COP
 	  if token == 'minimize':
-	    obj = 'min'
+	    solve = 'min'
 	  else:
-	    obj = 'max'
-          obj_var = ''
+	    solve = 'max'
+          obj_mzn = ''
           for j in range(i + 1, len(tokens)):
-	    obj_var += tokens[j] + ' '
+	    obj_mzn += tokens[j] + ' '
 	  if output_item:
 	    include_list = []
 	    break
 	elif token in ['output', 'output[']:
-	  out_mzn = model
+	  mzn_out = model
           output_item = True
 	  if solve_item:
 	    include_list = []
 	    break
         i += 1
-  return k, T, pfolio, backup, kb, lims, static, obj, obj_var, out_mzn
+  return k, T, pfolio, backup, kb, lims, static, solve, obj_mzn, mzn_out

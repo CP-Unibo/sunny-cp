@@ -14,23 +14,24 @@ class mzn2feat:
   
   @staticmethod
   def extract_features(args):
-    mzn = args[0]
-    dzn = args[1]
-    not_norm_vector = mzn2feat.extract(mzn, dzn)
+    problem = args[0]
+    not_norm_vector = mzn2feat.extract(problem)
     if not not_norm_vector:
       return None
-    lims_file = args[2]
+    lims_file = args[1]
     import json
     with open(lims_file, 'r') as infile:
       lims = json.load(infile)
     return mzn2feat.normalize(not_norm_vector, lims)
   
   @staticmethod
-  def extract(mzn, dzn):
+  def extract(problem):
     """
     Extracts the features from a MiniZinc model by exploiting the mzn2feat
     features extractor.
     """
+    mzn = problem.mzn
+    dzn = problem.dzn
     cmd = 'mzn2feat -i ' + mzn
     if dzn:
       cmd += ' -d ' + dzn

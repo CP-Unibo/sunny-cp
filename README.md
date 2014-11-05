@@ -86,7 +86,7 @@ or alternatively you can test all the models of the folder by typing:
 
   test/examples:~$ ./run_examples 
 
-	
+
 FURTHER INFORMATION
 ===================
 
@@ -95,6 +95,16 @@ For any question or information, please contact us at:
   amadini at cs.unibo.it
 
   jmauro  at cs.unibo.it
+
+
+ACKNOWLEDGMENTS
+===============
+
+We would like to thank the staff of the Optimization Research Group of NICTA 
+(National ICT of Australia) for allowing us to use Chuffed and G12/Gurobi, as 
+well as for granting us the computational resources needed for building and 
+testing sunny-cp.
+
 
 REFERENCES
 ==========

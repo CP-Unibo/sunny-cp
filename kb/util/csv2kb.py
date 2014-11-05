@@ -54,16 +54,16 @@ def main(args):
   except getopt.error, msg:
     print msg
     print >> sys.stderr, 'For help use --help'
-    return 2
+    sys.exit(2)
     
   if len(args) != 3:
     for o, a in opts:
       if o in ('-h', '--help'):
         print __doc__
-        return 0
+        sys.exit(0)
     print >> sys.stderr, 'Error! Wrong number of arguments.'
     print >> sys.stderr, 'For help use --help'
-    return 2
+    sys.exit(2)
   
   kb_name = args[0]
   feat_file = args[1]
@@ -89,33 +89,33 @@ def main(args):
       timeout = int(a)
       if timeout <= 0:
         print >> sys.stderr, 'Error! Timeout',timeout,'is non positive.'
-        return 2
+        sys.exit(2)
     elif o == '-p':
       path = a
       if not os.path.exists(a):
 	print >> sys.stderr, 'Error! Path',path,'does not exists.'
-	return 2
+	sys.exit(2)
     elif o == '-f':
       l, u = a.split(',')
       lb_feat = float(l)
       ub_feat = float(u)
       if lb_feat >= ub_feat:
 	print >> sys.stderr, 'Error! Bound',l,'not greater than',u
-	return 2
+	sys.exit(2)
     elif o == '-s':
       l, u = a.split(',')
       lb_score = float(l)
       ub_score = float(u)
       if not (0 <= lb_score < ub_score <= 1):
 	print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
-	return 2
+	sys.exit(2)
     elif o == '-a':
       l, u = a.split(',')
       lb_area = float(l)
       ub_area = float(u)
       if not (0 <= lb_area < ub_area <= 1):
 	print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
-	return 2
+	sys.exit(2)
     elif o == '--no-scale':
       scale = False
     elif o == '--no-const':
@@ -127,7 +127,7 @@ def main(args):
   if os.path.exists(kb_path):
     print >> sys.stderr, 'Error! Folder',kb_path,'already exists! Choose ',
     print >> sys.stderr, 'another name or location for the knowledge base!'
-    return 2
+    sys.exit(2)
   
   try:
     # Extract runtimes information.
@@ -146,7 +146,7 @@ def main(args):
       from shutil import rmtree
       rmtree(kb_path)
     print 'Knowledge base',kb_name,'not created'
-    return 1
+    sys.exit(1)
   
   print 'Knowledge base',kb_name,'created in',path
 
