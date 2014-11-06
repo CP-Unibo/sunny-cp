@@ -185,14 +185,11 @@ def parallelize(static_sched, dynamic_sched, cores, timeout):
   
   last_time = timeout
   while static_sched:
-    #if dynamic_sched and static_sched[-1][0] == dynamic_sched[0][0]:
-      #new_time = static_sched[-1][1] + dynamic_sched[0][1]
-      #static_sched[-1] = (static_sched[-1][0], new_time)
-      #dynamic_sched.pop(0)
-    #while static_sched:
-      (s, t) = static_sched.pop(0)
-      par_schedule.append((s, t))
-      last_time -= t
+    (s, t) = static_sched.pop(0)
+    if not static_sched and s == dynamic_sched[0][0]:
+      break
+    par_schedule.append((s, t))
+    last_time -= t
       
   dyn_time = sum(t for (s, t) in dynamic_sched)
   if last_time and dyn_time:

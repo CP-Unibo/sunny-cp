@@ -19,7 +19,6 @@ from scheduling     import *
 from pfolio_solvers import *
 
 #FIXME: Remove.
-from sunny_alg      import *
 from sunny_exe      import *
 
 # Global variable keeping track of the current problem.
@@ -79,11 +78,9 @@ def main(args):
     feat_vector = extractor.extract_features([pb, lims])
   
     if not feat_vector:
-      print '% Features extraction failed! Switching to backup solver(s):',
-      dynamic_sched = [(s, timeout) for s in pfolio[0 : cores]]
-      print dynamic_sched
-      scheduled = [s for (s, t) in dynamic_sched]
-      not_scheduled = [s for s in pfolio if s not in scheduled]
+      print '% Features extraction failed! Switching to backup solver(s):'
+      dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[0 : cores]]
+      not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
       par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
 	        + [(s, 0) for s in not_scheduled]
       print '% SUNNY parallel schedule:',par_sched
@@ -93,7 +90,9 @@ def main(args):
       print '% Computing solvers schedule...'
       dynamic_sched = sunny(pb, pfolio, backup, feat_vector, k, timeout, kb)
       print '% SUNNY sequential schedule:',dynamic_sched
-      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout)
+      not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
+      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
+	        + [(s, 0) for s in not_scheduled]
       print '% SUNNY parallel schedule:',par_sched
       print '% Executing solvers...'
       run_schedule(par_sched, pb, timeout)
