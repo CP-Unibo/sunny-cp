@@ -56,7 +56,7 @@ Options:
     Specifies a static schedule to be run before executing the SUNNY algorithm 
     on a given COP. The schedule must be passed in the form: 
       s_1,t_1,s_2,t_2,...,s_m,t_m
-    where each s_i belongs to the specified portfolio, 0 < t_i <= T, and 
+    where each s_i belongs to the specified portfolio, 0 < t_i < T, and 
     C = t_1 + ... + t_m <= T, where T is the specified solving timeout for COPs. 
     Passing a static schedule has the purpose of providing a 'warm start' to the 
     SUNNY algorithm in the first C seconds: first s_1 is run for t_1 seconds, 
@@ -218,8 +218,8 @@ def parse_arguments(args):
   st = 0
   for (s, t) in static:
     st += t
-    if t <= 0 or t > T:
-      print >> sys.stderr, 'Error! Not valid time slot',t,' for static schedule'
+    if t <= 0 or t >= T:
+      print >> sys.stderr, 'Error! Not valid time slot',t,'for static schedule'
       print >> sys.stderr, 'For help use --help'
       sys.exit(2)
     if s not in pfolio:
