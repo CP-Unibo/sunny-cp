@@ -15,9 +15,12 @@ sys.path.append(SUNNY_HOME + '/src')
 from problem        import *
 from parsing        import *
 from features       import *
+from scheduling     import *
+from pfolio_solvers import *
+
+#FIXME: Remove.
 from sunny_alg      import *
 from sunny_exe      import *
-from pfolio_solvers import *
 
 # Global variable keeping track of the current problem.
 PROBLEM = None
@@ -57,60 +60,44 @@ def clean():
       os.remove(PROBLEM.ozn)
   sys.stdout.close()
 
+def run_schedule(par_sched, pb, timeout):
+  """
+  TODO
+  """
+  return
+
 def main(args):
-  # Parsing input arguments
-  pb, k, T, pfolio, backup, kb, lims, static, extractor, cores = \
+  # Arguments parsing.
+  pb, k, timeout, pfolio, backup, kb, lims, static_sched, extractor, cores = \
     parse_arguments(args)
-  
   global PROBLEM
   PROBLEM = pb
-  pfolio = [eval(s + '()') for s in pfolio]
-  static = [(eval(s + '()'), t) for (s, t) in static]
   
   # Here the solving process starts.
   try:
     print '% Extracting features...'
     feat_vector = extractor.extract_features([pb, lims])
-    
-    # FIXME: From here refactoring is needed. This is just a dummy test.
-    
-    schedule = [(s, 2) for s in pfolio]
-    
-    for (s, t) in schedule:
-      print 'Executing',s.name
-      Popen(s.mzn2fzn_cmd(pb), stdout = PIPE, stderr = PIPE).wait()
-      pb.fzns[s.name] = pb.TMP_ID + '.' + s.name + '.fzn'
-      pb.ozn = pb.TMP_ID + '.ozn'
-      print 'Model converted'
-      Popen(s.flatzinc_cmd(pb), stderr = PIPE).wait()
-      
-       
-    
-    print '*** WORK IN PROGRESS ***'
-    clean()
-    return
   
     if not feat_vector:
-      print '% Features extraction failed! Switching to backup solver(s).'
-      schedule = [(s, T) for s in pfolio]
-      exe_schedule(schedule, pb, T)
+      print '% Features extraction failed! Switching to backup solver(s):',
+      dynamic_sched = [(s, timeout) for s in pfolio[0 : cores]]
+      print dynamic_sched
+      scheduled = [s for (s, t) in dynamic_sched]
+      not_scheduled = [s for s in pfolio if s not in scheduled]
+      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
+	        + [(s, 0) for s in not_scheduled]
+      print '% SUNNY parallel schedule:',par_sched
+      print '% Executing solvers...'
+      run_schedule(par_sched, pb, timeout)
     else:
       print '% Computing solvers schedule...'
-      schedule = get_schedule(
-	feat_vector, k, T, pfolio, backup, kb, lims, obj, static
-      )
-      print '% Resulting schedule:',schedule
+      dynamic_sched = sunny(pb, pfolio, backup, feat_vector, k, timeout, kb)
+      print '% SUNNY sequential schedule:',dynamic_sched
+      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout)
+      print '% SUNNY parallel schedule:',par_sched
       print '% Executing solvers...'
-      obj_bound = exe_schedule(schedule, pb, T)
-      print '% Search not completed by scheduled solvers! Trying others.'
-      others = [
-	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
-      ]
-      exe_schedule(others, pb, T, obj_bound)
-  except SearchCompleted:
-    # Everything went well.
-    clean()
-    sys.exit(0)
+      run_schedule(par_sched, pb, timeout)
+      print '% Search not completed by any constituent solver.'
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()

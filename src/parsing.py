@@ -124,8 +124,10 @@ def parse_arguments(args):
       if n < 1:
         print >> sys.stderr, 'Warning: -p parameter set to 1.'
         cores = 1
-      if n > cores:
+      elif n > cores:
         print >> sys.stderr, 'Warning: -p parameter set to',cores
+      else:
+	cores = n
       # FIXME: Change this.
       print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
                            'not yet implemented, -p is fixed to 1)'
@@ -217,8 +219,7 @@ def parse_arguments(args):
   for (s, t) in static:
     st += t
     if t <= 0 or t > T:
-      print >> sys.stderr, \
-      'Error! Not valid time slot ' + t + ' for static schedule'
+      print >> sys.stderr, 'Error! Not valid time slot',t,' for static schedule'
       print >> sys.stderr, 'For help use --help'
       sys.exit(2)
     if s not in pfolio:

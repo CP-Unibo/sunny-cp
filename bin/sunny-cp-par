@@ -1,8 +1,5 @@
 #! /usr/bin/env python
-# stable: 15/10 -- 20.21
-# controllare con pattern set mining k1 - german credit
 
-from threading import Thread
 from multiprocessing import *
 from subprocess import Popen, PIPE
 from shutil import move
@@ -32,15 +29,8 @@ PROC_RESTART_OBJ = 10
 
 SLEEP_TIME = 0.1
 
-#def kill_process(proc):
-  #if proc.poll() is None:
-    ##proc.stdout.close()
-    #pid = proc.pid
-    ##os.killpg(pid, signal.SIGTERM)
-    #os.killpg(pid, signal.SIGKILL)
-    #print "% Killed process", pid, "and all its children"
-
 import psutil
+
 def kill_process(proc):
   if proc.poll() is None:
     pid = proc.pid
@@ -50,8 +40,6 @@ def kill_process(proc):
     process.kill()
     print "% Killed process", pid, "and all its children"
     
-
-
 def handler(signum = None, frame = None):
   """
   Handles termination signals.
@@ -64,31 +52,6 @@ def handler(signum = None, frame = None):
   
 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
   signal.signal(sig, handler)
-
-
-def inject(obj):
-  """
-  Inject the value.
-  """
-  with open('2DPacking.fzn') as infile:
-    with open('tmp.fzn', 'w') as outfile:
-      add = True
-      for line in infile:
-	if add and 'constraint' in line.split():
-	  outfile.write('constraint int_lt(INT____00041, ' + str(obj) + ');\n')
-	  add = False
-	outfile.write(line)
-  move('tmp.fzn', '2DPacking.fzn')
-
-# class that makes a stream unbuffered  
-class Unbuffered(object):
-   def __init__(self, stream):
-       self.stream = stream
-   def write(self, data):
-       self.stream.write(data)
-       self.stream.flush()
-   def __getattr__(self, attr):
-       return getattr(self.stream, attr)
 
 def launch_solver(i,cmd, timeout, timewait, timeobj, startobj):
   """
@@ -174,13 +137,8 @@ def main():
   
   seq_schedule = [
     ('/home/jacopo/programmi/constraint_solvers/chuffed/fzn_chuffed -a ' + inst , 600),
-    #('/home/jacopo/programmi/constraint_solvers/chuffed/fzn_chuffed -a ' + inst , 600),
     ('/home/jacopo/programmi/minizinc-1.6/bin/fzn_cpx -a ' + inst, 600),
-    #('unbuffer flatzinc -a -b lazy ' + inst, 400),
-    #('flatzinc -a -b lazy ' + inst, 400),
     ('flatzinc -a -b mip ' + inst, 600)
-    #('sh prova.sh', 600)
-    #('unbuffer flatzinc -a -b mip ' + inst, 600)
   ]
   par_schedule = parallelize(seq_schedule, 1800, cpu_count())
   
@@ -237,7 +195,7 @@ def main():
 	    proc_count +=1
 	  else:
 	    running_proc -= 1
-	  del processes[i]	
+	  del processes[i]
 	
     # Deal with expired timeouts.
     for i in processes.keys():
