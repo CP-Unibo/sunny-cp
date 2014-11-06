@@ -14,6 +14,7 @@ class mzn2feat:
   
   @staticmethod
   def extract_features(args):
+    return None
     problem = args[0]
     not_norm_vector = mzn2feat.extract(problem)
     if not not_norm_vector:
