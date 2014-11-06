@@ -3,3 +3,5 @@
 - documentare
 
 - testing (coverage?) 
+
+- integrare installazione con mzn2feat (Makefile)

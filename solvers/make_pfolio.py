@@ -14,10 +14,11 @@ pfolio_file = open(pfolio_path, 'w')
 
 preamble = "'''\nThis module contains one class for each installed solver of " \
   "the portfolio.\nEach class must be a subclass of Solver class and might be" \
-  " defined manually,\nbut it is however strongly suggested to generate it "   \
-  "automatically by using the\nmake_pfolio.py script in SUNNY_HOME/solvers. "  \
-  "Note that running such script will\nreplace the current file.\n'''\n\n"     \
-  "from solver import Solver\n\n"
+  " defined manually, but \nit is however strongly suggested to first generate"\
+  " it automatically by using the\nmake_pfolio.py script in SUNNY_HOME/solvers"\
+  ". Then, once the file is created, it \nis possible to specialize each class"\
+  ". Note that running make_pfolio.py script \nwill replace the current file." \
+  "\n'''\n\nfrom solver import Solver\n\n"
 pfolio_file.write(preamble)
 
 solvers_path = os.environ['SUNNY_HOME'] + '/solvers/'
