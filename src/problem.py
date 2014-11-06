@@ -31,17 +31,22 @@ class Problem:
   obj_fzn = ''
   
   # Absolute path of the MiniZinc model that actually contains the output string
+  # It may coincide with mzn, be a file included in mzn, or be empty.
   mzn_out = ''
   
-  # Auxiliary variable artificially introduced in mzn_copy for keeping track of 
+  # Auxiliary variable artificially introduced in mzn_cpy for keeping track of 
   # the objective function value (printed in std output).
   OBJ_VAR = 'o__b__j__v__a__r'
   
-  # Absolute path of the copy of the original MiniZinc model. This copy is got 
-  # from the original model by adding the OBJ_VAR output variable.
-  mzn_copy = ''
+  # Absolute path of a copy of the original model mzn. This copy is got from 
+  # the original MiniZinc model by adding the OBJ_VAR output variable.
+  mzn_cpy = ''
   
-  # Identifier of the folder where temporary files (i.e., mzn_copy, the FlatZinc
+  # Absolute path of a copy of the model out_mzn containing the output item. 
+  # This copy is got from out_mzn by adding the OBJ_VAR output variable.
+  mzn_out_cpy = ''
+  
+  # Identifier of the folder where temporary files (i.e., mzn_cpy, the FlatZinc
   # models in fzns and ozn) are possibly put.
   tmp_dir = ''
   
@@ -50,7 +55,6 @@ class Problem:
   
   # If keep, do not remove temporary files.
   keep = None
-  
   
   def isCSP(self):
     """

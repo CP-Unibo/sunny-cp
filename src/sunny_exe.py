@@ -93,19 +93,22 @@ def update_mzn(mzn, tmp_mzn, out_mzn, tmp_inc, obj_var):
 	    line = line.replace('output', out_expr, 1)
 	  outfile.write(line)
   else:
-    # output string is omitted in mzn or included in another file.
+    # output string is omitted in mzn.
     if not out_mzn:
       with open(tmp_mzn, 'a') as outfile:
         outfile.write('var int: ' + OBJ_VAR + ' = ' + obj_var + ';\n')
         outfile.write('output [show(' + OBJ_VAR + '), "\\n" ]')
       return
+    # output string is included in another file.
     with open(mzn, 'r') as infile:
       with open(tmp_mzn, 'w') as outfile:
 	for line in infile:
+	  # Include tmp_inc instead of out_mzn
 	  line = replace(line, '"' + out_mzn + '"', '"' + tmp_inc + '"')
           outfile.write(line)
     with open(out_mzn, 'r') as infile:
       with open(tmp_inc, 'w') as outfile:
+	# Replace the string in tmp_inc
         outfile.write('var int: ' + OBJ_VAR + ' = ' + obj_var + ';\n')
 	for line in infile:
 	  if 'output' in line.split() or 'output[' in line.split():

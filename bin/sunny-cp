@@ -48,8 +48,8 @@ def clean():
       pass
   # Possibly remove temporary files.
   if PROBLEM and not PROBLEM.keep:
-    if os.path.exists(PROBLEM.mzn_copy):
-      os.remove(PROBLEM.mzn_copy)
+    if os.path.exists(PROBLEM.mzn_cpy):
+      os.remove(PROBLEM.mzn_cpy)
     for f in PROBLEM.fzns.values():
       if os.path.exists(f):
         os.remove(f)
@@ -78,8 +78,12 @@ def main(args):
     
     for (s, t) in schedule:
       print 'Executing',s.name
-      Popen(s.mzn2fzn_cmd(pb)).wait()
-      Popen(s.flatzinc_cmd(pb), stdout = PIPE).wait()
+      Popen(s.mzn2fzn_cmd(pb), stdout = PIPE, stderr = PIPE).wait()
+      pb.fzns[s.name] = pb.TMP_ID + '.' + s.name + '.fzn'
+      pb.ozn = pb.TMP_ID + '.ozn'
+      print 'Model converted'
+      Popen(s.flatzinc_cmd(pb), stderr = PIPE).wait()
+      
        
     
     print '*** WORK IN PROGRESS ***'

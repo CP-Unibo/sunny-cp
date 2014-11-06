@@ -1,9 +1,10 @@
 '''
 This module contains one class for each installed solver of the portfolio.
-Each class must be a subclass of Solver class and might be defined manually,
-but it is however strongly suggested to generate it automatically by using the
-make_pfolio.py script in SUNNY_HOME/solvers. Note that running such script will
-replace the current file.
+Each class must be a subclass of Solver class and might be defined manually, but 
+it is however strongly suggested to first generate it automatically by using the
+make_pfolio.py script in SUNNY_HOME/solvers. Then, once the file is created, it 
+is possible to specialize each class. Note that running make_pfolio.py script 
+will replace the current file.
 '''
 
 from solver import Solver
@@ -19,6 +20,13 @@ class g12fd(Solver):
   name = 'g12fd'
   mznlib = '/home/roberto/sunny-cp/solvers/g12fd/mzn-lib'
   fzn_exec = '/home/roberto/sunny-cp/solvers/g12fd/fzn-exec'
+  lt_constraint = 'constraint int_lt(llt, rlt)'
+  gt_constraint = 'constraint int_lt(rgt, lgt)'
+
+class minisatid(Solver):
+  name = 'minisatid'
+  mznlib = '/home/roberto/sunny-cp/solvers/minisatid/mzn-lib'
+  fzn_exec = '/home/roberto/sunny-cp/solvers/minisatid/fzn-exec'
   lt_constraint = 'constraint int_lt(llt, rlt)'
   gt_constraint = 'constraint int_lt(rgt, lgt)'
 
