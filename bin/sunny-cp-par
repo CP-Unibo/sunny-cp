@@ -95,7 +95,8 @@ def read_lines(i):
   except:
     return ""
   
-  
+# FIXME: Perchè usare una funzione update solution che fa sta roba che non capisco
+# invece che la soluzione orginale?
 def update_solution(i):
   processes[i][PROC_TIMESOL] = time.time()
   ls = processes[i][PROC_OUT].split("----------\n")[-2:]
@@ -157,6 +158,8 @@ def main():
     best_sol = ""
     time.sleep(SLEEP_TIME)
     
+    # FIXME: Perchè fai 4 cicli for sui processi? Non si potrebbe fare un ciclo unico?
+    
     # Read and parse the outputs.
     for i in processes:
       lines = read_lines(i)
@@ -177,7 +180,8 @@ def main():
 	  for i in processes:
 	    kill_process(processes[i][PROC_PROC])
 	  os._exit(0)
-     
+    
+    # FIXME: Perchè questo?
     #print new solution if any
     if best_sol != "":
       print best_sol
@@ -217,6 +221,7 @@ def main():
     # the modified FlatZinc.
     if obj != None:
       for i in processes.keys():
+	# FIXME: perchè questo doppio controllo? Cosa sono PROC_RESTART_OBJ e PROC_OBJ?
 	if (processes[i][PROC_RESTART_OBJ] == None or processes[i][PROC_RESTART_OBJ] > obj):
 	  if (processes[i][PROC_OBJ] == None or processes[i][PROC_OBJ] > obj) and \
 	    time.time() - processes[i][PROC_TIMESOL] > processes[i][PROC_TIMEOBJ]:

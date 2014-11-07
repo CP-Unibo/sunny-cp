@@ -13,22 +13,25 @@ class Problem:
   # Absolute path of the data of the problem.
   dzn = ''
   
-  # A dictionary that associates to each solver name the absolute path of the 
+  # A dictionary that associates to each solver name the absolute path of the
   # corresponding FlatZinc model.
   fzns = {}
   
-  # Absolute path of the output specifications of the problem.
+  # Absolute path of the output specification file.
   ozn = ''
   
   # Can be either 'sat', 'min', or 'max' for satisfaction, minimization, or 
   # maximization problems respectively.
   solve = ''
   
-  # Objective function expression (in the MiniZinc model).
-  obj_mzn = ''
+  # Objective function expression in the MiniZinc model.
+  obj_expr = ''
   
-  # Objective function variable (in the FlatZinc model).
-  obj_fzn = ''
+  # Objective variable in the FlatZinc model.
+  obj_var = ''
+  
+  # Best known objective function value for this problem.
+  best_bound = None
   
   # Absolute path of the MiniZinc model that actually contains the output string
   # It may coincide with mzn, be a file included in mzn, or be empty.
@@ -36,18 +39,18 @@ class Problem:
   
   # Auxiliary variable artificially introduced in mzn_cpy for keeping track of 
   # the objective function value (printed in std output).
-  OBJ_VAR = 'o__b__j__v__a__r'
+  AUX_VAR = 'o__b__j__v__a__r'
   
   # Absolute path of a copy of the original model mzn. This copy is got from 
-  # the original MiniZinc model by adding the OBJ_VAR output variable.
+  # the original MiniZinc model by adding the AUX_VAR output variable.
   mzn_cpy = ''
   
   # Absolute path of a copy of the model out_mzn containing the output item. 
-  # This copy is got from out_mzn by adding the OBJ_VAR output variable.
+  # This copy is got from out_mzn by adding the AUX_VAR output variable.
   mzn_out_cpy = ''
   
-  # Identifier of the folder where temporary files (i.e., mzn_cpy, the FlatZinc
-  # models in fzns and ozn) are possibly put.
+  # Identifier of the folder where temporary files generated from this problem 
+  # (e.g., copies of MiniZinc model or FlatZinc models) are put.
   tmp_dir = ''
   
   # Unique identifier for temporary files.
@@ -68,16 +71,17 @@ class Problem:
     """
     return self.solve != 'sat'
   
-  def better(self, x, y):
+  def bound_worse_than(self, bound):
     """
-    Returns True iff the objective value x is better than the objective value y 
-    for this problem
+    Returns True iff the current best bound is worse than bound: this means that
+    the current best bound should be updated.
     """
-    if self.isCSP():
-      return False
-    return self.solve == 'min' and x < y or self.solve == 'max' and x > y
+    return self.isCOP() and bound is not None and (
+      self.solve == 'min' and self.best_bound < bound or \
+      self.solve == 'max' and self.best_bound > bound
+    )
   
-  def __init__(self, mzn, dzn, solve, obj_mzn, mzn_out, tmp_dir, keep):
+  def __init__(self, mzn, dzn, solve, obj_expr, mzn_out, tmp_dir, keep):
     """
     Constructor.
     """
@@ -85,10 +89,79 @@ class Problem:
     self.dzn = dzn
     assert solve in ['sat', 'min', 'max']
     self.solve   = solve
-    self.obj_mzn = obj_mzn
+    self.obj_expr = obj_expr
+    if solve == 'min':
+      self.best_bound = float("+inf")
+    elif solve == 'max':
+      self.best_bound = float("-inf")
     self.mzn_out = mzn_out
     self.tmp_dir = tmp_dir
     self.keep    = keep
     from socket import gethostname
     from os import getpid
     self.TMP_ID  = tmp_dir + '/tmp_' + gethostname() + '_' + str(getpid())
+    self.ozn = self.TMP_ID + '.ozn'
+    
+  def make_mzn_cpy(self):
+    """
+    Copies the original MiniZinc model mzn to mzn_cpy, and eventually copies the 
+    model mzn_out to mzn_out_cpy.
+    """
+    self.mzn_cpy = self.TMP_ID + '.mzn'
+    self.mzn_out_cpy = self.TMP_ID + '.out'
+    import shutil
+    shutil.copyfile(self.mzn, self.mzn_cpy)
+    var_expr = 'var int: ' + self.AUX_VAR + ' = ' + self.obj_expr + ';\n'
+    out_expr = 'output [show(' + self.AUX_VAR + ')] ++ '
+    
+    # The output item is included in the original model
+    if self.mzn == self.mzn_out:
+      with open(self.mzn, 'r') as infile:
+	with open(self.mzn_cpy, 'w') as outfile:
+	  outfile.write(var_expr)
+	  for line in infile:
+	    if 'output' in line.split() or 'output[' in line.split():
+	      line = line.replace('output', out_expr, 1)
+	    outfile.write(line)
+      return
+    
+    # No output item defined in the original model.
+    if not self.mzn_out:
+      with open(self.mzn_cpy, 'a') as outfile:
+        outfile.write(var_expr)
+        outfile.write(out_expr + '[]')
+        return
+   
+    # Output item is not included in the original model
+    with open(self.mzn, 'r') as infile:
+      with open(self.mzn_cpy, 'w') as outfile:
+	for line in infile:
+	  # Replace mzn_out inclusion with mzn_out_cpy inclusion
+	  line = replace(
+	    line, '"' + self.mzn_out + '"', '"' + self.mzn_out_cpy + '"'
+	  )
+          outfile.write(line)
+    with open(self.mzn_cpy, 'r') as infile:
+      with open(self.mzn_out_cpy, 'w') as outfile:
+	# Replace the output item in mzn_out_cpy
+        outfile.write(var_expr)
+	for line in infile:
+	  if 'output' in line.split() or 'output[' in line.split():
+	    line = replace(line, 'output', out_expr, 1)
+	  outfile.write(line)
+	  
+  def inject_bound_mzn(self, bound):
+    """
+    Injects a new bound to the copy of the MiniZinc model.
+    """
+    if self.solve == 'min':
+      constraint = '\nconstraint ' + self.obj_expr + ' < ' + str(bound) + ';\n'
+    else:
+      constraint = '\nconstraint ' + self.obj_expr + ' > ' + str(bound) + ';\n'
+    tmp_mzn = self.TMP_ID + '.bound'
+    with open(self.mzn, 'r') as infile:
+      with open(tmp_mzn, 'w') as outfile:
+	tmp_mzn.write(constraint)
+	for line in infile:
+	  tmp_mzn.write(line)
+    shutil.move(tmp_mzn, mzn_cpy)

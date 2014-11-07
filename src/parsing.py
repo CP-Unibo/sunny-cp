@@ -79,6 +79,15 @@ Options:
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system.
     
+  -w <time>
+    Don't stop a constituent solver if it has produced a solution in the last 
+    <time> seconds (only for COPs). By default, <time> is 3 seconds.
+  
+  -r <time>
+    Restart a constituent solver if its best solution is obsolete and it has not 
+    produced a solution in the last <time> seconds (only for COPs). By default, 
+    <time> is 3 seconds.
+    
   --keep
     Do not erase the temporary files created by the solver and stored in the 
     specified directory. This option is unset by default.
@@ -109,11 +118,13 @@ def parse_arguments(args):
   # Get the arguments and parse the input model to get auxiliary information. 
   mzn, dzn, opts = get_args(args)
   k, T, pfolio, backup, kb, lims, \
-  static, solve, obj_mzn, mzn_out = parse_model(mzn)
+  static, solve, obj_expr, mzn_out = parse_model(mzn)
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
   keep = DEF_KEEP
+  wait_time = DEF_WAIT_TIME
+  restart_time = DEF_RESTART_TIME
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
@@ -198,6 +209,18 @@ def parse_arguments(args):
 	tmp_dir = a[0 : -1]
       else:
 	tmp_dir = a
+    elif o == '-w':
+      wait_time = int(a)
+      if wait_time < 0 or wait_time > T:
+	print >> sys.stderr, 'Error! Not acceptable time'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+    elif o == '-r':
+      restart_time = int(a)
+      if restart_time < 0 or restart_time > T:
+	print >> sys.stderr, 'Error! Not acceptable time'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
     elif o == '--keep':
       keep = True
     elif o.startswith('--csp') and solve == 'sat' or \
@@ -231,8 +254,9 @@ def parse_arguments(args):
     'Error! Static schedule allocated time exceeds the timeout'
     print >> sys.stderr, 'For help use --help'
     
-  problem = Problem(mzn, dzn, solve, obj_mzn, mzn_out, tmp_dir, keep)
-  return problem, k, T, pfolio, backup, kb, lims, static, extractor, cores
+  problem = Problem(mzn, dzn, solve, obj_expr, mzn_out, tmp_dir, keep)
+  return problem, k, T, pfolio, backup, kb, lims, static, extractor, cores, \
+         wait_time, restart_time
 
 def get_args(args):
   """
@@ -244,7 +268,7 @@ def get_args(args):
     csp_opts = ['csp-' + o + '=' for o in options]
     cop_opts = ['cop-' + o + '=' for o in options]
     opts, args = getopt.getopt(
-      args, 'hT:k:P:b:K:s:d:p:e:', ['help', 'keep'] + csp_opts + cop_opts 
+      args, 'hT:k:P:b:K:s:d:p:e:r:w:', ['help', 'keep'] + csp_opts + cop_opts 
     )
   except getopt.error, msg:
     print msg
@@ -291,7 +315,7 @@ def parse_model(mzn):
   include_list = [mzn]
   mzn_out = None
   static = []
-  obj_mzn = ''
+  obj_expr = ''
   mzn_dir = os.path.dirname(mzn)
   
   # Possibly extract solve and output items (for COPs).
@@ -343,9 +367,9 @@ def parse_model(mzn):
 	    solve = 'min'
 	  else:
 	    solve = 'max'
-          obj_mzn = ''
+          obj_expr = ''
           for j in range(i + 1, len(tokens)):
-	    obj_mzn += tokens[j] + ' '
+	    obj_expr += tokens[j] + ' '
 	  if output_item:
 	    include_list = []
 	    break
@@ -356,4 +380,4 @@ def parse_model(mzn):
 	    include_list = []
 	    break
         i += 1
-  return k, T, pfolio, backup, kb, lims, static, solve, obj_mzn, mzn_out
+  return k, T, pfolio, backup, kb, lims, static, solve, obj_expr, mzn_out

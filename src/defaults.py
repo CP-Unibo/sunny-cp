@@ -42,3 +42,7 @@ DEF_CORES = cpu_count()
 DEF_TMP_DIR = SUNNY_HOME + '/tmp'
 
 DEF_KEEP = False
+
+DEF_WAIT_TIME = 3
+
+DEF_RESTART_TIME = 3

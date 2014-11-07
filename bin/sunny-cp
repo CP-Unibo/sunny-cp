@@ -6,8 +6,11 @@ sunny-cp executable module.
 import os
 import sys
 import time
+import fcntl
+import psutil
 import signal
 import traceback
+import multiprocessing
 from subprocess import Popen, PIPE
 
 SUNNY_HOME = os.environ['SUNNY_HOME']
@@ -18,8 +21,19 @@ from features       import *
 from scheduling     import *
 from pfolio_solvers import *
 
-# Global variable keeping track of the current problem.
+# Global variables keeping track of the current problem and the running solvers.
 PROBLEM = None
+RUNNING_SOLVERS = {}
+# RUNNING_SOLVERS Indexes.
+CMD = 0
+PROCESS = 1
+START_TIME = 2
+TIMEOUT = 3
+SOLUTION_TIME = 4
+SOLUTION = 5
+OBJ_VALUE = 6
+# Sleep time (in seconds) for multiprocessing.
+SLEEP_TIME = 0.1
 
 def handler(signum = None, frame = None):
   """
@@ -32,11 +46,13 @@ for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
 
 def clean():
   """
-  Utility for (possibly) cleaning temporary files and stopping the solver 
+  Utility for (possibly) cleaning temporary files and stopping the solvers 
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  global PROBLEM
+  
+  # FIXME: Kill processes
+  
   # Possibly remove temporary files.
   if PROBLEM and not PROBLEM.keep:
     if os.path.exists(PROBLEM.mzn_cpy):
@@ -48,27 +64,94 @@ def clean():
       os.remove(PROBLEM.ozn)
   sys.stdout.close()
 
-def run_schedule(par_sched, pb, timeout):
+def run_schedule(par_schedule, timeout, cores, wait_time, restart_time):
   """
-  TODO
+  Runs (possibly in parallel on different cores) a schedule of solvers.
   """
-  return
+  if PROBLEM.isCOP():
+    PROBLEM.make_mzn_cpy()
+  
+  # Launch the mzn2fzn conversion.
+  for _ in range(cores):
+    (s, t) = par_schedule.pop(0)   
+    print '% Starting',s,'for',str(t),'seconds'
+    mzn2fzn(eval(s + "()"), t)
+  
+  # The actual solvers execution starts here.
+  while RUNNING_SOLVERS:
+    time.sleep(SLEEP_TIME)
+    
+    for s in RUNNING_SOLVERS.keys():
+      solver_info = RUNNING_SOLVERS[s]
+      
+      # The solver process is terminated.
+      if solver_info[PROCESS].poll() is not None:
+	if solver_info[CMD] == 'mzn2fzn':
+	  if solver_info[PROCESS].returncode == 0:
+	    print '% MiniZinc model converted by', s + '.', 
+	    print 'Starting the FlatZinc execution.'
+	    # TODO
+	    del RUNNING_SOLVERS[s]
+	  else:
+	    print '% Error! MiniZinc model not converted by',s
+	    del RUNNING_SOLVERS[s]
+	    new_solver = None
+	    while par_schedule:
+	      (new_solver, t) = par_schedule.pop(0)
+	      if new_solver == s:
+		continue
+	      else:
+	        # FIXME: Add to t the remaining time.
+	        print '% Starting',new_solver,'for',str(t),'seconds'
+	        mzn2fzn(eval(new_solver + "()"), t)
+	        break
+	else:
+	  # Unexpected termination of solver execution.
+	  # TODO:
+	  pass
+
+def mzn2fzn(solver, timeout, current_bound = None):
+  """
+  Converts the MiniZinc model to the solver-specific FlatZinc model.
+  """
+  name = solver.name
+  RUNNING_SOLVERS[name] = {}
+  solver_info = RUNNING_SOLVERS[name]
+  solver_info[CMD] = 'mzn2fzn'
+  fzn = PROBLEM.TMP_ID + '.' + name + '.fzn'
+  PROBLEM.fzns[name] = fzn
+  
+  if PROBLEM.isCOP():
+    solver_info[SOLUTION] = None
+    if PROBLEM.bound_worse_than(current_bound):
+      print '% Injecting value',current_bound,'to',solver
+      PROBLEM.inject_bound_mzn(current_bound)
+      solver_info[OBJ_VALUE] = current_bound
+    else:
+      solver_info[OBJ_VALUE] = None
+    solver_info[SOLUTION_TIME] = time.time()
+  
+  solver_info[TIMEOUT] = timeout
+  solver_info[START_TIME] = time.time()
+  solver_info[PROCESS] = Popen(solver.mzn2fzn_cmd(PROBLEM, fzn))
 
 def main(args):
-  pb, k, timeout, pfolio, backup, kb, lims, static_sched, extractor, cores = \
-    parse_arguments(args)
-  PROBLEM = pb
+  global PROBLEM
+  PROBLEM, k, timeout, pfolio, backup, kb, lims, static_sched, extractor, \
+  cores, wait_time, restart_time = parse_arguments(args)
   
   try:
     print '% Extracting features...'
-    feat_vector = extractor.extract_features([pb, lims])
+    feat_vector = extractor.extract_features([PROBLEM, lims])
   
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[0 : cores]]
     else:
       print '% Computing solvers schedule...'
-      dynamic_sched = sunny(pb, pfolio, backup, feat_vector, k, timeout, kb)
+      dynamic_sched = sunny(
+        PROBLEM, pfolio, backup, feat_vector, k, timeout, kb
+      )
       print '% SUNNY sequential schedule:',dynamic_sched
       
     not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
@@ -76,8 +159,8 @@ def main(args):
               + [(s, 0) for s in not_scheduled]
     print '% SUNNY parallel schedule:',par_sched
     print '% Executing solvers...'
-    run_schedule(par_sched, pb, timeout)
-      
+    run_schedule(par_sched, timeout, cores, wait_time, restart_time)
+    
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
