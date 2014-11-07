@@ -5,3 +5,5 @@
 - testing (coverage?) 
 
 - integrare installazione con mzn2feat (Makefile)
+
+- filtrare dataset, solvers, features x ridurre complessità
