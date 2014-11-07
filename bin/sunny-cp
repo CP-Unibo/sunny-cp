@@ -18,9 +18,6 @@ from features       import *
 from scheduling     import *
 from pfolio_solvers import *
 
-#FIXME: Remove.
-from sunny_exe      import *
-
 # Global variable keeping track of the current problem.
 PROBLEM = None
 
@@ -29,7 +26,6 @@ def handler(signum = None, frame = None):
   Handles termination signals.
   """
   print >> sys.stderr, '% Signal handler called with signal',signum
-  clean()
   sys.exit(signum)
 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
   signal.signal(sig, handler)
@@ -41,13 +37,6 @@ def clean():
   forced externally).
   """
   global PROBLEM
-  # Get the PID of the solver currently in execution (see sunny_exe.py).
-  pid = get_pid()
-  if pid:
-    try:
-      os.killpg(pid, signal.SIGKILL)
-    except OSError:
-      pass
   # Possibly remove temporary files.
   if PROBLEM and not PROBLEM.keep:
     if os.path.exists(PROBLEM.mzn_cpy):
@@ -66,13 +55,10 @@ def run_schedule(par_sched, pb, timeout):
   return
 
 def main(args):
-  # Arguments parsing.
   pb, k, timeout, pfolio, backup, kb, lims, static_sched, extractor, cores = \
     parse_arguments(args)
-  global PROBLEM
   PROBLEM = pb
   
-  # Here the solving process starts.
   try:
     print '% Extracting features...'
     feat_vector = extractor.extract_features([pb, lims])
@@ -80,23 +66,17 @@ def main(args):
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
       dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[0 : cores]]
-      not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
-      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
-	        + [(s, 0) for s in not_scheduled]
-      print '% SUNNY parallel schedule:',par_sched
-      print '% Executing solvers...'
-      run_schedule(par_sched, pb, timeout)
-      
     else:
       print '% Computing solvers schedule...'
       dynamic_sched = sunny(pb, pfolio, backup, feat_vector, k, timeout, kb)
       print '% SUNNY sequential schedule:',dynamic_sched
-      not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
-      par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
-	        + [(s, 0) for s in not_scheduled]
-      print '% SUNNY parallel schedule:',par_sched
-      print '% Executing solvers...'
-      run_schedule(par_sched, pb, timeout)
+      
+    not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
+    par_sched = parallelize(static_sched, dynamic_sched, cores, timeout) \
+              + [(s, 0) for s in not_scheduled]
+    print '% SUNNY parallel schedule:',par_sched
+    print '% Executing solvers...'
+    run_schedule(par_sched, pb, timeout)
       
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
