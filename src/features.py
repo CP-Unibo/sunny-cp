@@ -42,7 +42,7 @@ class mzn2feat:
     if proc.returncode != 0:
       return None
     features = out.split(",")
-    feat_vector = [float(features[i]) for i in range(1, len(features))]
+    feat_vector = [float(features[i]) for i in range(0, len(features))]
     return feat_vector
   
   @staticmethod

@@ -14,32 +14,25 @@ def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, size = cpu_count()):
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
   infos = {}
   feat_vectors = {}
+  distances = []
   for row in reader:
     inst = row[0]
-    feat_vectors[inst] = eval(row[1])
-    infos[inst] = eval(row[2])
-  neighbours = find_neighbours(feat_vector, feat_vectors, k)
+    d = euclidean_distance(feat_vector, map(float, row[1][1 : -1].split(',')))
+    distances.append((d, inst))
+    infos[inst] = row[2]
+  sorted_dist = distances.sort(key = lambda x : x[0])
+  neighbours = [inst for (d, inst) in distances[0 : k]]
   
   if pb.isCSP():
     return sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size)
   else:
     return sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size)
-
-def find_neighbours(fv, feat_vectors, k):
-  """
-  Returns the k instances of feat_vectors closer to fv.
-  """
-  distances = []
-  for (inst, vect) in feat_vectors.items():
-    distance = compare_instances(fv, vect)
-    distances.append((distance, inst))
-  distances.sort(key = lambda x : x[0])
-  return [i for (d, i) in distances[:k]]  
   
-def compare_instances(fv1, fv2):
+def euclidean_distance(fv1, fv2):
   """
   Computes the Euclidean distance between two instances.
   """
+  assert len(fv1) == len(fv2)
   distance = 0.0
   for i in range(0, len(fv1)):
     d = fv1[i] - fv2[i]
@@ -57,8 +50,9 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size):
     solved[solver] = set([])
     times[solver]  = 0.0
   for inst in neighbours:
+    item = eval(infos[inst])
     for solver in pfolio:
-      time = infos[inst][solver]['time']
+      time = item[solver]['time']
       if time < timeout:
         solved[solver].add(inst)
       times[solver] += time
@@ -120,10 +114,11 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
     times[solver] = 0.0
     areas[solver] = 0.0
   for inst in neighbours:
+    item = eval(infos[inst])
     for solver in pfolio:
-      scores[solver].append(infos[inst][solver]['score']) 
-      times[solver] += infos[inst][solver]['time']
-      areas[solver] += infos[inst][solver]['area']
+      scores[solver].append(item[solver]['score']) 
+      times[solver] += item[solver]['time']
+      areas[solver] += item[solver]['area']
   max_score = 0
   min_time = 1000000000
   min_area = 1000000000
