@@ -2,6 +2,8 @@
 Problem is the abstraction of an input problem to be solved by sunny-cp
 '''
 
+from shutil import move
+
 class Problem:
   '''
   Abstraction of a problem.
@@ -27,11 +29,15 @@ class Problem:
   # Objective function expression in the MiniZinc model.
   obj_expr = ''
   
-  # Objective variable in the FlatZinc model.
-  obj_var = ''
+  # A dictionary that associates to each solver name the objective variable in 
+  # the FlatZinc model.
+  obj_vars = {}
   
   # Best known objective function value for this problem.
   best_bound = None
+  
+  # The name of the solver that found best_bound.
+  best_solver = ''
   
   # Absolute path of the MiniZinc model that actually contains the output string
   # It may coincide with mzn, be a file included in mzn, or be empty.
@@ -174,12 +180,12 @@ class Problem:
     else:
       constraint = '\nconstraint ' + self.obj_expr + ' > ' + str(bound) + ';\n'
     tmp_mzn = self.TMP_ID + '.bound'
-    with open(self.mzn, 'r') as infile:
+    with open(self.mzn_cpy, 'r') as infile:
       with open(tmp_mzn, 'w') as outfile:
-	tmp_mzn.write(constraint)
+	outfile.write(constraint)
 	for line in infile:
-	  tmp_mzn.write(line)
-    shutil.move(tmp_mzn, mzn_cpy)
+	  outfile.write(line)
+    move(tmp_mzn, self.mzn_cpy)
   
   def inject_bound_fzn(self, solver, bound):
     '''
@@ -187,18 +193,19 @@ class Problem:
     '''
     if self.solve == 'min':
       lt = solver.lt_constraint
-      new_bound = lt.replace('llt', pb.obj_var).replace('rlt', str(bound))
+      obj_var = self.obj_vars[solver.name]
+      constraint = lt.replace('llt', obj_var).replace('rlt', str(bound))
     else:
       gt = solver.gt_constraint
-      new_bound = gt.replace('lgt', pb.obj_var).replace('rgt', str(bound))
-    
+      obj_var = self.obj_vars[solver.name]
+      constraint = gt.replace('lgt', obj_var).replace('rgt', str(bound))
     tmp_fzn = self.fzns[solver.name] + '.bound'
     with open(self.fzns[solver.name], 'r') as infile:
       with open(tmp_fzn, 'w') as outfile:
 	add = True
 	for line in infile:
 	  if add and 'constraint' in line.split():
-	    outfile.write(bound_const)
+	    outfile.write(constraint + ';\n')
 	    add = False
 	  outfile.write(line)
-    shutil.move(tmp_fzn, self.fzns[solver.name])
+    move(tmp_fzn, self.fzns[solver.name])
