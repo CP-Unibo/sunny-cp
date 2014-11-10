@@ -139,9 +139,6 @@ def parse_arguments(args):
         print >> sys.stderr, 'Warning: -p parameter set to',cores
       else:
 	cores = n
-      # FIXME: Change this.
-      print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
-                           'not yet implemented, -p is fixed to 1)'
     elif o == '-e':
       extractor = eval(a)
     elif o == '-k':
@@ -159,13 +156,12 @@ def parse_arguments(args):
     elif o == '-P':
       p = a.split(',')
       if not p:
-	print >> sys.stderr, \
-	'Error! The portfolio ' + a + ' is not valid.'
+	print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
 	print >> sys.stderr, 'For help use --help'
 	sys.exit(2)
       if not set(p) <= set(pfolio):
-	print >> sys.stderr, \
-	'Error! The portfolio ' + a + ' is not a subset of ' + str(pfolio)
+	print >> sys.stderr, 'Error! The portfolio',a,'is not a subset of', \
+	  str(pfolio)
 	print >> sys.stderr, 'For help use --help'
 	sys.exit(2)
       pfolio = p

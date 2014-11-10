@@ -42,25 +42,3 @@ class Solver:
       return [self.fzn_exec, pb.fzns[self.name]]
     else:
       return [self.fzn_exec, '-a', pb.fzns[self.name]]
-    
-  def inject_bound_fzn(self, pb, bound):
-    '''
-    Injects a new bound to the FlatZinc model.
-    '''
-    if pb.solve == 'min':
-      lt = self.lt_constraint
-      new_bound = lt.replace('llt', pb.obj_var).replace('rlt', str(bound))
-    else:
-      gt = self.gt_constraint
-      new_bound = gt.replace('lgt', pb.obj_var).replace('rgt', str(bound))
-    
-    tmp_fzn = pb.fzns[self.name] + '.bound'
-    with open(pb.fzns[self.name], 'r') as infile:
-      with open(tmp_fzn, 'w') as outfile:
-	add = True
-	for line in infile:
-	  if add and 'constraint' in line.split():
-	    outfile.write(bound_const)
-	    add = False
-	  outfile.write(line)
-    shutil.move(tmp_fzn, pb.fzns[self.name])

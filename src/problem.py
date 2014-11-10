@@ -71,14 +71,29 @@ class Problem:
     """
     return self.solve != 'sat'
   
+  def has_bound(self):
+    """
+    Returns True iff the best known bound is defined.
+    """
+    return float("-inf") < self.best_bound < float("+inf")
+  
+  def bound_better_than(self, bound):
+    """
+    Returns True iff the current best bound is better than bound.
+    """
+    return self.isCOP() and self.best_bound is not None and (
+      self.solve == 'min' and self.best_bound < bound or \
+      self.solve == 'max' and self.best_bound > bound
+    )
+  
   def bound_worse_than(self, bound):
     """
     Returns True iff the current best bound is worse than bound: this means that
     the current best bound should be updated.
     """
     return self.isCOP() and bound is not None and (
-      self.solve == 'min' and self.best_bound < bound or \
-      self.solve == 'max' and self.best_bound > bound
+      self.solve == 'min' and self.best_bound > bound or \
+      self.solve == 'max' and self.best_bound < bound
     )
   
   def __init__(self, mzn, dzn, solve, obj_expr, mzn_out, tmp_dir, keep):
@@ -89,11 +104,11 @@ class Problem:
     self.dzn = dzn
     assert solve in ['sat', 'min', 'max']
     self.solve   = solve
-    self.obj_expr = obj_expr
     if solve == 'min':
-      self.best_bound = float("+inf")
-    elif solve == 'max':
-      self.best_bound = float("-inf")
+      self.best_bound = float('+inf')
+    else:
+      self.best_bound = float('-inf')
+    self.obj_expr = obj_expr
     self.mzn_out = mzn_out
     self.tmp_dir = tmp_dir
     self.keep    = keep
@@ -165,3 +180,25 @@ class Problem:
 	for line in infile:
 	  tmp_mzn.write(line)
     shutil.move(tmp_mzn, mzn_cpy)
+  
+  def inject_bound_fzn(self, solver, bound):
+    '''
+    Injects a new bound to the FlatZinc model.
+    '''
+    if self.solve == 'min':
+      lt = solver.lt_constraint
+      new_bound = lt.replace('llt', pb.obj_var).replace('rlt', str(bound))
+    else:
+      gt = solver.gt_constraint
+      new_bound = gt.replace('lgt', pb.obj_var).replace('rgt', str(bound))
+    
+    tmp_fzn = self.fzns[solver.name] + '.bound'
+    with open(self.fzns[solver.name], 'r') as infile:
+      with open(tmp_fzn, 'w') as outfile:
+	add = True
+	for line in infile:
+	  if add and 'constraint' in line.split():
+	    outfile.write(bound_const)
+	    add = False
+	  outfile.write(line)
+    shutil.move(tmp_fzn, self.fzns[solver.name])

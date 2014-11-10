@@ -29,6 +29,7 @@ PROC_RESTART_OBJ = 10
 
 SLEEP_TIME = 0.1
 
+# FIXME: perchè psutil? (non è pacchetto di default)
 import psutil
 
 def kill_process(proc):

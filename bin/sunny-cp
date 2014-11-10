@@ -24,14 +24,17 @@ from pfolio_solvers import *
 # Global variables keeping track of the current problem and the running solvers.
 PROBLEM = None
 RUNNING_SOLVERS = {}
+
 # RUNNING_SOLVERS Indexes.
 CMD = 0
 PROCESS = 1
-START_TIME = 2
-TIMEOUT = 3
-SOLUTION_TIME = 4
-SOLUTION = 5
-OBJ_VALUE = 6
+FLATZINC = 2
+START_TIME = 3
+TIMEOUT = 4
+SOLUTION_TIME = 5
+SOLUTION = 6
+OBJ_VALUE = 7
+
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
 
@@ -40,6 +43,7 @@ def handler(signum = None, frame = None):
   Handles termination signals.
   """
   print >> sys.stderr, '% Signal handler called with signal',signum
+  clean()
   sys.exit(signum)
 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
   signal.signal(sig, handler)
@@ -51,7 +55,14 @@ def clean():
   forced externally).
   """
   
-  # FIXME: Kill processes
+  for info in RUNNING_SOLVERS.values():
+    proc = info[PROCESS]
+    if proc.poll() is None:
+      pid = proc.pid
+      process = psutil.Process(pid)
+      for proc in process.get_children(recursive = True):
+        proc.kill()
+      process.kill()
   
   # Possibly remove temporary files.
   if PROBLEM and not PROBLEM.keep:
@@ -64,76 +75,195 @@ def clean():
       os.remove(PROBLEM.ozn)
   sys.stdout.close()
 
-def run_schedule(par_schedule, timeout, cores, wait_time, restart_time):
+def run_schedule(par_schedule, cores, wait_time, restart_time):
   """
   Runs (possibly in parallel on different cores) a schedule of solvers.
   """
   if PROBLEM.isCOP():
+    # Make a copy of the original MiniZinc model.
     PROBLEM.make_mzn_cpy()
   
   # Launch the mzn2fzn conversion.
   for _ in range(cores):
     (s, t) = par_schedule.pop(0)   
     print '% Starting',s,'for',str(t),'seconds'
-    mzn2fzn(eval(s + "()"), t)
+    mzn2fzn(s, t)
   
   # The actual solvers execution starts here.
   while RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
     
-    for s in RUNNING_SOLVERS.keys():
-      solver_info = RUNNING_SOLVERS[s]
+    for (solver, info) in RUNNING_SOLVERS.items():
+      # Read and process lines from the output stream of each process.
+      lines = read_lines(info)  
+      if lines:
+	process_output(solver, info, lines)
       
-      # The solver process is terminated.
-      if solver_info[PROCESS].poll() is not None:
-	if solver_info[CMD] == 'mzn2fzn':
-	  if solver_info[PROCESS].returncode == 0:
-	    print '% MiniZinc model converted by', s + '.', 
-	    print 'Starting the FlatZinc execution.'
-	    # TODO
-	    del RUNNING_SOLVERS[s]
-	  else:
-	    print '% Error! MiniZinc model not converted by',s
-	    del RUNNING_SOLVERS[s]
-	    new_solver = None
-	    while par_schedule:
-	      (new_solver, t) = par_schedule.pop(0)
-	      if new_solver == s:
-		continue
-	      else:
-	        # FIXME: Add to t the remaining time.
-	        print '% Starting',new_solver,'for',str(t),'seconds'
-	        mzn2fzn(eval(new_solver + "()"), t)
-	        break
-	else:
-	  # Unexpected termination of solver execution.
-	  # TODO:
-	  pass
+      # Solver process terminated or expired timeout.
+      if info[PROCESS].poll() is not None:
+        solver_terminated(solver, info, par_schedule)
+      
+      # Expired timeout.
+      if time.time() - info[START_TIME] > info[TIMEOUT] and \
+	 time.time() - info[SOLUTION_TIME] > wait_time:
+	   solver_timeout(solver, par_schedule)
+      
+      # Restart the solver if its solution is obsolete.
+      if PROBLEM.bound_better_than(info[OBJ_VALUE]) and \
+	 time.time() - info[SOLUTION_TIME] > restart_time:
+	   print '% Restarting',solver
+	   restart_solver(solver, info)
 
-def mzn2fzn(solver, timeout, current_bound = None):
+def read_lines(info):
+  """
+  Returns the read lines of the process.
+  """
+  try:
+    return info[PROCESS].stdout.read()
+  except:
+    return ''
+
+def process_output(solver, info, lines):
+  """
+  Processes the output of a solver.
+  """
+  global RUNNING_SOLVERS
+  for line in lines.split('\n'):
+    if line == '----------':
+      if PROBLEM.isCSP():
+	print '%',solver,'found a solution'
+	for s in info[SOLUTION]:
+	  print s
+	print line
+	clean()
+        sys.exit(0)
+      if PROBLEM.bound_worse_than(info[OBJ_VALUE]):
+	# The objective value found is the best so far.
+	PROBLEM.best_bound = info[OBJ_VALUE]
+	print '%',solver,'found a new solution'
+	for s in info[SOLUTION]:
+	  print s
+	print line
+	RUNNING_SOLVERS[solver][SOLUTION] = []
+      RUNNING_SOLVERS[solver][SOLUTION_TIME] = time.time()
+    elif line == '==========' or line == '=====UNSATISFIABLE=====':
+      if PROBLEM.has_bound():
+	print line
+      else:
+	print '=========='
+      print '% Search completed by',solver
+      clean()
+      sys.exit(0)
+    elif ' = ' in line:
+      if PROBLEM.AUX_VAR in line:
+	# Actual objective value.
+	RUNNING_SOLVERS[solver][OBJ_VALUE] = int(
+	  line[line.index(' = ') + 3 : len(line)].split(';')[0]
+	)
+	line = '% ' + line
+      RUNNING_SOLVERS[solver][SOLUTION].append(line)
+      RUNNING_SOLVERS[solver][SOLUTION_TIME] = time.time()
+
+def solver_terminated(solver, info, par_schedule):
+  '''
+  Handles the termination of a solver process.
+  '''
+  if info[CMD] == 'mzn2fzn':
+    if info[PROCESS].returncode == 0:
+      print '% MiniZinc model converted by',solver + '.',
+      timeout = info[TIMEOUT] - (time.time() - info[START_TIME])
+      print 'Starting the FlatZinc execution for',str(timeout),'seconds'
+      flatzinc(solver, timeout)
+    else:
+      print '% Error! MiniZinc model not converted by',solver
+      del RUNNING_SOLVERS[solver]
+      # Launch a new solver if any.
+      new_solver = None
+      while par_schedule:
+	(new_solver, t) = par_schedule.pop(0)
+	if new_solver == solver:
+	  continue
+	else:
+	  t += info[TIMEOUT] + info[START_TIME] - time.time()
+	  print '% Starting',new_solver,'for',str(t),'seconds'
+	  mzn2fzn(new_solver, t)
+	  break
+  else:
+    # Unexpected termination of solver execution.
+    print '% Error: solver',solver,'failed unexpectedly'
+    del RUNNING_SOLVERS[solver]
+    # Launch a new solver if any.
+    new_solver = None
+    while par_schedule:
+      (new_solver, t) = par_schedule.pop(0)
+      if new_solver == solver:
+	continue
+      else:
+	t += info[TIMEOUT] + info[START_TIME] - time.time()
+	print '% Starting',new_solver,'for',str(t),'seconds'
+	mzn2fzn(new_solver, t)
+	break
+
+def solver_timeout(solver, par_schedule):
+  print '%',solver,'timeout'
+  global RUNNING_SOLVERS
+  del RUNNING_SOLVERS[solver]
+  # Launch a new solver if any.
+  new_solver = None
+  if par_schedule:
+    (new_solver, timeout) = par_schedule.pop(0)
+    print '% Starting',new_solver,'for',str(timeout),'seconds'
+    mzn2fzn(new_solver, timeout)
+
+def mzn2fzn(solver, timeout):
   """
   Converts the MiniZinc model to the solver-specific FlatZinc model.
   """
+  global RUNNING_SOLVERS
+  solver = eval(solver + '()')
   name = solver.name
   RUNNING_SOLVERS[name] = {}
-  solver_info = RUNNING_SOLVERS[name]
-  solver_info[CMD] = 'mzn2fzn'
+  RUNNING_SOLVERS[name][CMD] = 'mzn2fzn'
   fzn = PROBLEM.TMP_ID + '.' + name + '.fzn'
   PROBLEM.fzns[name] = fzn
-  
-  if PROBLEM.isCOP():
-    solver_info[SOLUTION] = None
-    if PROBLEM.bound_worse_than(current_bound):
-      print '% Injecting value',current_bound,'to',solver
-      PROBLEM.inject_bound_mzn(current_bound)
-      solver_info[OBJ_VALUE] = current_bound
-    else:
-      solver_info[OBJ_VALUE] = None
-    solver_info[SOLUTION_TIME] = time.time()
-  
-  solver_info[TIMEOUT] = timeout
-  solver_info[START_TIME] = time.time()
-  solver_info[PROCESS] = Popen(solver.mzn2fzn_cmd(PROBLEM, fzn))
+  RUNNING_SOLVERS[name][FLATZINC] = solver.flatzinc_cmd(PROBLEM)
+  RUNNING_SOLVERS[name][SOLUTION] = []
+  if PROBLEM.has_bound():
+    bound = PROBLEM.best_bound
+    print '% Injecting value',bound,'to',solver
+    PROBLEM.inject_bound_mzn(bound)
+    RUNNING_SOLVERS[name][OBJ_VALUE] = bound
+  else:
+    RUNNING_SOLVERS[name][OBJ_VALUE] = None
+  RUNNING_SOLVERS[name][SOLUTION_TIME] = time.time()
+  RUNNING_SOLVERS[name][TIMEOUT] = timeout
+  RUNNING_SOLVERS[name][START_TIME] = time.time()
+  RUNNING_SOLVERS[name][PROCESS] = Popen(solver.mzn2fzn_cmd(PROBLEM, fzn))
+
+def flatzinc(solver, timeout, current_bound = None):
+  """
+  Executes the FlatZinc interpreter of a solver
+  """
+  global RUNNING_SOLVERS
+  RUNNING_SOLVERS[solver][CMD] = 'flatzinc'
+  RUNNING_SOLVERS[solver][SOLUTION] = []
+  if PROBLEM.has_bound():
+    bound = PROBLEM.best_bound
+    print '% Injecting value',bound,'to',solver
+    PROBLEM.inject_bound_fzn(solver, bound)
+    RUNNING_SOLVERS[solver][OBJ_VALUE] = bound
+  else:
+    RUNNING_SOLVERS[solver][OBJ_VALUE] = None
+  RUNNING_SOLVERS[solver][SOLUTION_TIME] = time.time()
+  RUNNING_SOLVERS[solver][TIMEOUT] = timeout
+  RUNNING_SOLVERS[solver][START_TIME] = time.time()
+  RUNNING_SOLVERS[solver][PROCESS] = Popen(
+    RUNNING_SOLVERS[solver][FLATZINC], stdout = PIPE
+  )
+  # Non blocking read.
+  fd = RUNNING_SOLVERS[solver][PROCESS].stdout.fileno()
+  fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+  fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 def main(args):
   global PROBLEM
@@ -159,7 +289,7 @@ def main(args):
               + [(s, 0) for s in not_scheduled]
     print '% SUNNY parallel schedule:',par_sched
     print '% Executing solvers...'
-    run_schedule(par_sched, timeout, cores, wait_time, restart_time)
+    run_schedule(par_sched, cores, wait_time, restart_time)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
