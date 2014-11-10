@@ -3,6 +3,9 @@
 
 IN_PATH=$SUNNY_HOME/test/examples
 OZN=$IN_PATH/tmp.ozn
+PFOLIO='g12cbc,g12cpx,g12fd,g12lazyfd'
+BACKUP='g12cpx'
+PROC=1
 cd $IN_PATH
 
 for m in `ls *.mzn`
@@ -14,7 +17,8 @@ do
     for d in domino.1.dzn domino.2.dzn
     do
        mzn2fzn $m $d --output-ozn-to-file $OZN
-       sunny-cp -T 30 $m $d | solns2out $OZN | solns2dzn -l
+       echo "$PFOLIO" "$BACKUP"
+       sunny-cp -p "$PROC" -P "$PFOLIO" -b "$BACKUP" -T 30 $m $d | solns2out $OZN | solns2dzn -l
        ret=$?
        if
          [ $ret -ne 0 ]
@@ -25,7 +29,7 @@ do
     done
   else
     mzn2fzn $m --output-ozn-to-file $OZN
-    sunny-cp -T 30 $m | solns2out $OZN | solns2dzn -l
+    sunny-cp -p "$PROC" -P "$PFOLIO" -b "$BACKUP" -T 30 $m | solns2out $OZN | solns2dzn -l
     ret=$?
     if
       [ $ret -ne 0 ]
