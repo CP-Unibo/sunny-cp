@@ -168,10 +168,12 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
   )
   return sorted_schedule
 
-def parallelize(static_sched, dynamic_sched, cores, timeout):
+def parallelize(static_sched, dynamic_sched, cores, timeout, pfolio):
   '''
   Returns a parallel schedule of the solvers.
-  '''
+  ''' 
+  not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
+  
   par_schedule = []
   for i in range(0, cores - 1):
     if not dynamic_sched:
@@ -192,6 +194,14 @@ def parallelize(static_sched, dynamic_sched, cores, timeout):
       (s, t) = dynamic_sched.pop(0)
       new_time = t * last_time / dyn_time
       par_schedule.append((s, new_time))
+      
+  for i in range(len(par_schedule), cores):
+    if not_scheduled:
+      par_schedule.append((not_scheduled.pop(0), timeout))
   
-  assert not static_sched and not dynamic_sched
+  while not_scheduled:
+    par_schedule.append((not_scheduled.pop(0), 0))
+  
+  assert not static_sched and not dynamic_sched and not not_scheduled
+  
   return par_schedule

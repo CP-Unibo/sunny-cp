@@ -38,6 +38,7 @@ def kill_process(proc):
     process = psutil.Process(pid)
     for proc in process.get_children(recursive=True):
         proc.kill()
+    process.stdout.close()
     process.kill()
     print "% Killed process", pid, "and all its children"
     
