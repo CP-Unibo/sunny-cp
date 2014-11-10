@@ -171,9 +171,9 @@ def process_output(solver, info, lines):
       RUNNING_SOLVERS[solver][SOLUTION_TIME] = time.time()
 
 def solver_terminated(solver, info, par_schedule):
-  '''
+  """
   Handles the termination of a solver process.
-  '''
+  """
   if info[CMD] == 'mzn2fzn':
     if info[PROCESS].returncode == 0:
       print '% MiniZinc model converted by',solver + '.',
@@ -210,6 +210,9 @@ def solver_terminated(solver, info, par_schedule):
 	break
 
 def solver_timeout(solver, par_schedule):
+  """
+  Handles the timeout of a solver, possibly restarting a new one.
+  """
   print '%',solver,'timeout'  
   global RUNNING_SOLVERS
   kill_process(RUNNING_SOLVERS[solver][PROCESS])
@@ -234,6 +237,7 @@ def mzn2fzn(solver, timeout):
   RUNNING_SOLVERS[name][SOLUTION] = []
   RUNNING_SOLVERS[name][OBJ_VALUE] = PROBLEM.best_bound
   if PROBLEM.has_bound() and name != PROBLEM.best_solver:
+    # Converts the MiniZinc model by using a better bound.
     bound = PROBLEM.best_bound
     print '% Injecting value',bound,'to MiniZinc model'
     PROBLEM.inject_bound_mzn(bound)
@@ -259,11 +263,13 @@ def flatzinc(solver, timeout):
   RUNNING_SOLVERS[name][SOLUTION] = []
   if name == PROBLEM.best_solver or \
     PROBLEM.bound_better_than(RUNNING_SOLVERS[name][OBJ_VALUE]):
+      # Restarts solver with a better bound.
       bound = PROBLEM.best_bound
       print '% Injecting value',bound,'to',name,'FlatZinc model'
       PROBLEM.inject_bound_fzn(solver, bound)
       RUNNING_SOLVERS[name][OBJ_VALUE] = bound
   if name not in PROBLEM.obj_vars.keys():
+    # Extract the obj var from the FlatZinc model.
     with open(PROBLEM.fzns[name], 'r') as infile:
       for line in reversed(infile.readlines()):
 	tokens = line.split()
