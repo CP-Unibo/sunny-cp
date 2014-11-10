@@ -199,15 +199,13 @@ def solver_terminated(solver, info, par_schedule):
     del RUNNING_SOLVERS[solver]
     # Launch a new solver if any.
     new_solver = None
-    while par_schedule:
-      (new_solver, t) = par_schedule.pop(0)
-      if new_solver == solver:
-	continue
-      else:
-	t += info[TIMEOUT] + info[START_TIME] - time.time()
-	print '% Starting',new_solver,'for',str(t),'seconds'
-	mzn2fzn(new_solver, t)
-	break
+    for i in range(0, len(par_schedule)):
+      if par_schedule[i][0] == solver:
+        par_schedule.pop(i)
+    if par_schedule:
+      t += info[TIMEOUT] + info[START_TIME] - time.time()
+      print '% Starting',new_solver,'for',str(t),'seconds'
+      mzn2fzn(new_solver, t)
 
 def solver_timeout(solver, par_schedule):
   """
@@ -282,7 +280,7 @@ def flatzinc(solver, timeout):
   RUNNING_SOLVERS[name][PROCESS] = Popen(
     solver.flatzinc_cmd(PROBLEM), stdout = PIPE
   )
-  # Non blocking read.
+  # Non blocking read for processing output.
   fd = RUNNING_SOLVERS[name][PROCESS].stdout.fileno()
   fl = fcntl.fcntl(fd, fcntl.F_GETFL)
   fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
