@@ -36,7 +36,12 @@ class mzn2feat:
     if dzn:
       cmd += ' -d ' + dzn
     from subprocess import Popen, PIPE
-    proc = Popen(cmd.split(), stdout = PIPE)
+    import os
+    if os.path.dirname(mzn):
+      cmd_dir = os.path.dirname(mzn)
+    else:
+      cmd_dir = '.'
+    proc = Popen(cmd.split(), stdout = PIPE, cwd = cmd_dir)
     (out, err) = proc.communicate()
     # Failure in features extraction.
     if proc.returncode != 0:

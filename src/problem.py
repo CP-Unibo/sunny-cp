@@ -3,6 +3,7 @@ Problem is the abstraction of an input problem to be solved by sunny-cp
 '''
 
 from shutil import move
+from string import replace
 
 class Problem:
   '''
@@ -130,8 +131,6 @@ class Problem:
     """
     self.mzn_cpy = self.TMP_ID + '.mzn'
     self.mzn_out_cpy = self.TMP_ID + '.out'
-    import shutil
-    shutil.copyfile(self.mzn, self.mzn_cpy)
     var_expr = 'var int: ' + self.AUX_VAR + ' = ' + self.obj_expr + ';\n'
     out_expr = 'output [show(' + self.AUX_VAR + ')] ++ '
     
@@ -148,10 +147,13 @@ class Problem:
     
     # No output item defined in the original model.
     if not self.mzn_out:
-      with open(self.mzn_cpy, 'a') as outfile:
-        outfile.write(var_expr)
-        outfile.write(out_expr + '[]')
-        return
+      with open(self.mzn, 'r') as infile:
+	with open(self.mzn_cpy, 'w') as outfile:
+	  outfile.write(var_expr)
+	  outfile.write(out_expr + '[];\n')
+	  for line in infile:
+            outfile.write(line)
+      return
    
     # Output item is not included in the original model
     with open(self.mzn, 'r') as infile:
@@ -162,7 +164,7 @@ class Problem:
 	    line, '"' + self.mzn_out + '"', '"' + self.mzn_out_cpy + '"'
 	  )
           outfile.write(line)
-    with open(self.mzn_cpy, 'r') as infile:
+    with open(self.mzn_out, 'r') as infile:
       with open(self.mzn_out_cpy, 'w') as outfile:
 	# Replace the output item in mzn_out_cpy
         outfile.write(var_expr)
@@ -170,7 +172,7 @@ class Problem:
 	  if 'output' in line.split() or 'output[' in line.split():
 	    line = replace(line, 'output', out_expr, 1)
 	  outfile.write(line)
-	  
+    
   def inject_bound_mzn(self, bound):
     """
     Injects a new bound to the copy of the MiniZinc model.
