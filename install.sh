@@ -52,13 +52,14 @@ do
   then
     echo 'Error! '$f' not successfully compiled!'
     echo 'Aborted.'
+    rm `find . -name *.pyc`
     exit $ret
   fi
   echo 'OK!'
 done
 
-echo "\n--- Everything went well!\n"
-echo -n "To complete sunny-cp installation just add/modify the "
-echo "environment variables SUNNY_HOME and PATH:\n"
-echo "  SUNNY_HOME must point to: "$PWD
-echo "\n  PATH must be extended to include: "$PWD"/bin\n"
+echo "--- Everything went well!"
+echo "To complete sunny-cp installation you just have to add/modify the" 
+echo "environment variables SUNNY_HOME and PATH:"
+echo "1. SUNNY_HOME must point to: "$PWD
+echo "2. PATH must be extended to include: "$PWD"/bin"
