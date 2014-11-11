@@ -259,13 +259,6 @@ def flatzinc(solver, timeout):
   name = solver.name
   RUNNING_SOLVERS[name][CMD] = 'flatzinc'
   RUNNING_SOLVERS[name][SOLUTION] = []
-  if name == PROBLEM.best_solver or \
-    PROBLEM.bound_better_than(RUNNING_SOLVERS[name][OBJ_VALUE]):
-      # Restarts solver with a better bound.
-      bound = PROBLEM.best_bound
-      print '% Injecting value',bound,'to',name,'FlatZinc model'
-      PROBLEM.inject_bound_fzn(solver, bound)
-      RUNNING_SOLVERS[name][OBJ_VALUE] = bound
   if name not in PROBLEM.obj_vars.keys():
     # Extract the obj var from the FlatZinc model.
     with open(PROBLEM.fzns[name], 'r') as infile:
@@ -274,6 +267,13 @@ def flatzinc(solver, timeout):
 	if 'solve' in tokens:
 	  PROBLEM.obj_vars[name] = tokens[-1].replace(';', '')
 	  break
+  if name == PROBLEM.best_solver or \
+    PROBLEM.bound_better_than(RUNNING_SOLVERS[name][OBJ_VALUE]):
+      # Restarts solver with a better bound.
+      bound = PROBLEM.best_bound
+      print '% Injecting value',bound,'to',name,'FlatZinc model'
+      PROBLEM.inject_bound_fzn(solver, bound)
+      RUNNING_SOLVERS[name][OBJ_VALUE] = bound
   RUNNING_SOLVERS[name][SOLUTION_TIME] = time.time()
   RUNNING_SOLVERS[name][TIMEOUT] = timeout
   RUNNING_SOLVERS[name][START_TIME] = time.time()
