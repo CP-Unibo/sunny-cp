@@ -87,7 +87,7 @@ class Problem:
     """
     Returns True iff the current best bound is better than bound.
     """
-    return self.isCOP() and self.best_bound is not None and (
+    return self.isCOP() and bound is not None and (
       self.solve == 'min' and self.best_bound < bound or \
       self.solve == 'max' and self.best_bound > bound
     )
