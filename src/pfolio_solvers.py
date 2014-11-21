@@ -44,3 +44,18 @@ class g12cpx(Solver):
   lt_constraint = 'constraint int_lin_le([1, -1], [llt, rlt], -1)'
   gt_constraint = 'constraint int_lin_le([1, -1], [rgt, lgt], -1)'
 
+class g12gurobi(Solver):
+  name = 'g12gurobi'
+  mznlib = '/home/roberto/sunny-cp/solvers/g12gurobi/mzn-lib -I ' + \
+           '/home/roberto/sunny-cp/solvers/g12gurobi/std '
+  fzn_exec = '/home/roberto/sunny-cp/solvers/g12gurobi/fzn-exec'
+  lt_constraint = 'constraint int_lt(llt, rlt)'
+  gt_constraint = 'constraint int_lt(rgt, lgt)'
+
+class minisatid(Solver):
+  name = 'minisatid'
+  mznlib = '/home/roberto/sunny-cp/solvers/minisatid/mzn-lib'
+  fzn_exec = '/home/roberto/sunny-cp/solvers/minisatid/fzn-exec'
+  lt_constraint = 'constraint int_lt(llt, rlt)'
+  gt_constraint = 'constraint int_lt(rgt, lgt)'
+

@@ -107,10 +107,11 @@ def run_schedule(par_schedule, cores, wait_time, restart_time):
       
       # Solver process terminated or expired timeout.
       if info[PROCESS].poll() is not None:
-        if info[PROCESS].returncode == 0 and info[CMD] == 'flatzinc' \
-        and PROBLEM.best_solver == solver:
-          # For printing the ========== line
-          continue
+	if info[CMD] == 'flatzinc':
+	  # Sometimes not all the lines are read from solver output.
+	  lines = read_lines(info)  
+          if lines:
+	    process_output(solver, info, lines)
         solver_terminated(solver, info, par_schedule)
       
       # Expired timeout.
@@ -121,10 +122,10 @@ def run_schedule(par_schedule, cores, wait_time, restart_time):
       # Restart the solver if its solution is obsolete.
       if PROBLEM.bound_better_than(info[OBJ_VALUE]) and info[CMD] == 'flatzinc'\
       and time.time() - info[SOLUTION_TIME] > restart_time:
-	   kill_process(RUNNING_SOLVERS[solver][PROCESS])
-	   print '% Restarting',solver
-	   timeout = max(info[TIMEOUT] - (time.time() - info[START_TIME]), 0)
-	   flatzinc(solver, timeout)
+	kill_process(RUNNING_SOLVERS[solver][PROCESS])
+	print '% Restarting',solver
+	timeout = max(info[TIMEOUT] - (time.time() - info[START_TIME]), 0)
+	flatzinc(solver, timeout)
 
 def read_lines(info):
   """
