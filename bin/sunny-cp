@@ -107,6 +107,10 @@ def run_schedule(par_schedule, cores, wait_time, restart_time):
       
       # Solver process terminated or expired timeout.
       if info[PROCESS].poll() is not None:
+        if info[PROCESS].returncode == 0 and info[CMD] == 'flatzinc' \
+        and PROBLEM.best_solver == solver:
+          # For printing the ========== line
+          continue
         solver_terminated(solver, info, par_schedule)
       
       # Expired timeout.
