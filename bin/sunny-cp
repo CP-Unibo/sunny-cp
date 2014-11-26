@@ -53,12 +53,15 @@ def kill_process(proc):
   """
   Kills a process.
   """
-  if proc.poll() is None:
-    pid = proc.pid
-    process = psutil.Process(pid)
-    for p in process.get_children(recursive = True):
-      p.kill()
-    process.kill()
+  try:
+    if proc.poll() is None:
+      pid = proc.pid
+      process = psutil.Process(pid)
+      for p in process.children(recursive = True):
+        p.kill()
+      process.kill()
+  except:
+    return
 
 def clean():
   """
@@ -75,6 +78,7 @@ def clean():
     if os.path.exists(PROBLEM.mzn_out_cpy):
       os.remove(PROBLEM.mzn_out_cpy)
     for f in PROBLEM.fzns.values():
+      time.sleep(SLEEP_TIME) 
       if os.path.exists(f):
         os.remove(f)
     if os.path.exists(PROBLEM.ozn):
@@ -211,6 +215,7 @@ def solver_terminated(solver, info, par_schedule):
       if par_schedule[i][0] == solver:
         par_schedule.pop(i)
     if par_schedule:
+      (new_solver, t) = par_schedule.pop(0)
       t += info[TIMEOUT] + info[START_TIME] - time.time()
       print '% Starting',new_solver,'for',str(t),'seconds'
       mzn2fzn(new_solver, t)

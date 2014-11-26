@@ -35,10 +35,11 @@ for solver in solvers:
   out, err = proc.communicate()
   if proc.returncode != 0:
     print err
-    print 'Error! Creation aborted.',
-    pfolio_file.close()
-    os.remove(pfolio_path)
-    sys.exit(proc.returncode)
+    print 'Error! Solver',solver,'not installed'
+    continue
+    #pfolio_file.close()
+    #os.remove(pfolio_path)
+    #sys.exit(proc.returncode)
   for line in out.split(';\n'):
     if 'constraint ' in line:
       if 'llt' in line:

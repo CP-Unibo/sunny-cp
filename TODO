@@ -1,4 +1,6 @@
-- parallelizzare (static schedule?) 
+- passare opzioni a solvers
+
+- come parallelizzare uno (static) schedule?
 
 - documentare
 
