@@ -23,7 +23,8 @@ do
     for d in domino.1.dzn domino.2.dzn
     do
       mzn2fzn $m $d --output-ozn-to-file $OZN
-      cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m $d"
+      #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m $d"
+      cmd="sunny-cp -T $TIMEOUT $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
       cat $OUT | solns2out $OZN | solns2dzn -l
@@ -41,7 +42,8 @@ do
     done
   else
     mzn2fzn $m --output-ozn-to-file $OZN
-    cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m"
+    #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m"
+    cmd="sunny-cp -T $TIMEOUT $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
     cat $OUT | solns2out $OZN | solns2dzn -l
