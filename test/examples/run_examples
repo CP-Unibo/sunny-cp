@@ -3,7 +3,8 @@
 
 IN_PATH=$SUNNY_HOME/test/examples
 OZN=$IN_PATH/tmp.ozn
-PFOLIO='g12cpx,g12lazyfd,g12fd,g12cbc'
+PFOLIO=`ls -l $SUNNY_HOME/solvers/ | grep ^d | \
+        awk '{printf $NF","} END {print '\n'}' | sed 's/,$//g'`
 BACKUP='g12cpx'
 PROC=4
 OUT=$IN_PATH/out
@@ -24,7 +25,7 @@ do
     do
       mzn2fzn $m $d --output-ozn-to-file $OZN
       #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m $d"
-      cmd="sunny-cp -T $TIMEOUT $m $d"
+      cmd="sunny-cp -P $PFOLIO -T $TIMEOUT $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
       cat $OUT | solns2out $OZN | solns2dzn -l
@@ -43,7 +44,7 @@ do
   else
     mzn2fzn $m --output-ozn-to-file $OZN
     #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m"
-    cmd="sunny-cp -T $TIMEOUT $m"
+    cmd="sunny-cp -P $PFOLIO -T $TIMEOUT $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
     cat $OUT | solns2out $OZN | solns2dzn -l
