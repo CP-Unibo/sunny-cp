@@ -191,7 +191,7 @@ def solver_terminated(solver, info, par_schedule):
     else:
       print '% Error! MiniZinc model not converted by',solver
       fzn = PROBLEM.fzns[solver]
-      if os.path.exists(fzn):
+      if os.path.exists(fzn) and not PROBLEM.keep:
 	os.remove(fzn)
       del RUNNING_SOLVERS[solver]
       # Launch a new solver if any.
@@ -208,7 +208,7 @@ def solver_terminated(solver, info, par_schedule):
     # Unexpected termination of solver execution.
     print '% Error: solver',solver,'failed unexpectedly'
     fzn = PROBLEM.fzns[solver]
-    if os.path.exists(fzn):
+    if os.path.exists(fzn) and not PROBLEM.keep:
       os.remove(fzn)
     del RUNNING_SOLVERS[solver]
     # Launch a new solver if any.
@@ -231,7 +231,7 @@ def solver_timeout(solver, par_schedule):
   kill_process(RUNNING_SOLVERS[solver][PROCESS])
   if RUNNING_SOLVERS[solver][CMD] == 'mzn2fzn':
     fzn = PROBLEM.fzns[solver]
-    if os.path.exists(fzn):
+    if os.path.exists(fzn) and not PROBLEM.keep:
       os.remove(fzn)
     PROBLEM.fzns[solver] = ''
   del RUNNING_SOLVERS[solver]
@@ -295,13 +295,14 @@ def flatzinc(solver, timeout):
   RUNNING_SOLVERS[name][SOLUTION_TIME] = time.time()
   RUNNING_SOLVERS[name][TIMEOUT] = timeout
   RUNNING_SOLVERS[name][START_TIME] = time.time()
-  RUNNING_SOLVERS[name][PROCESS] = Popen(
-    solver.flatzinc_cmd(PROBLEM), stdout = PIPE
-  )
-  # Non blocking read for processing output.
-  fd = RUNNING_SOLVERS[name][PROCESS].stdout.fileno()
-  fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-  fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+  if os.path.exists(PROBLEM.fzns[name]):
+    RUNNING_SOLVERS[name][PROCESS] = Popen(
+      solver.flatzinc_cmd(PROBLEM), stdout = PIPE
+    )
+    # Non blocking read for processing output.
+    fd = RUNNING_SOLVERS[name][PROCESS].stdout.fileno()
+    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 def main(args):
   global PROBLEM
