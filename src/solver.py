@@ -11,7 +11,7 @@ class Solver:
   Solver is the abstraction of a constituent solver of the portfolio.
   """
   
-  # Solver name.
+  # Solver name. It must be an unique identifier.
   name = ''
   # Absolute path of the folder containing solver-specific redefinitions.
   mznlib = ''
