@@ -50,4 +50,3 @@ class g12cbc(Solver):
   fzn_exec = '/home/roberto/sunny-cp/solvers/g12cbc/fzn-exec'
   lt_constraint = 'constraint int_lt(llt, rlt)'
   gt_constraint = 'constraint int_lt(rgt, lgt)'
-

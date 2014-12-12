@@ -1,22 +1,22 @@
-- class Solver:
-    old Solver +
-    id = '' # instead of name
-    state = 'ready' # 'converting', 'solving', 'suspended'
+- class RunningSolver:
+    solver = solver_object (Solver has a field options = '')
+    fzn = '' # Path FlatZinc
+    state = '' # 'converting', 'solving', 'suspended'
     process = None # Popen(...)
     start_time = -1
     timeout = -1
     solution_time = -1
     solution = []
     obj_value = None
-    options = ''
     
-  --opt-<SOLVER_NAME> "OPTIONS" 
-  --opt-all "OPTIONS"  (def "-a" if COP, "" if CSP)
+  solvers come oggetti di classe Solver
+  RUNNING_SOLVERS + SUSPENDED_SOLVERS: dict(name, RunningSolver)
+    
+  --fzn-opt-<SOLVER_NAME> "<OPTIONS>"
+  --fzn-opt-all "<OPTIONS>"  (def "-a" if COP, "" if CSP)
   -a == --opt-all "-a" (def set if COP, not set if CSP)
   -f == --opt-all "-f" (def not set)
-    
-  RUNNING_SOLVERS + SUSPENDED_SOLVERS {id: solver}
-
+  
 - pre-solving + solving
 
 - documentare
