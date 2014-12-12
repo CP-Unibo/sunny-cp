@@ -1,6 +1,6 @@
 '''
 Solver is the abstraction of a constituent solver of the portfolio. Each solver 
-must be a subclass of Solver.
+must be a subclass of Solver. #FIXME: Object of class Solver.
 '''
 
 import shutil
@@ -17,9 +17,9 @@ class Solver:
   mznlib = ''
   # Absolute path of the command used for executing a FlatZinc model.
   fzn_exec = ''
-  # Solver representation of a MiniZinc constraint llt < rlt.
+  # Solver representation of a MiniZinc constraint "llt < rlt".
   lt_constraint = ''
-  # Solver representation of a MiniZinc constraint lgt < rgt.
+  # Solver representation of a MiniZinc constraint "lgt < rgt".
   gt_constraint = ''
   
   def mzn2fzn_cmd(self, pb, fzn):
