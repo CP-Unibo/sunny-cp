@@ -1,6 +1,19 @@
+- make_pfolio.py/pfolio_solvers.py
+  solvers come oggetti di classe Solver
+  
+- class Problem:
+  no inject_bound_fzn, TMP_ID,
+  settare aux_var = ...
+
+- class Solver:
+  no mzn2fzn_cmd, flatzinc_cmd
+
 - class RunningSolver:
-    solver = solver_object (Solver has a field options = '')
-    fzn = '' # Path FlatZinc
+    solver = solver_object
+    fzn = ''
+    fzn_options = ''
+    wait_time = -1
+    restart_time = -1
     state = '' # 'converting', 'solving', 'suspended'
     process = None # Popen(...)
     start_time = -1
@@ -9,15 +22,35 @@
     solution = []
     obj_value = None
     
-  solvers come oggetti di classe Solver
-  RUNNING_SOLVERS + SUSPENDED_SOLVERS: dict(name, RunningSolver)
-    
-  --fzn-opt-<SOLVER_NAME> "<OPTIONS>"
-  --fzn-opt-all "<OPTIONS>"  (def "-a" if COP, "" if CSP)
-  -a == --opt-all "-a" (def set if COP, not set if CSP)
-  -f == --opt-all "-f" (def not set)
+    mzn2fzn_cmd(pb)
+    flatzinc_cmd()
+    inject_bound_fzn()
+  
+- parsing:
+
+  Add options:
+  -x <AUX_VAR>
+  --wait-time <TIME> (ex -w)
+  --wait-time-<SOLVER>
+  --restart-time <TIME> (ex -r)
+  --restart-time-<SOLVER>
+  --fzn-options "<OPTIONS>"  (def "-a" if COP, "" if CSP)  
+  --fzn-options-<SOLVER_NAME> "<OPTIONS>"
+  -a == --fzn-options "-a" (def set if COP, not set if CSP)
+  -f == --fzn-options "-f" (def not set)
+ 
+- sunny-cp:
+  
+  pfolio = stringhe di solvers, poi obj di classe RunningSolver creati con 
+  con running_sched = setup_schedule(schedule, solver_opts, tmp_dir) che crea 
+  anche una copia mzn se COP. Poi lanciare run_schedule
+  
+  Globals:
+  KEEP, TMP_FILES, RUNNING_SOLVERS: dict(name, RunningSolver)
   
 - pre-solving + solving
+
+- sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
 
 - documentare
 
