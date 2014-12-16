@@ -90,7 +90,7 @@ Options:
     
   --keep
     Do not erase the temporary files created by the solver and stored in the 
-    specified directory. This option is unset by default.
+    specified directory (useful for debugging). This option is unset by default.
     
   --csp-<option> <value>
     Allows to set the specific option only if the input problem is a CSP. 
