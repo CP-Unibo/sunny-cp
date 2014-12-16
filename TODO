@@ -1,21 +1,9 @@
-- parsing:
-
-  Add options:
-  -x <AUX_VAR>
-  --wait-time <TIME> (ex -w)
-  --wait-time-<SOLVER>
-  --restart-time <TIME> (ex -r)
-  --restart-time-<SOLVER>
-  --fzn-options "<OPTIONS>"  (def "-a" if COP, "" if CSP)  
-  --fzn-options-<SOLVER_NAME> "<OPTIONS>"
-  -a == --fzn-options "-a" (def set if COP, not set if CSP)
-  -f == --fzn-options "-f" (def not set)
- 
 - sunny-cp:
   
   pfolio = stringhe di solvers, poi obj di classe RunningSolver creati con 
-  con running_sched = setup_schedule(schedule, solver_opts, tmp_dir) che crea 
-  anche una copia mzn se COP. Poi lanciare run_schedule
+  con running_sched = setup_schedule(schedule, solver_opts, tmp_dir) che setta 
+  tutt i path e crea anche una copia mzn se COP. 
+  Poi lanciare run_schedule
   
   Globals:
   KEEP, TMP_FILES, RUNNING_SOLVERS: dict(name, RunningSolver)
@@ -24,7 +12,7 @@
 
 - sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
 
-- documentare, rimuovere tabs
+- documentare, rimuovere tabs (replace \t con '        ')
 
 - testing (coverage?) 
 

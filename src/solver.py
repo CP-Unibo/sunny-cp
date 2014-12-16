@@ -46,9 +46,12 @@ class RunningSolver:
   # solution in the last restart_time sec.
   restart_time = -1
   
-  # State of the solving process: it can be either 'converting' (solver is 
-  # converting the MiniZinc model into FlatZinc), 'solving' (solver is solving 
-  # the FlatZinc model), or 'suspended' (solver is temporary suspended).
+  # State of the solving process. It can be either:
+  # 'ready_mzn2fzn': solver is ready to execute the mzn2fzn conversion
+  #   'run_mzn2fzn': solver is running mzn2fzn converter
+  #     'ready_fzn': solver is ready to execute the FlatZinc interpreter
+  #       'run_fzn': solver is running the FlatZinc interpreter
+  #     'suspended': solver has been suspended
   state = ''
   
   # Object of class subprocess.Popen referring to the solving process.
