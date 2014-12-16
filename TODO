@@ -1,31 +1,3 @@
-- make_pfolio.py/pfolio_solvers.py
-  solvers come oggetti di classe Solver
-  
-- class Problem:
-  no inject_bound_fzn, TMP_ID,
-  settare aux_var = ...
-
-- class Solver:
-  no mzn2fzn_cmd, flatzinc_cmd
-
-- class RunningSolver:
-    solver = solver_object
-    fzn = ''
-    fzn_options = ''
-    wait_time = -1
-    restart_time = -1
-    state = '' # 'converting', 'solving', 'suspended'
-    process = None # Popen(...)
-    start_time = -1
-    timeout = -1
-    solution_time = -1
-    solution = []
-    obj_value = None
-    
-    mzn2fzn_cmd(pb)
-    flatzinc_cmd()
-    inject_bound_fzn()
-  
 - parsing:
 
   Add options:
@@ -52,7 +24,7 @@
 
 - sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
 
-- documentare
+- documentare, rimuovere tabs
 
 - testing (coverage?) 
 

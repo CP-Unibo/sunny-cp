@@ -1,8 +1,9 @@
 '''
-Problem is the abstraction of an input problem to be solved by sunny-cp
+Problem is the abstraction of a MiniZinc model to be solved by sunny-cp.
 '''
 
-from shutil import move
+import uuid
+from shutil import move, copy
 from string import replace
 
 class Problem:
@@ -11,17 +12,17 @@ class Problem:
   '''
    
   # Absolute path of the MiniZinc model of the problem.
-  mzn = ''
+  mzn_path = ''
   
   # Absolute path of the data of the problem.
-  dzn = ''
-  
-  # A dictionary that associates to each solver name the absolute path of the
-  # corresponding FlatZinc model.
-  fzns = {}
+  dzn_path = ''
   
   # Absolute path of the output specification file.
-  ozn = ''
+  ozn_path = ''
+  
+  # Absolute path of the MiniZinc model that actually contains the output string
+  # It may coincide with mzn, be a file included in mzn, or be empty.
+  out_path = ''
   
   # Can be either 'sat', 'min', or 'max' for satisfaction, minimization, or 
   # maximization problems respectively.
@@ -30,63 +31,34 @@ class Problem:
   # Objective function expression in the MiniZinc model.
   obj_expr = ''
   
-  # A dictionary that associates to each solver name the objective variable in 
-  # the FlatZinc model.
-  obj_vars = {}
-  
   # Best known objective function value for this problem.
   best_bound = None
   
-  # The name of the solver that found best_bound.
-  best_solver = ''
-  
-  # Absolute path of the MiniZinc model that actually contains the output string
-  # It may coincide with mzn, be a file included in mzn, or be empty.
-  mzn_out = ''
-  
-  # Auxiliary variable artificially introduced in mzn_cpy for keeping track of 
-  # the objective function value (printed in std output).
-  AUX_VAR = 'o__b__j__v__a__r'
-  
-  # Absolute path of a copy of the original model mzn. This copy is got from 
-  # the original MiniZinc model by adding the AUX_VAR output variable.
-  mzn_cpy = ''
-  
-  # Absolute path of a copy of the model out_mzn containing the output item. 
-  # This copy is got from out_mzn by adding the AUX_VAR output variable.
-  mzn_out_cpy = ''
-  
-  # Identifier of the folder where temporary files generated from this problem 
-  # (e.g., copies of MiniZinc model or FlatZinc models) are put.
-  tmp_dir = ''
-  
-  # Unique identifier for temporary files.
-  TMP_ID = ''
-  
-  # If keep, do not remove temporary files.
-  keep = None
+  # Auxiliary variable possibly introduced for tracking the objective function 
+  # value (that will be printed on std output).
+  aux_var = ''
   
   def isCSP(self):
     """
-    Returns True iff the problem is a satisfaction problem.
+    Returns True if the problem is a satisfaction problem, False otherwise.
     """
     return self.solve == 'sat'
   
   def isCOP(self):
     """
-    Returns True iff the problem is an optimization problem.
+    Returns True if the problem is an optimization problem, False otherwise.
     """
-    return self.solve != 'sat'
+    return self.solve in ['min', 'max']
   
   def has_bound(self):
     """
-    Returns True iff the best known bound is defined.
+    Returns True iff an objective bound is known for this problem.
     """
     return float("-inf") < self.best_bound < float("+inf")
   
   def bound_better_than(self, bound):
     """
-    Returns True iff the current best bound is better than bound.
+    Returns True iff the current best bound is better than the specified bound.
     """
     return self.isCOP() and self.has_bound() and (
       self.solve == 'min' and self.best_bound < bound or \
@@ -95,119 +67,102 @@ class Problem:
   
   def bound_worse_than(self, bound):
     """
-    Returns True iff the current best bound is worse than bound: this means that
-    the current best bound should be updated.
+    Returns True iff the current best bound is worse than the specified bound: 
+    this means that the current best bound should be updated.
     """
     return self.isCOP() and bound is not None and (
       self.solve == 'min' and self.best_bound > bound or \
       self.solve == 'max' and self.best_bound < bound
     )
   
-  def __init__(self, mzn, dzn, solve, obj_expr, mzn_out, tmp_dir, keep):
+  def __init__(self, mzn_path, dzn_path, out_path, solve, obj_expr):
     """
-    Constructor.
+    Class Constructor.
     """
-    self.mzn = mzn
-    self.dzn = dzn
+    self.mzn_path = mzn
+    self.dzn_path = dzn
+    self.out_path = mzn_out
     assert solve in ['sat', 'min', 'max']
-    self.solve   = solve
+    self.solve = solve
     if solve == 'min':
       self.best_bound = float('+inf')
     else:
       self.best_bound = float('-inf')
     self.obj_expr = obj_expr
-    self.mzn_out = mzn_out
-    self.tmp_dir = tmp_dir
-    self.keep    = keep
-    from socket import gethostname
-    from os import getpid
-    self.TMP_ID  = tmp_dir + '/tmp_' + gethostname() + '_' + str(getpid())
-    self.ozn = self.TMP_ID + '.ozn'
     
-  def make_mzn_cpy(self):
+  def make_mzn_cpy(self, mzn_path, out_path, aux_var = False):
     """
-    Copies the original MiniZinc model mzn to mzn_cpy, and eventually copies the 
-    model mzn_out to mzn_out_cpy.
+    Creates a copy of the original MiniZinc model at the specified path and 
+    returns the corresponding object. If aux_var is set, it also introduces in 
+    the copy a variable named aux_var for printing the objective value on std 
+    output.
     """
-    self.mzn_cpy = self.TMP_ID + '.mzn'
-    self.mzn_out_cpy = self.TMP_ID + '.out'
-    var_expr = 'var int: ' + self.AUX_VAR + ' = ' + self.obj_expr + ';\n'
-    out_expr = 'output [show(' + self.AUX_VAR + ')] ++ '
+    from copy import copy
+    cpy = copy(Problem())
+    cpy.mzn_path = mzn_path
+    cpy.out_path = out_path
+    if not aux_var:
+      copy(self.mzn_path, mzn_path)
+      copy(self.out_path, out_path)
+      return cpy
+    cpy.aux_var = aux_var
+    var_expr = 'var int: ' + aux_var + ' = ' + self.obj_expr + ';\n'
+    out_expr = 'output [show(' + aux_var + ')] ++ '
     
     # The output item is included in the original model
-    if self.mzn == self.mzn_out:
-      with open(self.mzn, 'r') as infile:
-	with open(self.mzn_cpy, 'w') as outfile:
-	  outfile.write(var_expr)
-	  for line in infile:
-	    if 'output' in line.split() or 'output[' in line.split():
-	      line = line.replace('output', out_expr, 1)
-	    outfile.write(line)
-      return
+    if self.mzn_path == self.out_path:
+      with open(self.mzn_path, 'r') as infile:
+        with open(mzn_path, 'w') as outfile:
+          outfile.write(var_expr)
+          for line in infile:
+            if 'output' in line.split() or 'output[' in line.split():
+              line = line.replace('output', out_expr, 1)
+            outfile.write(line)
+      return cpy
     
     # No output item defined in the original model.
-    if not self.mzn_out:
-      with open(self.mzn, 'r') as infile:
-	with open(self.mzn_cpy, 'w') as outfile:
-	  outfile.write(var_expr)
-	  outfile.write(out_expr + '[];\n')
-	  for line in infile:
+    if not self.out_path:
+      with open(self.mzn_path, 'r') as infile:
+        with open(mzn_path, 'w') as outfile:
+          outfile.write(var_expr)
+          outfile.write(out_expr + '[];\n')
+          for line in infile:
             outfile.write(line)
-      return
+      return cpy
    
     # Output item is not included in the original model
-    with open(self.mzn, 'r') as infile:
-      with open(self.mzn_cpy, 'w') as outfile:
-	for line in infile:
-	  # Replace mzn_out inclusion with mzn_out_cpy inclusion
-	  line = replace(
-	    line, '"' + self.mzn_out + '"', '"' + self.mzn_out_cpy + '"'
-	  )
+    with open(self.mzn_path, 'r') as infile:
+      with open(mzn_path, 'w') as outfile:
+        for line in infile:
+          # Replace mzn_out inclusion with mzn_out_cpy inclusion
+          line = replace(
+            line, '"' + self.out_path + '"', '"' + out_cpy + '"'
+          )
           outfile.write(line)
-    with open(self.mzn_out, 'r') as infile:
-      with open(self.mzn_out_cpy, 'w') as outfile:
-	# Replace the output item in mzn_out_cpy
+    with open(self.out_path, 'r') as infile:
+      with open(out_path, 'w') as outfile:
+        # Replace the output item in mzn_out_cpy
         outfile.write(var_expr)
-	for line in infile:
-	  if 'output' in line.split() or 'output[' in line.split():
-	    line = replace(line, 'output', out_expr, 1)
-	  outfile.write(line)
+        for line in infile:
+          if 'output' in line.split() or 'output[' in line.split():
+            line = replace(line, 'output', out_expr, 1)
+          outfile.write(line)
+    return cpy
     
-  def inject_bound_mzn(self, bound):
+  def inject_bound(self, bound):
     """
-    Injects a new bound to the copy of the MiniZinc model.
+    Injects a new bound to the MiniZinc model.
     """
     if self.solve == 'min':
       constraint = '\nconstraint ' + self.obj_expr + ' < ' + str(bound) + ';\n'
-    else:
+    elif self.solve == 'max':
       constraint = '\nconstraint ' + self.obj_expr + ' > ' + str(bound) + ';\n'
-    tmp_mzn = self.TMP_ID + '.bound'
-    with open(self.mzn_cpy, 'r') as infile:
-      with open(tmp_mzn, 'w') as outfile:
-	outfile.write(constraint)
-	for line in infile:
-	  outfile.write(line)
-    move(tmp_mzn, self.mzn_cpy)
-  
-  def inject_bound_fzn(self, solver, bound):
-    '''
-    Injects a new bound to the FlatZinc model.
-    '''
-    if self.solve == 'min':
-      lt = solver.lt_constraint
-      obj_var = self.obj_vars[solver.name]
-      constraint = lt.replace('llt', obj_var).replace('rlt', str(bound))
     else:
-      gt = solver.gt_constraint
-      obj_var = self.obj_vars[solver.name]
-      constraint = gt.replace('lgt', obj_var).replace('rgt', str(bound))
-    tmp_fzn = self.fzns[solver.name] + '.bound'
-    with open(self.fzns[solver.name], 'r') as infile:
-      with open(tmp_fzn, 'w') as outfile:
-	add = True
-	for line in infile:
-	  if add and 'constraint' in line.split():
-	    outfile.write(constraint + ';\n')
-	    add = False
-	  outfile.write(line)
-    move(tmp_fzn, self.fzns[solver.name])
+      return
+    tmp_path = str(uuid.uuid4())
+    with open(mzn_path, 'r') as infile:
+      with open(tmp_path, 'w') as outfile:
+        outfile.write(constraint)
+        for line in infile:
+          outfile.write(line)
+    move(tmp_path, mzn_path)    
