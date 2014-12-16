@@ -75,13 +75,13 @@ class Problem:
       self.solve == 'max' and self.best_bound < bound
     )
   
-  def __init__(self, mzn_path, dzn_path, out_path, solve, obj_expr):
+  def __init__(self, mzn_path, dzn_path, out_path, solve, obj_expr, aux_var):
     """
     Class Constructor.
     """
-    self.mzn_path = mzn
-    self.dzn_path = dzn
-    self.out_path = mzn_out
+    self.mzn_path = mzn_path
+    self.dzn_path = dzn_path
+    self.out_path = out_path
     assert solve in ['sat', 'min', 'max']
     self.solve = solve
     if solve == 'min':
@@ -89,6 +89,7 @@ class Problem:
     else:
       self.best_bound = float('-inf')
     self.obj_expr = obj_expr
+    self.aux_var = aux_var
     
   def make_mzn_cpy(self, mzn_path, out_path, aux_var = False):
     """
@@ -98,7 +99,7 @@ class Problem:
     output.
     """
     from copy import copy
-    cpy = copy(Problem())
+    cpy = copy(self)
     cpy.mzn_path = mzn_path
     cpy.out_path = out_path
     if not aux_var:

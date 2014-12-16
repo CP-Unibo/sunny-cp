@@ -305,9 +305,14 @@ def flatzinc(solver, timeout):
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 def main(args):
-  global PROBLEM
-  PROBLEM, k, timeout, pfolio, backup, kb, lims, static_sched, extractor, \
-  cores, wait_time, restart_time = parse_arguments(args)
+  problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
+  solver_options, tmp_dir, keep = parse_arguments(args)
+  
+  #FIXME: Temporary.
+  print problem.mzn_path, problem.dzn_path, problem.solve, problem.obj_expr, problem.aux_var
+  print k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
+  solver_options, tmp_dir, keep
+  sys.exit(0)
   
   try:
     print '% Extracting features...'

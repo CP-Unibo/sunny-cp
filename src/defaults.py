@@ -2,14 +2,15 @@
 Default settings for sunny-cp parameters.
 '''
 
+from multiprocessing import cpu_count
 import os
 SUNNY_HOME = os.environ['SUNNY_HOME']
 
 DEF_K_CSP = 70
 DEF_K_COP = 70
 
-DEF_T_CSP = 1800
-DEF_T_COP = 1800
+DEF_TOUT_CSP = 1800
+DEF_TOUT_COP = 1800
 
 # FIXME: Change this ordering.
 DEF_PFOLIO_CSP = [
@@ -34,15 +35,19 @@ DEF_LIMS_COP = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
 DEF_STATIC_CSP = []
 DEF_STATIC_COP = []
 
+DEF_OPTIONS_CSP = ''
+DEF_OPTIONS_COP = '-a'
+
 DEF_EXTRACTOR = 'mzn2feat'
 
-from multiprocessing import cpu_count
 DEF_CORES = cpu_count()
+
+DEF_AUX_VAR = 'o__b__j__v__a__r'
 
 DEF_TMP_DIR = SUNNY_HOME + '/tmp'
 
 DEF_KEEP = False
 
-DEF_WAIT_TIME = 3
+DEF_WAIT_TIME = 2
 
-DEF_RESTART_TIME = 3
+DEF_RESTART_TIME = 5
