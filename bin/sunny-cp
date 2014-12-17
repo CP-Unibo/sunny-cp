@@ -52,8 +52,14 @@ def kill_process(proc):
     pid = proc.pid
     process = psutil.Process(pid)
     for p in process.get_children(recursive = True):
-      p.kill()
-    process.kill()
+      try:
+        p.kill()
+      except NoSuchProcess:
+	pass
+    try:
+      process.kill()
+    except NoSuchProcess:
+      pass
 
 def clean():
   """
