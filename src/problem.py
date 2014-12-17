@@ -147,21 +147,3 @@ class Problem:
             line = replace(line, 'output', out_expr, 1)
           outfile.write(line)
     return cpy
-    
-  def inject_bound(self, bound):
-    """
-    Injects a new bound to the MiniZinc model.
-    """
-    if self.solve == 'min':
-      constraint = '\nconstraint ' + self.obj_expr + ' < ' + str(bound) + ';\n'
-    elif self.solve == 'max':
-      constraint = '\nconstraint ' + self.obj_expr + ' > ' + str(bound) + ';\n'
-    else:
-      return
-    tmp_path = str(uuid.uuid4())
-    with open(mzn_path, 'r') as infile:
-      with open(tmp_path, 'w') as outfile:
-        outfile.write(constraint)
-        for line in infile:
-          outfile.write(line)
-    shutil.move(tmp_path, mzn_path)    
