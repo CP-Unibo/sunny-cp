@@ -3,7 +3,8 @@ Problem is the abstraction of a MiniZinc model to be solved by sunny-cp.
 '''
 
 import uuid
-from shutil import move, copy
+import shutil
+from copy import copy
 from string import replace
 
 class Problem:
@@ -91,24 +92,21 @@ class Problem:
     self.obj_expr = obj_expr
     self.aux_var = aux_var
     
-  def make_mzn_cpy(self, mzn_path, out_path, aux_var = False):
+  def make_cpy(self, mzn_path, out_path, aux = False):
     """
     Creates a copy of the original MiniZinc model at the specified path and 
-    returns the corresponding object. If aux_var is set, it also introduces in 
-    the copy a variable named aux_var for printing the objective value on std 
-    output.
+    returns the corresponding object. If aux flag is set, it also introduces in 
+    the copy the variable aux_var for printing the objective value on stdout.
     """
-    from copy import copy
     cpy = copy(self)
     cpy.mzn_path = mzn_path
     cpy.out_path = out_path
-    if not aux_var:
-      copy(self.mzn_path, mzn_path)
-      copy(self.out_path, out_path)
+    if not aux:
+      shutil.copy(self.mzn_path, mzn_path)
+      shutil.copy(self.out_path, out_path)
       return cpy
-    cpy.aux_var = aux_var
-    var_expr = 'var int: ' + aux_var + ' = ' + self.obj_expr + ';\n'
-    out_expr = 'output [show(' + aux_var + ')] ++ '
+    var_expr = 'var int: ' + self.aux_var + ' = ' + self.obj_expr + ';\n'
+    out_expr = 'output [show(' + self.aux_var + ')] ++ '
     
     # The output item is included in the original model
     if self.mzn_path == self.out_path:
@@ -166,4 +164,4 @@ class Problem:
         outfile.write(constraint)
         for line in infile:
           outfile.write(line)
-    move(tmp_path, mzn_path)    
+    shutil.move(tmp_path, mzn_path)    

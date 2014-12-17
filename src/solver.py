@@ -33,19 +33,6 @@ class RunningSolver:
   # Object of class Solver, identifying the running solver.
   solver = None
   
-  # Absolute path of the FlatZinc model on which solver is run.
-  fzn_path = ''
-  
-  # String of the options used by the FlatZinc interpreter of the solver.
-  fzn_options = ''
-  
-  # Don't stop solver if it has produced a solution in the last wait_time sec.
-  wait_time = -1
-  
-  # Restart solver if its best solution is obsolete and it has not produced a 
-  # solution in the last restart_time sec.
-  restart_time = -1
-  
   # State of the solving process. It can be either:
   # 'ready_mzn2fzn': solver is ready to execute the mzn2fzn conversion
   #   'run_mzn2fzn': solver is running mzn2fzn converter
@@ -54,8 +41,12 @@ class RunningSolver:
   #     'suspended': solver has been suspended
   state = ''
   
-  # Object of class subprocess.Popen referring to the solving process.
-  process = None
+  # Don't stop solver if it has produced a solution in the last wait_time sec.
+  wait_time = -1
+  
+  # Restart solver if its best solution is obsolete and it has not produced a 
+  # solution in the last restart_time sec.
+  restart_time = -1
   
   # Timeout in seconds of the solving process.
   timeout = -1
@@ -65,6 +56,12 @@ class RunningSolver:
   
   # Time in seconds (since the epoch) when the solver found its last solution.
   solution_time = -1
+  
+  # Absolute path of the FlatZinc model on which solver is run.
+  fzn_path = ''
+  
+  # String of the options used by the FlatZinc interpreter of the solver.
+  fzn_options = ''
   
   # Array of the best solution currently found by solver, where each element 
   # corresponds to a line <VARIABLE> = <VALUE> printed by solver on std output.
@@ -79,6 +76,20 @@ class RunningSolver:
   
   # Best objective value found by solver.
   obj_value = None
+  
+  # Object of class subprocess.Popen referring to the solving process.
+  process = None
+  
+  def __init__(self, solver, solve, options, wait_time, restart_time, timeout):
+    self.solver       = solver
+    self.solve        = solve
+    self.fzn_options  = options
+    self.wait_time    = wait_time
+    self.restart_time = restart_time
+    self.timeout      = timeout
+  
+  def name(self):
+    return self.solver.name
   
   def mzn2fzn_cmd(self, pb):
     '''
