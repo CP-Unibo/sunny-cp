@@ -66,10 +66,11 @@ def clean():
   # Possibly remove temporary files.
   if not KEEP:
     for f in TMP_FILES:
+      print f, os.path.exists(f)
       if os.path.exists(f):
 	os.remove(f)
 
-def run_schedule(schedule, cores):
+def run_schedule(schedule, problem, cores):
   """
   Runs (possibly in parallel on different cores) a schedule of solvers.
   """ 
@@ -79,8 +80,9 @@ def run_schedule(schedule, cores):
     if schedule:
       solver = schedule.pop(0)
       print '% Starting',solver.name(),'for',solver.timeout,'seconds'
-      #FIXME: mzn2fzn(s, t)
-  clean()    
+      run_solver(solver, problem)
+  time.sleep(SLEEP_TIME)
+  clean()
   sys.exit(0)
   # The actual solvers execution starts here.
   while RUNNING_SOLVERS:
@@ -113,6 +115,15 @@ def run_schedule(schedule, cores):
 	print '% Restarting',solver
 	timeout = max(info[TIMEOUT] - (time.time() - info[START_TIME]), 0)
 	flatzinc(solver, timeout)
+
+def run_solver(solver, problem):
+  if solver.status == 'ready_mzn2fzn':
+    cmd = solver.mzn2fzn_cmd(problem)
+    solver.status = 'run_mzn2fzn'
+  solver.start_time = time.time()
+  solver.solution_time = time.time()
+  solver.process = Popen(cmd)
+  
 
 def read_lines(info):
   """
@@ -230,6 +241,7 @@ def solver_timeout(solver, par_schedule):
 
 def mzn2fzn(solver, timeout):
   """
+  #FIXME: To remove
   Converts the MiniZinc model to the solver-specific FlatZinc model.
   """
   global RUNNING_SOLVERS
@@ -292,8 +304,14 @@ def flatzinc(solver, timeout):
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
 def setup_schedule(problem, par_sched, solver_options, tmp_dir):
+  """
+  Prepares the execution of a schedule by setting the proper parameters.
+  """
   global TMP_FILES
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
+  ozn_path = tmp_id + '.ozn'
+  problem.ozn_path = ozn_path
+  TMP_FILES = [ozn_path]
   if problem.isCOP():
     # Make a copy of the original MiniZinc model.
     mzn_path = tmp_id + '.mzn'
@@ -302,11 +320,13 @@ def setup_schedule(problem, par_sched, solver_options, tmp_dir):
     TMP_FILES += [mzn_path, out_path]
   schedule = []
   for (s, t) in par_sched:
+    fzn_path = tmp_id + '.' + s + '.fzn'
     opts = solver_options[s]['options']
     wt   = solver_options[s]['wait_time']
     rt   = solver_options[s]['restart_time']
-    solver = RunningSolver(eval(s), problem.solve, opts, wt, rt, t)
+    solver = RunningSolver(eval(s), problem.solve, fzn_path, opts, wt, rt, t)
     schedule.append(solver)
+    TMP_FILES += [fzn_path]
   return schedule
 
 def main(args):
@@ -333,7 +353,7 @@ def main(args):
     print '% Executing solvers...'
     print par_sched
     schedule = setup_schedule(problem, par_sched, solver_options, tmp_dir)
-    run_schedule(schedule, cores)
+    run_schedule(schedule, problem, cores)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'

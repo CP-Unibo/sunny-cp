@@ -80,9 +80,13 @@ class RunningSolver:
   # Object of class subprocess.Popen referring to the solving process.
   process = None
   
-  def __init__(self, solver, solve, options, wait_time, restart_time, timeout):
+  def __init__(
+    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
+  ):
+    self.status       = 'ready_mzn2fzn'
     self.solver       = solver
     self.solve        = solve
+    self.fzn_path     = fzn_path
     self.fzn_options  = options
     self.wait_time    = wait_time
     self.restart_time = restart_time
@@ -96,15 +100,16 @@ class RunningSolver:
     Returns the command for converting a given MiniZinc model to FlatZinc by 
     using solver-specific redefinitions.
     '''
-    cmd = 'mzn2fzn -I ' + solver.mznlib + ' ' + pb.mzn_path + ' ' + pb.dzn_path\
-        + ' -o ' + self.fzn_path + ' --output-ozn-to-file ' + pb.ozn_path
+    cmd = 'mzn2fzn -I ' + self.solver.mznlib + ' ' + pb.mzn_path + ' '     + \
+           pb.dzn_path + ' -o ' + self.fzn_path + ' --output-ozn-to-file ' + \
+	   pb.ozn_path
     return cmd.split()
     
   def flatzinc_cmd(self, pb):
     '''
     Returns the command for executing the FlatZinc model.
     '''
-    cmd = solver.fzn_exec + ' ' + fzn_options + ' ' + fzn_path
+    cmd = self.solver.fzn_exec + ' ' + self.fzn_options + ' ' + self.fzn_path
     return cmd.split()
     
   def inject_bound(self, bound):
