@@ -60,20 +60,20 @@ class mzn2feat:
     for i in range(0, len(feat_vector)):
       j = str(i)
       if lims[j][0] != lims[j][1]:
-	val = float(feat_vector[i])
-	if isnan(val):
-	  val = def_value
-	min_val = float(lims[j][0])
-	max_val = float(lims[j][1])
-	if val <= min_val:
-	  norm_val = lb
-	elif val >= max_val:
-	  norm_val = ub
-	else:
-	  x = (val - min_val) / (max_val - min_val)
-	  norm_val = (ub - lb) * x + lb
-	  assert lb <= norm_val <= ub
-	norm_vector.append(norm_val)
+        val = float(feat_vector[i])
+        if isnan(val):
+          val = def_value
+        min_val = float(lims[j][0])
+        max_val = float(lims[j][1])
+        if val <= min_val:
+          norm_val = lb
+        elif val >= max_val:
+          norm_val = ub
+        else:
+          x = (val - min_val) / (max_val - min_val)
+          norm_val = (ub - lb) * x + lb
+          assert lb <= norm_val <= ub
+        norm_vector.append(norm_val)
     return norm_vector
  
 '''

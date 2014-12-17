@@ -3,10 +3,6 @@
 
 IN_PATH=$SUNNY_HOME/test/examples
 OZN=$IN_PATH/tmp.ozn
-PFOLIO=`ls -l $SUNNY_HOME/solvers/ | grep ^d | \
-        awk '{printf $NF","} END {print '\n'}' | sed 's/,$//g'`
-BACKUP='g12cpx'
-PROC=4
 OUT=$IN_PATH/out
 ERR=$IN_PATH/err
 TIMEOUT=10
@@ -24,8 +20,7 @@ do
     for d in domino.1.dzn domino.2.dzn
     do
       mzn2fzn $m $d --output-ozn-to-file $OZN
-      #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m $d"
-      cmd="sunny-cp -P $PFOLIO -T $TIMEOUT $m $d"
+      cmd="sunny-cp -T $TIMEOUT --g12 $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
       cat $OUT | solns2out $OZN | solns2dzn -l
@@ -43,8 +38,7 @@ do
     done
   else
     mzn2fzn $m --output-ozn-to-file $OZN
-    #cmd="sunny-cp -p $PROC -P $PFOLIO -b $BACKUP -T $TIMEOUT $m"
-    cmd="sunny-cp -P $PFOLIO -T $TIMEOUT $m"
+    cmd="sunny-cp -T $TIMEOUT --g12 $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
     cat $OUT | solns2out $OZN | solns2dzn -l

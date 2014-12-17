@@ -6,7 +6,7 @@ RunningSolver is instead a solver running on a given FlatZinc model.
 '''
 
 import uuid
-import shutil
+from shutil import move
 from string import replace
 
 class Solver:
@@ -34,11 +34,10 @@ class RunningSolver:
   solver = None
   
   # State of the solving process. It can be either:
-  # 'ready_mzn2fzn': solver is ready to execute the mzn2fzn conversion
-  #   'run_mzn2fzn': solver is running mzn2fzn converter
-  #     'ready_fzn': solver is ready to execute the FlatZinc interpreter
-  #       'run_fzn': solver is running the FlatZinc interpreter
-  #     'suspended': solver has been suspended
+  #     'ready': solver is ready to execute the mzn2fzn conversion
+  #   'mzn2fzn': solver is running mzn2fzn converter
+  #  'flatzinc': solver is running the FlatZinc interpreter
+  # 'suspended': solver has been suspended
   state = ''
   
   # Don't stop solver if it has produced a solution in the last wait_time sec.
@@ -83,9 +82,13 @@ class RunningSolver:
   def __init__(
     self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
   ):
-    self.status       = 'ready_mzn2fzn'
+    self.status       = 'ready'
     self.solver       = solver
     self.solve        = solve
+    if solve == 'min':
+      self.obj_value = float('+inf')
+    elif solve == 'max':
+      self.obj_value = float('-inf')
     self.fzn_path     = fzn_path
     self.fzn_options  = options
     self.wait_time    = wait_time
@@ -102,7 +105,7 @@ class RunningSolver:
     '''
     cmd = 'mzn2fzn -I ' + self.solver.mznlib + ' ' + pb.mzn_path + ' '     + \
            pb.dzn_path + ' -o ' + self.fzn_path + ' --output-ozn-to-file ' + \
-	   pb.ozn_path
+           pb.ozn_path
     return cmd.split()
     
   def flatzinc_cmd(self, pb):
@@ -111,21 +114,29 @@ class RunningSolver:
     '''
     cmd = self.solver.fzn_exec + ' ' + self.fzn_options + ' ' + self.fzn_path
     return cmd.split()
-    
+  
+  def set_obj_var(self):
+    with open(self.fzn_path, 'r') as infile:
+      for line in reversed(infile.readlines()):
+        tokens = line.split()
+        if 'solve' in tokens:
+          self.obj_var = tokens[-1].replace(';', '')
+          break
+  
   def inject_bound(self, bound):
     '''
     Injects a new bound to the FlatZinc model.
     '''
     if self.solve == 'min':
-      lt = solver.lt_constraint
-      constraint = lt.replace('llt', obj_var).replace('rlt', str(bound))
+      lt = self.solver.lt_constraint
+      constraint = lt.replace('llt', self.obj_var).replace('rlt', str(bound))
     elif self.solver == 'max':
-      gt = solver.gt_constraint
-      constraint = gt.replace('lgt', obj_var).replace('rgt', str(bound))
+      gt = self.solver.gt_constraint
+      constraint = gt.replace('lgt', self.obj_var).replace('rgt', str(bound))
     else:
       return
     tmp_path = str(uuid.uuid4())
-    with open(fzn_path, 'r') as infile:
+    with open(self.fzn_path, 'r') as infile:
       with open(tmp_path, 'w') as outfile:
         add = True
         for line in infile:
@@ -133,4 +144,5 @@ class RunningSolver:
             outfile.write(constraint + ';\n')
             add = False
           outfile.write(line)
-    move(tmp_path, fzn_path)
+    move(tmp_path, self.fzn_path)
+    self.obj_value = bound

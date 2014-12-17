@@ -81,18 +81,13 @@ Options:
     the options specified in <OPTIONS> string. No checks are performed on that 
     string. By default, the options string is empty for CSPs, while is "-a" for 
     COPs. Note that this option should allow to print all the solutions of the 
-    problem according to the MiniZinc Challenge rules.
+    problem, according to the MiniZinc Challenge rules.
   --fzn-options-<SOLVER_NAME> "<OPTIONS>"
     Runs the solver <SOLVER_NAME> with the options specified in <OPTIONS>
   
-  -a
-    For compatibility with MiniZinc Challenge rules. This option is equivalent 
-    to --fzn-options "-a". By default, this flag is unset for CSPs while is set 
-    for COPs
-  
-  -f
-    For compatibility with MiniZinc Challenge rules. This option is deprecated 
-    since it is always ignored: use --fzn-options "-f" instead
+  -a, -f
+    For compatibility with MiniZinc Challenge rules. Note that these options are 
+    deprecated, since always ignored: if needed, use --fzn-options
 
   --wait-time <TIME>
     Don't stop each running solver if it has produced a solution in the last 
@@ -253,16 +248,13 @@ def parse_arguments(args):
         tmp_dir = a[0 : -1]
       else:
         tmp_dir = a
-    elif o == '-a':
-      for item in solver_options.values():
-        item['options'] = '-a'
     elif o.startswith('--fzn-options'):
       if len(o) > 13:
         solver = o[14:]
         solver_options[solver]['options'] = a
       else:
-	for item in solver_options.values():  
-	  item['options'] = a
+        for item in solver_options.values():  
+          item['options'] = a
     elif o.startswith('--wait-time'):
       wait_time = float(a)
       if wait_time < 0:
@@ -270,11 +262,11 @@ def parse_arguments(args):
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
       if len(o) > 11:
-	solver = o[12:]
-	solver_options[solver]['wait_time'] = wait_time
+        solver = o[12:]
+        solver_options[solver]['wait_time'] = wait_time
       else:
         for item in solver_options.values():  
-	  item['wait_time'] = a
+          item['wait_time'] = wait_time
     elif o.startswith('--restart-time'):
       rest_time = float(a)
       if rest_time < 0:
@@ -282,11 +274,11 @@ def parse_arguments(args):
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
       if len(o) > 14:
-	solver = o[15:]
-	solver_options[solver]['restart_time'] = rest_time
+        solver = o[15:]
+        solver_options[solver]['restart_time'] = rest_time
       else:
         for item in solver_options.values():  
-	  item['restart_time'] = a
+          item['restart_time'] = rest_time
     elif o == '-x':
       aux_var = a
     elif o == '--keep':
@@ -296,10 +288,10 @@ def parse_arguments(args):
       backup = 'g12cpx'
     elif o.startswith('--csp-') and solve == 'sat' or \
          o.startswith('--cop-') and solve != 'sat':
-	   if len(o) == 7:
+           if len(o) == 7:
              opts.append(['-' + o[6], a])
            else:
-	     opts.append(['--' + o[6:], a])
+             opts.append(['--' + o[6:], a])
            
   # Additional checks.
   if backup not in pfolio:

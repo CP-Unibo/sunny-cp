@@ -1,12 +1,8 @@
-- sunny-cp: run_schedule
-  
 - pre-solving + solving
 
 - sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
 
-- documentare, rimuovere tabs (replace \t con '        ')
-
-- testing (coverage?) 
+- documenting + testing (coverage?) 
 
 - integrare installazione con mzn2feat (PB Makefile: var. d'ambiente)
 
