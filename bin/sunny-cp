@@ -54,11 +54,11 @@ def kill_process(proc):
     for p in process.get_children(recursive = True):
       try:
         p.kill()
-      except NoSuchProcess:
+      except psutil.NoSuchProcess:
 	pass
     try:
       process.kill()
-    except NoSuchProcess:
+    except psutil.NoSuchProcess:
       pass
 
 def clean():
