@@ -10,6 +10,11 @@ This is done for keeping all the auxiliary functions in the same class and
 for possible future extensions.
 '''
 
+from math import isnan
+from subprocess import Popen, PIPE
+import os
+import json
+
 class mzn2feat:
   
   @staticmethod
@@ -19,7 +24,7 @@ class mzn2feat:
     if not not_norm_vector:
       return None
     lims_file = args[1]
-    import json
+    
     with open(lims_file, 'r') as infile:
       lims = json.load(infile)
     return mzn2feat.normalize(not_norm_vector, lims)
@@ -30,13 +35,11 @@ class mzn2feat:
     Extracts the features from a MiniZinc model by exploiting the mzn2feat
     features extractor.
     """
-    mzn = problem.mzn
-    dzn = problem.dzn
-    cmd = 'mzn2feat -i ' + mzn
-    if dzn:
-      cmd += ' -d ' + dzn
-    from subprocess import Popen, PIPE
-    import os
+    mzn_path = problem.mzn_path
+    dzn_path = problem.dzn_path
+    cmd = 'mzn2feat -i ' + mzn_path
+    if dzn_path:
+      cmd += ' -d ' + dzn_path
     proc = Popen(cmd.split(), stdout = PIPE)
     (out, err) = proc.communicate()
     # Failure in features extraction.
@@ -53,7 +56,6 @@ class mzn2feat:
     features are removed and feature values are scaled in [lb, ub] by 
     exploiting the information already computed in lims dictionary.
     """
-    from math import isnan
     norm_vector = []
     for i in range(0, len(feat_vector)):
       j = str(i)
