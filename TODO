@@ -1,12 +1,4 @@
-- sunny-cp:
-  
-  pfolio = stringhe di solvers, poi obj di classe RunningSolver creati con 
-  con running_sched = setup_schedule(schedule, solver_opts, tmp_dir) che setta 
-  tutt i path e crea anche una copia mzn se COP. 
-  Poi lanciare run_schedule
-  
-  Globals:
-  KEEP, TMP_FILES, RUNNING_SOLVERS: dict(name, RunningSolver)
+- sunny-cp: run_schedule
   
 - pre-solving + solving
 
