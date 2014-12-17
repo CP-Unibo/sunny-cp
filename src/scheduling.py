@@ -136,7 +136,7 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
         (s, l) for s, l in scores.items() if s in sub_pfolio
       ])
       for h in range(0, k):
-	score += max([inst[h] for inst in port_scores.values()])
+        score += max([inst[h] for inst in port_scores.values()])
       time = sum([times[solver] for solver in sub_pfolio])
       area = sum([areas[solver] for solver in sub_pfolio])
       if score >  max_score or \
@@ -183,7 +183,7 @@ def parallelize(static_sched, dynamic_sched, cores, timeout, pfolio):
   last_time = timeout
   while static_sched:
     (s, t) = static_sched.pop(0)
-    if not static_sched and s == dynamic_sched[0][0]:
+    if not static_sched and (not dynamic_sched or s == dynamic_sched[0][0]):
       break
     par_schedule.append((s, t))
     last_time -= t

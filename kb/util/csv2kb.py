@@ -5,7 +5,7 @@ Usage: python csv2kb.py [OPTIONS] <KB_NAME> <FEAT_FILE> <INFO_FILE>
 
 Options:
 
-  -h, --help  		
+  -h, --help                  
     Print this message
     
   -t <timeout>
@@ -93,29 +93,29 @@ def main(args):
     elif o == '-p':
       path = a
       if not os.path.exists(a):
-	print >> sys.stderr, 'Error! Path',path,'does not exists.'
-	sys.exit(2)
+        print >> sys.stderr, 'Error! Path',path,'does not exists.'
+        sys.exit(2)
     elif o == '-f':
       l, u = a.split(',')
       lb_feat = float(l)
       ub_feat = float(u)
       if lb_feat >= ub_feat:
-	print >> sys.stderr, 'Error! Bound',l,'not greater than',u
-	sys.exit(2)
+        print >> sys.stderr, 'Error! Bound',l,'not greater than',u
+        sys.exit(2)
     elif o == '-s':
       l, u = a.split(',')
       lb_score = float(l)
       ub_score = float(u)
       if not (0 <= lb_score < ub_score <= 1):
-	print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
-	sys.exit(2)
+        print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
+        sys.exit(2)
     elif o == '-a':
       l, u = a.split(',')
       lb_area = float(l)
       ub_area = float(u)
       if not (0 <= lb_area < ub_area <= 1):
-	print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
-	sys.exit(2)
+        print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
+        sys.exit(2)
     elif o == '--no-scale':
       scale = False
     elif o == '--no-const':
