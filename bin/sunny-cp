@@ -22,19 +22,12 @@ from features       import *
 from scheduling     import *
 from pfolio_solvers import *
 
-# Global variables keeping track of the current problem and the running solvers.
-PROBLEM = None
-RUNNING_SOLVERS = {}
-
-# RUNNING_SOLVERS Indexes.
-CMD = 0
-PROCESS = 1
-START_TIME = 2
-TIMEOUT = 3
-SOLUTION_TIME =4
-SOLUTION = 5
-OBJ_VALUE = 6
-
+# List of the running solvers.
+RUNNING_SOLVERS = []
+# If KEEP, don't delete temporary files.
+KEEP = False
+# List of temporary file paths.
+TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
 
@@ -66,19 +59,13 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  for info in RUNNING_SOLVERS.values():
-    kill_process(info[PROCESS])
+  for solver in RUNNING_SOLVERS:
+    kill_process(solver.process)
   # Possibly remove temporary files.
-  if PROBLEM and not PROBLEM.keep:
-    if os.path.exists(PROBLEM.mzn_cpy):
-      os.remove(PROBLEM.mzn_cpy)
-    if os.path.exists(PROBLEM.mzn_out_cpy):
-      os.remove(PROBLEM.mzn_out_cpy)
-    for f in PROBLEM.fzns.values():
+  if not KEEP:
+    for f in TMP_FILES:
       if os.path.exists(f):
 	os.remove(f)
-    if os.path.exists(PROBLEM.ozn):
-      os.remove(PROBLEM.ozn)
 
 def run_schedule(par_schedule, cores, wait_time, restart_time):
   """
@@ -307,24 +294,19 @@ def flatzinc(solver, timeout):
 def main(args):
   problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
   solver_options, tmp_dir, keep = parse_arguments(args)
-  
-  #FIXME: Temporary.
-  print problem.mzn_path, problem.dzn_path, problem.solve, problem.obj_expr, problem.aux_var
-  print k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-  solver_options, tmp_dir, keep
-  sys.exit(0)
-  
+
   try:
     print '% Extracting features...'
-    feat_vector = extractor.extract_features([PROBLEM, lims])
-  
+    feat_vector = extractor.extract_features([problem, lims])
+    print feat_vector
+    sys.exit(0)
     if not feat_vector:
       print '% Features extraction failed! Switching to backup solver(s).'
-      dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[0 : cores]]
+      dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[:cores]]
     else:
       print '% Computing solvers schedule...'
       dynamic_sched = sunny(
-        PROBLEM, pfolio, backup, feat_vector, k, timeout, kb
+        problem, pfolio, backup, feat_vector, k, timeout, kb
       )
       print '% SUNNY sequential schedule:',dynamic_sched
       
