@@ -17,9 +17,6 @@
   - il miglior solver fino a quel momento è sospeso: in questo caso, lascio 
     correre tale solver a tempo indefinito: solver.timeout = +inf
   
-- usare pslib aggiornata al posto di Popen (mettere nei requirements e check 
-  nella installazione) e limitare memoria con memory_percent() <= -m (50% def?)
-  
 - fissare solving dinamico
 
 - sospendere solvers (no need SUSPENDED_SOLVERS? status susp_mzn, susp_fzn)

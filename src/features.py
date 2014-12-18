@@ -11,9 +11,10 @@ for possible future extensions.
 '''
 
 from math import isnan
-from subprocess import Popen, PIPE
+from subprocess import PIPE
 import os
 import json
+import psutil
 
 class mzn2feat:
   
@@ -40,7 +41,7 @@ class mzn2feat:
     cmd = 'mzn2feat -i ' + mzn_path
     if dzn_path:
       cmd += ' -d ' + dzn_path
-    proc = Popen(cmd.split(), stdout = PIPE)
+    proc = psutil.Popen(cmd.split(), stdout = PIPE)
     (out, err) = proc.communicate()
     # Failure in features extraction.
     if proc.returncode != 0:
