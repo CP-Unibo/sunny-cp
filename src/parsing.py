@@ -1,12 +1,16 @@
 '''
-sunny-cp: a CP portfolio solver consisting of 12 constituent solvers:
+sunny-cp: a parallel CP portfolio solver consisting of 12 constituent solvers:
 
   Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, 
   G12/CBC, Gecode, HaifaCSP, iZplus, MinisatID, OR-Tools
 
-********************************************************************************
-* Don't forget to properly set the SUNNY_HOME and PATH environment variables!! *
-********************************************************************************
+In a nutshell, sunny-cp relies on two sequential steps:
+
+  1. PRE-SOLVING: consists in the (possible) execution of a static schedule and 
+                  the feature extraction
+                  
+  2. SOLVING: consists in the execution of a number of constituent solvers, 
+              (possibly) selected by means of SUNNY algorithm
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
@@ -16,16 +20,12 @@ Options:
     Print this message
     
   -T <TIMEOUT>
-    #FIXME: Update this.
-    Timeout (in seconds) of SUNNY algorithm. Note that this IS NOT the timeout 
-    of the whole solving process: if the instance is still not solved within T 
-    seconds by the scheduled solvers, the others non-scheduled solvers of the 
-    portfolio will be executed for T seconds following a default ordering. 
-    Anyway, note that none of the solvers will be executed for more than T 
-    seconds.
-    The default value is T = 1800, while the default 'backup' ordering is:
-      chuffed, g12cpx, minisatid, gecode, g12lazyfd, g12fd, g12gurobi, g12cbc    
-  
+    Timeout (in seconds) of SUNNY algorithm, used at runtime for predicting the 
+    schedule of solvers to be run. Actually, T will be subtracted by C seconds 
+    where C is the time taken by the pre-solving phase (i.e., static schedule 
+    and feature extraction). Note that T IS NOT the timeout of the whole solving 
+    process, which has to be set externally. The default value is T = 1800.
+    
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
     k is 70, while the distance metric is the Euclidean one
@@ -33,15 +33,19 @@ Options:
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
     form s_1,s_2,...,s_m. Note that such solvers must be a not empty subset of 
-    the default portfolio. Moreover, also the specified ordering of solvers is 
-    important: indeed, in case of failure of the scheduled solvers, the other 
-    solvers will be executed according to such ordering. This option can be used 
-    to select a particular sub-portfolio or even to change the default ordering 
-    of the solvers in case of failures
+    the default portfolio. The specified ordering of solvers matters: indeed, 
+    in case of failure of the scheduled solvers, the other solvers will be 
+    executed according to such ordering. This option can be used to select a 
+    particular sub-portfolio or even to change the default ordering of the 
+    solvers, which is by default: TODO
   
   -b <SOLVER>
     Set the backup solver of the portfolio. It must belong to the specified 
     portfolio. The default backup solver is chuffed
+    
+  --g12
+    Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
+    This is equivalent to set -P g12cbc,g12cpx,g12fd,g12lazyfd and -b g12cpx
     
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
@@ -49,27 +53,14 @@ Options:
     README file in SUNNY_HOME/kb folder
   
   -s <SCHEDULE>
-    # FIXME: Update this.
-    Specifies a static schedule to be run before executing the SUNNY algorithm 
-    on a given COP. The schedule must be passed in the form: 
+    Specifies a static schedule to be run before executing the SUNNY algorithm. 
+    The schedule must be passed in the form: 
       s_1,t_1,s_2,t_2,...,s_m,t_m
-    where each s_i belongs to the specified portfolio, 0 < t_i < T, and 
-    C = t_1 + ... + t_m <= T, where T is the specified solving timeout for COPs. 
-    Passing a static schedule has the purpose of providing a 'warm start' to the 
-    SUNNY algorithm in the first C seconds: first s_1 is run for t_1 seconds, 
-    then s_2 is run for t_2 seconds, ..., and finally s_m is run for t_m seconds 
-    by exploiting each sub-optimal solution found by the previous solver. If the 
-    problem is still not solved after running the static schedule, the schedule 
-    resulting from SUNNY algorithm is run in the remaining T - C seconds. The 
-    static schedule is empty by default
-    
-  -d <PATH> 
-    Absolute path of the folder in which the temporary files created by the 
-    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
-    such files are deleted after sunny-cp execution
+    where each s_i belongs to the specified portfolio, and t_i is the timeout 
+    (in seconds) for s_i. The static schedule is empty by default
     
   -e <EXTRACTOR>
-    Features extractor used by sunny-cp. By default is mzn2feat, but it can be 
+    Feature extractor used by sunny-cp. By default is mzn2feat, but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
     
   -p <CORES>
@@ -77,29 +68,24 @@ Options:
     of CPUs in the system
     
   --fzn-options "<OPTIONS>"
-    Allows to run each scheduled solver on its specific FlatZinc model by using 
+    Allows to run each selected solver on its specific FlatZinc model by using 
     the options specified in <OPTIONS> string. No checks are performed on that 
     string. By default, the options string is empty for CSPs, while is "-a" for 
     COPs. Note that this option should allow to print all the solutions of the 
     problem, according to the MiniZinc Challenge rules.
   --fzn-options-<SOLVER_NAME> "<OPTIONS>"
     Runs the solver <SOLVER_NAME> with the options specified in <OPTIONS>
-  
-  -a, -f
-    For compatibility with MiniZinc Challenge rules. Note that these options are 
-    deprecated, since always ignored: if needed, use --fzn-options
 
   --wait-time <TIME>
-    Don't stop each running solver if it has produced a solution in the last 
-    <TIME> seconds (only for COPs). By default, <TIME> is 2 seconds. Also the 
-    the constant +inf is allowed
+    Don't stop a running solver if it has produced a solution in the last <TIME> 
+    seconds. By default, <TIME> is 2 seconds. Also the constant +inf is allowed
   --wait-time-<SOLVER> <TIME>
     Don't stop <SOLVER> if it has produced a solution in the last <TIME> seconds
   
   --restart-time <TIME>
-    Restart each constituent solver if its best solution is obsolete and it has 
-    not produced a solution in the last <TIME> seconds (only for COPs). 
-    By default, <TIME> is 5 seconds. Also the constant +inf is allowed
+    Restart a constituent solver if its best solution is obsolete and it has not 
+    produced a solution in the last <TIME> seconds. 
+    By default, <TIME> is 5 seconds. Also the constant +inf is allowed.
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
@@ -109,9 +95,10 @@ Options:
     function value (for COPs). Note that such variable must not appear in the 
     MiniZinc model to be solved. The default variable name is o__b__j__v__a__r
     
-  --g12
-    Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
-    This is equivalent to set -P g12cbc,g12cpx,g12fd,g12lazyfd and -b g12cpx
+  -d <PATH> 
+    Absolute path of the folder in which the temporary files created by the 
+    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
+    such files are deleted after sunny-cp execution  
     
   --keep
     Do not erase the temporary files created by the solver and stored in the 
@@ -128,6 +115,10 @@ Options:
     that the '-' character of <OPTION> must be omitted.
     For example, --cop-T 900 set the T parameter to 900 only if the problem is a 
     COP, while such option is ignored for CSPs
+  
+  -a, -f
+    For compatibility with MiniZinc Challenge rules. Note that these options are 
+    deprecated, since always ignored: if needed, use --fzn-options
 '''
 
 import sys

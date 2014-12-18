@@ -135,8 +135,19 @@ def run_schedule(
 	   print '% Timeout expired for',solver.name()
 	   if schedule:
              solver = schedule.pop(0)
-             print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
-             run_solver(solver, problem)
+             if solver.timeout == 0:
+	       # FIXME: In this case, all the scheduled solvers have been run 
+	       # (or are running on another core) while the removed solver ran 
+	       # out of time. There is still (at least) a solver that never run, 
+	       # but we don't know how much time assign to it. This happens when 
+	       # the global timeout T is reached. However, note that T refers to 
+	       # the timeout of SUNNY algorithm and not of the solving process.
+	       # At the moment we simply ignore that solver (and all subsequent 
+	       # solvers). Alternative choices?
+	       schedule = []
+	     else:
+               print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
+               run_solver(solver, problem)
 	   continue
 	 
       # Restart a solver if its solution is obsolete.
