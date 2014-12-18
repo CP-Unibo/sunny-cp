@@ -1,6 +1,18 @@
-- pre-solving + solving
+- FIXME:
+  * come gestire quando un solver va in timeout a un tempo t >= T? (v. FIXME)
+    si prende il primo dei non schedulati, dei sospesi, quale? quanto tempo gli 
+    si dà? Per ora semplicemente libero quel processore...
+  * un solver può andare in esecuzione n > 1 volte solo se appare nello static 
+    schedule. Come comportarsi quando:
+    - timeout static schedule: si era detto sospendere, non killare
+    - timeout dynamic schedule: in teoria non dovrebbe più essere eseguito, 
+      ma potrebbe essere che quelli dopo falliscono... si sospende anche questo?
+      In questo caso, dopo t >= T secondi si ripresenta il problema di prima
+
+- fissare solving dinamico
 
 - sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
+  status susp_mzn, susp_fzn
 
 - documenting + testing (coverage?) 
 
