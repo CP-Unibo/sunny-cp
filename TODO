@@ -1,18 +1,28 @@
-- FIXME:
-  * come gestire quando un solver va in timeout a un tempo t >= T? (v. FIXME)
-    si prende il primo dei non schedulati, dei sospesi, quale? quanto tempo gli 
-    si dà? Per ora semplicemente libero quel processore...
-  * un solver può andare in esecuzione n > 1 volte solo se appare nello static 
-    schedule. Come comportarsi quando:
-    - timeout static schedule: si era detto sospendere, non killare
-    - timeout dynamic schedule: in teoria non dovrebbe più essere eseguito, 
-      ma potrebbe essere che quelli dopo falliscono... si sospende anche questo?
-      In questo caso, dopo t >= T secondi si ripresenta il problema di prima
-
+- come gestire quando un solver va in timeout a tempo t >= T, e ci sono altri 
+  solvers sospesi/non-schedulati? (v. FIXME) si prende il primo dei sospesi? 
+  in che ordine? (in questo caso rischio di non eseguire mai i non-schedulati),
+  si prende il primo dei non-schedulati (stessi problemi), quanto timeout gli 
+  diamo? T? +inf? Boh? Infatti sunny-cp non segue il timeout di SUNNY, i primi 
+  n - 1 processori corrono a tempo indefinito.
+  Per ora semplicemente libero quel processore, che mi sembra una soluzione 
+  semplice e naturale. Infatti possiamo sempre dire: 
+  "Se un solver fallisce prima del suo timeout, il rimanente tempo viene 
+  allocato agli altri" in quanto in questo caso non fallisce prima del timeout
+  ma semplicemente esaurisce il tempo a disposizione. 
+  Anche perchè: se un solver è sospeso, significa che ha già corso senza 
+  particolare successo. Se non è schedulato, probabilmente è un solver scarso.
+  L'unica eccezione la farei se:
+  - il solver che va in timeout è l'unico rimasto in esecuzione: in questo caso, 
+    si lascia andare a tempo indefinito: solver.timeout = +inf
+  - il miglior solver fino a quel momento è sospeso: in questo caso, lascio 
+    correre tale solver a tempo indefinito: solver.timeout = +inf
+  
+- usare pslib aggiornata al posto di Popen (mettere nei requirements e check 
+  nella installazione) e limitare memoria con memory_percent() <= -m (50% def?)
+  
 - fissare solving dinamico
 
-- sospendere solvers static schedule (dict SUSPENDED_SOLVERS)
-  status susp_mzn, susp_fzn
+- sospendere solvers (no need SUSPENDED_SOLVERS? status susp_mzn, susp_fzn)
 
 - documenting + testing (coverage?) 
 
