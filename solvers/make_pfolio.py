@@ -6,8 +6,9 @@ file of this folder.
 
 import os
 import sys
+import psutil
 from string import replace
-from subprocess import Popen, PIPE
+from subprocess import PIPE
 
 pfolio_path = os.environ['SUNNY_HOME'] + '/src/pfolio_solvers.py'
 pfolio_file = open(pfolio_path, 'w')
@@ -35,7 +36,7 @@ for solver in solvers:
   )
   cmd = 'mzn2fzn -I ' + solvers_path + solver + '/mzn-lib ' + solvers_path + \
         'lt_gt.mzn --output-to-stdout --no-output-ozn'
-  proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
+  proc = psutil.Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   out, err = proc.communicate()
   if proc.returncode != 0:
     print err

@@ -13,7 +13,7 @@ import traceback
 import multiprocessing
 from string import replace
 from socket import gethostname
-from subprocess import Popen, PIPE
+from subprocess import PIPE
 
 SUNNY_HOME = os.environ['SUNNY_HOME']
 sys.path.append(SUNNY_HOME + '/src')
@@ -50,14 +50,13 @@ def kill_process(proc):
   """
   if proc.poll() is None:
     pid = proc.pid
-    process = psutil.Process(pid)
-    for p in process.get_children(recursive = True):
+    for p in proc.children(recursive = True):
       try:
         p.kill()
       except psutil.NoSuchProcess:
 	pass
     try:
-      process.kill()
+      proc.kill()
     except psutil.NoSuchProcess:
       pass
 
@@ -112,6 +111,12 @@ def run_schedule(
       feat_extracted = True
     
     for solver in RUNNING_SOLVERS:
+      if solver.process.memory_percent() > solver.max_memory:
+	print '% Error!',solver.name(),'exceeded the maximum allowed memory'
+	solver_terminated(solver, problem, schedule)
+	continue
+	
+      
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)  
       if lines:
@@ -195,13 +200,13 @@ def run_solver(solver, problem):
     assert False
   
   if solver.status == 'flatzinc':
-    solver.process = Popen(cmd, stdout = PIPE)
+    solver.process = psutil.Popen(cmd, stdout = PIPE)
     # For non-blocking read.
     fd = solver.process.stdout.fileno()
     fl = fcntl.fcntl(fd, fcntl.F_GETFL)
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
   else:
-    solver.process = Popen(cmd)
+    solver.process = psutil.Popen(cmd)
     
   solver.start_time = time.time()
   solver.solution_time = time.time()
@@ -284,8 +289,8 @@ def solver_terminated(solver, problem, schedule):
 	run_solver(new_solver, problem)
   else:
     if solver.process.returncode != 0:
-      # Unexpected termination of solver execution.
-      print '% Error: solver',solver.name(),'failed unexpectedly'
+      # Premature termination of solver execution.
+      print '% Solver',solver.name(),'failed prematurely'
       for s in schedule:
 	if s.name() == solver.name():
 	  schedule.remove(s)
@@ -323,7 +328,8 @@ def init_schedule(schedule, solver_options, solve, tmp_id):
     opts = solver_options[s]['options']
     wt   = float(solver_options[s]['wait_time'])
     rt   = solver_options[s]['restart_time']
-    solver = RunningSolver(eval(s), solve, fzn_path, opts, wt, rt, t)
+    mem  = solver_options[s]['max_memory']
+    solver = RunningSolver(eval(s), solve, fzn_path, opts, wt, rt, mem, t)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule

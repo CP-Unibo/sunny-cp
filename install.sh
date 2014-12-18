@@ -13,6 +13,21 @@ then
 fi
 echo 'OK!'
 
+psv=`python -c "import psutil ; print psutil.__version__[0]"` 2>/dev/null
+if 
+  [ -z $psv ]
+then
+  echo 'Error! psutil package not properly installed'
+  echo 'Aborted.'
+  exit 1
+elif
+  [ $psv -lt 2 ]
+then
+  echo 'Error! psutil package obsolete (need version >= 2.x)'
+  echo 'Aborted.'
+  exit 1
+fi
+
 echo -n 'Testing MiniZinc installation...'
 which minizinc 1>/dev/null
 ret=$?

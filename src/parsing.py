@@ -90,6 +90,12 @@ Options:
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
     
+  --max-memory <PERCENTAGE>
+    The maximum memory allowed (in percentage) for a constituent solver. If such
+    a value is exceeded, the solver process is killed. The default value is 50%
+  --max-memory-<SOLVER> <PERCENTAGE>
+    The maximum memory allowed (in percentage) for <SOLVER>
+    
   -x <AUX_VAR>
     Specifies the name of the auxiliary variable used for tracking the objective 
     function value (for COPs). Note that such variable must not appear in the 
@@ -148,14 +154,16 @@ def parse_arguments(args):
     solver_options = dict((s, {
       'options': DEF_OPTIONS_CSP, 
       'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME
+      'restart_time': DEF_RESTART_TIME,
+      'max_memory': DEF_MAX_MEMORY
       }) for s in DEF_PFOLIO_CSP
     )
   else:
     solver_options = dict((s, {
       'options': DEF_OPTIONS_COP, 
       'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME
+      'restart_time': DEF_RESTART_TIME,
+      'max_memory': DEF_MAX_MEMORY
       }) for s in DEF_PFOLIO_COP
     )
   
@@ -270,6 +278,18 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():  
           item['restart_time'] = rest_time
+    elif o.startswith('--max-memory'):
+      mem = float(a)
+      if mem < 0 or mem > 100:
+	print >> sys.stderr, 'Error!',mem,'is not between 0 and 100'
+        print >> sys.stderr, 'For help use --help'
+        sys.exit(2)
+      if len(o) > 12:
+	solver = o[13:]
+        solver_options[solver]['max_memory'] = mem
+      else:
+	for item in solver_options.values():  
+          item['max_memory'] = mem
     elif o == '-x':
       aux_var = a
     elif o == '--keep':
@@ -322,7 +342,7 @@ def get_args(args):
   dzn = ''
   try:
     options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'a', 'f']
-    long_options = ['fzn-options', 'wait-time', 'restart-time']
+    long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
     long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]

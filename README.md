@@ -35,6 +35,9 @@ on other platforms. Some of the main requirements are:
 + mzn2feat 1.0
   http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
 
++ psutil 2.X
+  https://pypi.python.org/pypi/psutil
+
 SOLVERS
 =======
 
