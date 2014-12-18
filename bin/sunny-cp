@@ -24,8 +24,8 @@ from features       import *
 from scheduling     import *
 from pfolio_solvers import *
 
-# Dictionary (name, solver) of the running solvers.
-RUNNING_SOLVERS = {}
+# List of the running solvers.
+RUNNING_SOLVERS = []
 # If KEEP, don't delete temporary files.
 KEEP = False
 # List of temporary file paths.
@@ -67,13 +67,51 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  for solver in RUNNING_SOLVERS.values():
+  for solver in RUNNING_SOLVERS:
     kill_process(solver.process)
   # Possibly remove temporary files.
   if not KEEP:
     for f in TMP_FILES:
       if os.path.exists(f):
 	os.remove(f)
+
+#def presolve(problem, static_sched, extractor, cores, pfolio_size):
+  #"""
+  #FIXME: Document.
+  #Faccio correre ogni solver nell'ordine specificato dall'utente. E' quindi 
+  #l'utente che si deve prendere cura di dosare l'allocazione dei solvers.
+  #Quando l'ultimo solver termina finisce il pre_solving, ritornando 
+  #una coppia (feat_vector, tempo impiegato).
+  #L'estrazione delle features viene effettuata non appena c'e' un processore 
+  #libero, nel caso vi siano piu' solver che processori.
+  #Se static_schedule = [], semplicemente estrae le features (se n < m).
+  #"""
+  
+  #if cores >= pfolio_size:
+    ## If the number of specified cores execeeds the number of, no prediction is 
+    ## needed: we simply allocate a core per solver.
+    #return ([], 0)
+  
+  #start_time = time.time()
+  #feat_extracted = False
+  ## Controllo l'esecuzione dei solvers in esecuzione
+  #while (running_solvers):
+    #for solver in running_solvers:
+      #gestisci_output(solver)
+      #eventualmente_restart(solver)
+      #if fails(solver):
+        #rimuovere da static_schedule e pfolio!
+      #if timeout(solver):
+	#sospendi(solver)
+	#static_schedule.remove(solver)
+	#if static_schedule not empty:
+	  #lancia_solver(static_schedule.pop(0)) # eventualm. resume
+	#elif n < m and not feat_extracted:
+	  #feat_vector = extract_features(pb)
+	  #feat_extracted = True
+
+  ## Ritorno feat_vector e il tempo impiegato per lo static	    
+  #return (feat_vector, time.time() - start_time)
 
 def run_schedule(schedule, problem, cores):
   """
@@ -91,7 +129,7 @@ def run_schedule(schedule, problem, cores):
   while RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
     
-    for solver in RUNNING_SOLVERS.values():
+    for solver in RUNNING_SOLVERS:
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)  
       if lines:
@@ -111,7 +149,7 @@ def run_schedule(schedule, problem, cores):
 	 time.time() - solver.solution_time > solver.wait_time:
 	   kill_process(solver.process)
 	   print '% Timeout expired for',solver.name()
-	   del RUNNING_SOLVERS[solver.name()]
+	   RUNNING_SOLVERS.remove(solver)
 	   if schedule:
              solver = schedule.pop(0)
              print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
@@ -161,7 +199,7 @@ def run_solver(solver, problem):
     solver.process = Popen(cmd)
   solver.start_time = time.time()
   solver.solution_time = time.time()
-  RUNNING_SOLVERS[solver.name()] = solver
+  RUNNING_SOLVERS.append(solver)
 
 def read_lines(proc):
   """
@@ -228,7 +266,7 @@ def solver_terminated(solver, problem, schedule):
       run_solver(solver, problem)
     else:
       print '% Error! MiniZinc model not converted by',solver.name()
-      del RUNNING_SOLVERS[solver.name()]
+      RUNNING_SOLVERS.remove(solver)
       # Launch a new solver if any.
       for s in schedule:
 	if s.name() == solver.name():
@@ -239,7 +277,7 @@ def solver_terminated(solver, problem, schedule):
 	print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
 	run_solver(new_solver, problem)
   else:
-    del RUNNING_SOLVERS[solver.name()]
+    RUNNING_SOLVERS.remove(solver)
     if solver.process.returncode != 0:
       # Unexpected termination of solver execution.
       print '% Error: solver',solver,'failed unexpectedly'
@@ -253,7 +291,7 @@ def solver_terminated(solver, problem, schedule):
       print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
       run_solver(new_solver, problem)
 
-def setup(problem, par_sched, solver_options, tmp_dir):
+def setup(problem, schedule, solver_options, tmp_dir):
   """
   Prepares the execution of a schedule by setting the proper parameters.
   """
@@ -268,16 +306,16 @@ def setup(problem, par_sched, solver_options, tmp_dir):
     out_path = tmp_id + '.out'
     problem = problem.make_cpy(mzn_path, out_path, aux = True)
     TMP_FILES += [mzn_path, out_path]
-  schedule = []
-  for (s, t) in par_sched:
+  setup_schedule = []
+  for (s, t) in schedule:
     fzn_path = tmp_id + '.' + s + '.fzn'
     opts = solver_options[s]['options']
     wt   = float(solver_options[s]['wait_time'])
     rt   = solver_options[s]['restart_time']
     solver = RunningSolver(eval(s), problem.solve, fzn_path, opts, wt, rt, t)
-    schedule.append(solver)
+    setup_schedule.append(solver)
     TMP_FILES += [fzn_path]
-  return problem, schedule
+  return problem, setup_schedule
 
 def main(args):
   global KEEP
@@ -285,6 +323,10 @@ def main(args):
   cores, solver_options, tmp_dir, KEEP = parse_arguments(args)
 
   try:
+    #presolve(problem, static_sched, extractor, cores, len(pfolio))
+    
+    #clean()
+    #sys.exit(0)
     print '% Extracting features...'
     feat_vector = extractor.extract_features([problem, lims])
 
