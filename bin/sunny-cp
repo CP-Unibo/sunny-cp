@@ -143,28 +143,32 @@ def run_schedule(schedule, problem, cores):
           if lines:
 	    process_output(solver, problem, lines)
         solver_terminated(solver, problem, schedule)
+        continue
       
       # Expired timeout.
       if time.time() - solver.start_time > solver.timeout and \
 	 time.time() - solver.solution_time > solver.wait_time:
 	   kill_process(solver.process)
-	   print '% Timeout expired for',solver.name()
 	   RUNNING_SOLVERS.remove(solver)
+	   print '% Timeout expired for',solver.name()
 	   if schedule:
              solver = schedule.pop(0)
              print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
              run_solver(solver, problem)
-	   
+	   continue
+	 
       # Restart a solver if its solution is obsolete.
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
 	kill_process(solver.process)
+	RUNNING_SOLVERS.remove(solver)
 	print '% Restarting',solver.name()
 	solver.timeout = max(
 	  solver.timeout - (time.time() - solver.start_time), 0
 	)
 	run_solver(solver, problem)
+	continue
 
 def run_solver(solver, problem):
   global RUNNING_SOLVERS
@@ -257,6 +261,7 @@ def solver_terminated(solver, problem, schedule):
   """
   Handles the termination of a solver process, possibly launching a new solver.
   """
+  RUNNING_SOLVERS.remove(solver)
   if solver.status == 'mzn2fzn':
     if solver.process.returncode == 0:
       print '% MiniZinc model converted by ' + solver.name() + '.',
@@ -266,7 +271,6 @@ def solver_terminated(solver, problem, schedule):
       run_solver(solver, problem)
     else:
       print '% Error! MiniZinc model not converted by',solver.name()
-      RUNNING_SOLVERS.remove(solver)
       # Launch a new solver if any.
       for s in schedule:
 	if s.name() == solver.name():
@@ -277,10 +281,9 @@ def solver_terminated(solver, problem, schedule):
 	print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
 	run_solver(new_solver, problem)
   else:
-    RUNNING_SOLVERS.remove(solver)
     if solver.process.returncode != 0:
       # Unexpected termination of solver execution.
-      print '% Error: solver',solver,'failed unexpectedly'
+      print '% Error: solver',solver.name(),'failed unexpectedly'
       for s in schedule:
 	if s.name() == solver.name():
 	  schedule.remove(s)
