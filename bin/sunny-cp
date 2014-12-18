@@ -115,7 +115,6 @@ def run_schedule(
 	print '% Error!',solver.name(),'exceeded the maximum allowed memory'
 	solver_terminated(solver, problem, schedule)
 	continue
-	
       
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)  
@@ -361,6 +360,9 @@ def main(args):
     else:
       timeout -= round(static_time)
       print '% Computing solvers schedule...'
+      #TODO: From Here. Consider that if len(seq_schedule) <= cores, then all 
+      # the solvers in parallel + possible padding with not_scheduled.
+      # Parallelization is useless if num solvers <= cores (edit parallelize).
       dynamic_sched = sunny(
         problem, pfolio, backup, feat_vector, k, timeout, kb
       )
