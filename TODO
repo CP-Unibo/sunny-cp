@@ -1,17 +1,5 @@
 - come gestire quando un solver va in timeout a tempo t >= T, e ci sono altri 
-  solvers sospesi/non-schedulati? (v. FIXME) si prende il primo dei sospesi? 
-  in che ordine? (in questo caso rischio di non eseguire mai i non-schedulati),
-  si prende il primo dei non-schedulati (stessi problemi), quanto timeout gli 
-  diamo? T? +inf? Boh? Infatti sunny-cp non segue il timeout di SUNNY, i primi 
-  n - 1 processori corrono a tempo indefinito.
-  Per ora semplicemente libero quel processore, che mi sembra una soluzione 
-  semplice e naturale. Infatti possiamo sempre dire: 
-  "Se un solver fallisce prima del suo timeout, il rimanente tempo viene 
-  allocato agli altri" in quanto in questo caso non fallisce prima del timeout
-  ma semplicemente esaurisce il tempo a disposizione. 
-  Anche perchè: se un solver è sospeso, significa che ha già corso senza 
-  particolare successo. Se non è schedulato, probabilmente è un solver scarso.
-  L'unica eccezione la farei se:
+  solvers sospesi/non-schedulati? Si libera CPU, unica eccezione se:
   - il solver che va in timeout è l'unico rimasto in esecuzione: in questo caso, 
     si lascia andare a tempo indefinito: solver.timeout = +inf
   - il miglior solver fino a quel momento è sospeso: in questo caso, lascio 
@@ -19,8 +7,8 @@
 
 - sospendere solvers (no need SUSPENDED_SOLVERS? status susp_mzn, susp_fzn)
 
-- documenting + testing (coverage?) 
+- Docker (www.docker.com) documenting + testing (coverage?)
 
-- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente)
+- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
 
 - filtrare dataset, solvers, features x ridurre complessità
