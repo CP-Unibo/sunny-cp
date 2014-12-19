@@ -6,6 +6,7 @@ RunningSolver is instead a solver running on a given FlatZinc model.
 '''
 
 import uuid
+import psutil
 from shutil import move
 from string import replace
 
