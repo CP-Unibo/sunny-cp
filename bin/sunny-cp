@@ -75,7 +75,8 @@ def clean():
         os.remove(f)
 
 def run_schedule(
-  schedule, problem, cores, presolve = False, extractor = None, lims = None
+  schedule, problem, cores, mem_limit, 
+  presolve = False, extractor = None, lims = None
 ):
   """
   Runs (possibly in parallel on different cores) a schedule of solvers.
@@ -84,13 +85,16 @@ def run_schedule(
   If presolve = True, it is also possible to perform the feature extraction by 
   setting the "extractor" and "lims" parameters. Feature extraction is performed 
   as soon as a free core is available. 
-  If presolve = True this function returns a pair (t, f) where:
+  If presolve = True this function returns a triple (t, f, b) where:
     - t is the time taken by the presolve phase
     - f is the (possibly empty) feature vector of the problem
+    - b is the (possibly empry) black list of the name of the solvers that 
+      failed during the pre-solving fase
   """
   if presolve:
     start_time = time.time()
     feat_vector = []
+    black_list = []
     if extractor:
       feat_extracted = False
     
@@ -110,10 +114,20 @@ def run_schedule(
       feat_vector = extractor.extract_features([problem, lims])
       feat_extracted = True
     
+    if sum(s.mem_percent() for s in RUNNING_SOLVERS) > mem_limit:
+      solver = max(RUNNING_SOLVERS, key = lambda s: s.mem_percent())
+      print '% Warning! sunny-cp exceeded the maximum allowed memory'
+      print '% Killing solver',solver.name()
+      kill_process(solver.process)
+      solver_terminated(solver, problem, schedule)
+      continue
+    
     for solver in RUNNING_SOLVERS:
       if solver.process.memory_percent() > solver.max_memory:
 	print '% Error!',solver.name(),'exceeded the maximum allowed memory'
 	solver_terminated(solver, problem, schedule)
+	if presolve:
+	  black_list.append(solver.name())
 	continue
       
       # Read and process lines from the output stream of each process.
@@ -129,6 +143,8 @@ def run_schedule(
           if lines:
 	    process_output(solver, problem, lines)
         solver_terminated(solver, problem, schedule)
+        if presolve and solver.process.returncode != 0:
+	  black_list.append(solver.name())
         continue
       
       # Expired timeout.
@@ -168,7 +184,7 @@ def run_schedule(
 	continue
 
   if presolve:
-    return feat_vector, time.time() - start_time
+    return feat_vector, time.time() - start_time, black_list
 
 def run_solver(solver, problem):
   """
@@ -206,7 +222,6 @@ def run_solver(solver, problem):
     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
   else:
     solver.process = psutil.Popen(cmd)
-    
   solver.start_time = time.time()
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
@@ -338,7 +353,7 @@ def main(args):
     # Initialization.
     global KEEP
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_dir, KEEP = parse_arguments(args)
+    solver_options, tmp_dir, mem_limit, KEEP = parse_arguments(args)
   
     tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
     problem = init_problem(problem, tmp_id)
@@ -350,8 +365,8 @@ def main(args):
       print '% Features extraction not needed!'
       extractor = None
       lims = None
-    feat_vector, static_time = run_schedule(
-      static, problem, cores, True, extractor, lims
+    feat_vector, static_time, black_list = run_schedule(
+      static, problem, cores, mem_limit, True, extractor, lims
     )
     if not feat_vector:
       if extractor:
@@ -363,6 +378,7 @@ def main(args):
       #TODO: From Here. Consider that if len(seq_schedule) <= cores, then all 
       # the solvers in parallel + possible padding with not_scheduled.
       # Parallelization is useless if num solvers <= cores (edit parallelize).
+      pfolio = [s for s in pfolio if s not in black_list]
       dynamic_sched = sunny(
         problem, pfolio, backup, feat_vector, k, timeout, kb
       )
@@ -372,7 +388,7 @@ def main(args):
     # Solving.
     print '% Solving...'
     schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_dir)
-    run_schedule(schedule, problem, cores)
+    run_schedule(schedule, problem, cores, mem_limit)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'

@@ -66,6 +66,10 @@ Options:
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system
+  
+  -m <MEM_PERCENTAGE>
+    Sets the maximum memory allowed in percentage for sunny-cp. By default, this
+    value is set to 50%.
     
   --fzn-options "<OPTIONS>"
     Allows to run each selected solver on its specific FlatZinc model by using 
@@ -89,12 +93,12 @@ Options:
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
-    
-  --max-memory <PERCENTAGE>
-    The maximum memory allowed (in percentage) for a constituent solver. If such
+
+  --max-memory <MEM_PERCENTAGE>
+    The maximum memory allowed in percentage for a constituent solver. If such
     a value is exceeded, the solver process is killed. The default value is 50%
-  --max-memory-<SOLVER> <PERCENTAGE>
-    The maximum memory allowed (in percentage) for <SOLVER>
+  --max-memory-<SOLVER> <MEM_PERCENTAGE>
+    The maximum memory allowed in percentage for <SOLVER>
     
   -x <AUX_VAR>
     Specifies the name of the auxiliary variable used for tracking the objective 
@@ -150,12 +154,13 @@ def parse_arguments(args):
   wait_time = DEF_WAIT_TIME
   restart_time = DEF_RESTART_TIME
   aux_var = DEF_AUX_VAR
+  mem_limit = DEF_MEM_LIMIT
   if solve == 'sat':
     solver_options = dict((s, {
       'options': DEF_OPTIONS_CSP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      'max_memory': DEF_MAX_MEMORY
+      'max_memory': DEF_MEM_LIMIT
       }) for s in DEF_PFOLIO_CSP
     )
   else:
@@ -163,7 +168,7 @@ def parse_arguments(args):
       'options': DEF_OPTIONS_COP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      'max_memory': DEF_MAX_MEMORY
+      'max_memory': DEF_MEM_LIMIT
       }) for s in DEF_PFOLIO_COP
     )
   
@@ -247,6 +252,8 @@ def parse_arguments(args):
         tmp_dir = a[0 : -1]
       else:
         tmp_dir = a
+    elif o == '-m':
+      mem_limit = float(a)
     elif o.startswith('--fzn-options'):
       if len(o) > 13:
         solver = o[14:]
@@ -333,7 +340,7 @@ def parse_arguments(args):
     
   problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_dir, keep
+    cores, solver_options, tmp_dir, mem_limit, keep
 
 def get_args(args):
   """
@@ -341,7 +348,7 @@ def get_args(args):
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'a', 'f']
+    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'a', 'f', 'm']
     long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
     long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
@@ -349,7 +356,7 @@ def get_args(args):
     long_options = [o + '=' for o in long_options]
     long_options += ['help', 'keep', 'g12'] + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'hafT:k:P:b:K:s:d:p:e:x:', long_options
+      args, 'hafT:k:P:b:K:s:d:p:e:x:m:', long_options
     )
   except getopt.error, msg:
     print msg
