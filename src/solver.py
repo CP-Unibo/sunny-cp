@@ -103,6 +103,15 @@ class RunningSolver:
   def name(self):
     return self.solver.name
   
+  def mem_percent(self):
+    m = self.process.memory_percent()
+    for p in self.process.children(recursive = True):
+      try:
+        m += p.memory_percent()
+      except psutil.NoSuchProcess:
+	pass
+    return m
+  
   def mzn2fzn_cmd(self, pb):
     '''
     Returns the command for converting a given MiniZinc model to FlatZinc by 
@@ -135,7 +144,7 @@ class RunningSolver:
     if self.solve == 'min':
       lt = self.solver.lt_constraint
       constraint = lt.replace('llt', self.obj_var).replace('rlt', str(bound))
-    elif self.solver == 'max':
+    elif self.solve == 'max':
       gt = self.solver.gt_constraint
       constraint = gt.replace('lgt', self.obj_var).replace('rgt', str(bound))
     else:
