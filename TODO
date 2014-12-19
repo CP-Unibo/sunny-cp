@@ -16,8 +16,6 @@
     si lascia andare a tempo indefinito: solver.timeout = +inf
   - il miglior solver fino a quel momento è sospeso: in questo caso, lascio 
     correre tale solver a tempo indefinito: solver.timeout = +inf
-  
-- fissare solving dinamico
 
 - sospendere solvers (no need SUSPENDED_SOLVERS? status susp_mzn, susp_fzn)
 

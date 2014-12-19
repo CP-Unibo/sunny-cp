@@ -168,40 +168,15 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
   )
   return sorted_schedule
 
-def parallelize(static_sched, dynamic_sched, cores, timeout, pfolio):
+def parallelize(seq_sched, cores, timeout):
   '''
-  Returns a parallel schedule of the solvers.
-  ''' 
-  not_scheduled = [s for s in pfolio if s not in dict(dynamic_sched).keys()]
-  
-  par_schedule = []
-  for i in range(0, cores - 1):
-    if not dynamic_sched:
-      break
-    par_schedule.append((dynamic_sched.pop(0)[0], timeout))
-  
-  last_time = timeout
-  while static_sched:
-    (s, t) = static_sched.pop(0)
-    if not static_sched and (not dynamic_sched or s == dynamic_sched[0][0]):
-      break
-    par_schedule.append((s, t))
-    last_time -= t
-      
-  dyn_time = sum(t for (s, t) in dynamic_sched)
-  if last_time and dyn_time:
-    while dynamic_sched:
-      (s, t) = dynamic_sched.pop(0)
-      new_time = t * last_time / dyn_time
-      par_schedule.append((s, new_time))
-      
-  for i in range(len(par_schedule), cores):
-    if not_scheduled:
-      par_schedule.append((not_scheduled.pop(0), timeout))
-  
-  while not_scheduled:
-    par_schedule.append((not_scheduled.pop(0), 0))
-  
-  assert not static_sched and not dynamic_sched and not not_scheduled
-  
-  return par_schedule
+  Given a sequential schedule of n > cores solvers, returns its parallelization.
+  '''
+  sort_sched = sorted(seq_sched, key = lambda x: x[1], reverse = True)
+  par_sched = [(s, float('+inf')) for (s, _) in sort_sched[:cores - 1]]
+  seq_sched = [x for x in seq_sched if x[0] not in dict(par_sched).keys()]
+  seq_time = sum(t for (_, t) in seq_sched)
+  for (s, t) in seq_sched:
+    par_sched.append((s, t * timeout / seq_time))
+  assert round(sum(t for (s, t) in par_sched[cores - 1:]), 5) == timeout
+  return par_sched
