@@ -358,7 +358,7 @@ def main(args):
     tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
     problem = init_problem(problem, tmp_id)
     static  = init_schedule(static, solver_options, problem.solve, tmp_id)
-    print '% Pre-solving...'
+    print '%%%%% Pre-solving %%%%%'
     if cores >= len(pfolio):
       # If the number of specified cores execeeds the portfolio size, then no 
       # prediction is needed: we simply allocate a core per solver.
@@ -368,25 +368,31 @@ def main(args):
     feat_vector, static_time, black_list = run_schedule(
       static, problem, cores, mem_limit, True, extractor, lims
     )
-    if not feat_vector:
+    
+    print '%%%%% Solving %%%%%'
+    pfolio = [s for s in pfolio if s not in black_list]
+    if not feat_vector or len(pfolio) <= cores:
       if extractor:
         print '% Features extraction failed! Switching to backup solver(s).'
-      dynamic_sched = [(s, float(timeout) / cores) for s in pfolio[:cores]]
+      if len(pfolio) <= cores:
+	print '% Portfolio size <= No. of cores: no prediction needed!'
+      par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
     else:
-      timeout -= round(static_time)
       print '% Computing solvers schedule...'
-      #TODO: From Here. Consider that if len(seq_schedule) <= cores, then all 
-      # the solvers in parallel + possible padding with not_scheduled.
-      # Parallelization is useless if num solvers <= cores (edit parallelize).
-      pfolio = [s for s in pfolio if s not in black_list]
-      dynamic_sched = sunny(
-        problem, pfolio, backup, feat_vector, k, timeout, kb
-      )
-      print '% SUNNY sequential schedule:',dynamic_sched
-    par_sched = parallelize([], dynamic_sched, cores, timeout, pfolio)
+      timeout -= round(static_time)
+      seq_sched = sunny(problem, pfolio, backup, feat_vector, k, timeout, kb)
+      print '% SUNNY sequential schedule:',seq_sched
+      if len(seq_sched) <= cores:
+	print '% Schedule size <= No. of cores! No re-scheduling needed!'
+	par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
+	not_sched = [s for s in pfolio if s not in dict(par_sched).keys()]
+	for s in not_sched:
+	  par_sched.append((s, float('+inf')))
+      else:
+	print '% Parallelizing schedule on',cores,'cores'
+        par_sched = parallelize(seq_sched, cores, timeout)
+        
     print '% SUNNY parallel schedule:',par_sched
-    # Solving.
-    print '% Solving...'
     schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_dir)
     run_schedule(schedule, problem, cores, mem_limit)
     
