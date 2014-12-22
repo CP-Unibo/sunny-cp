@@ -1,11 +1,10 @@
-- come gestire quando un solver va in timeout a tempo t >= T, e ci sono altri 
-  solvers sospesi/non-schedulati? Si libera CPU, unica eccezione se:
-  - il solver che va in timeout è l'unico rimasto in esecuzione: in questo caso, 
-    si lascia andare a tempo indefinito: solver.timeout = +inf
-  - il miglior solver fino a quel momento è sospeso: in questo caso, lascio 
-    correre tale solver a tempo indefinito: solver.timeout = +inf
+- togliere --mem-limit, tenere solo -m con FIXME e default 100%
 
-- sospendere solvers (no need SUSPENDED_SOLVERS? status susp_mzn, susp_fzn)
+- sospendere solvers (status susp_mzn, susp_fzn)
+  timeout --> SUSP.
+  run_solver --> if ready, check SUSP.
+  fails --> check not_sched,SUSP.
+  clean SUSP.
 
 - Docker (www.docker.com) documenting + testing (coverage?)
 

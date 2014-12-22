@@ -14,22 +14,16 @@ In a nutshell, sunny-cp relies on two sequential steps:
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
-Options:
-
-  -h, --help
-    Print this message
-    
+SUNNY-CP Options:    
   -T <TIMEOUT>
     Timeout (in seconds) of SUNNY algorithm, used at runtime for predicting the 
     schedule of solvers to be run. Actually, T will be subtracted by C seconds 
     where C is the time taken by the pre-solving phase (i.e., static schedule 
     and feature extraction). Note that T IS NOT the timeout of the whole solving 
     process, which has to be set externally. The default value is T = 1800.
-    
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
     k is 70, while the distance metric is the Euclidean one
-  
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
     form s_1,s_2,...,s_m. Note that such solvers must be a not empty subset of 
@@ -38,39 +32,35 @@ Options:
     executed according to such ordering. This option can be used to select a 
     particular sub-portfolio or even to change the default ordering of the 
     solvers, which is by default: TODO
-  
   -b <SOLVER>
     Set the backup solver of the portfolio. It must belong to the specified 
     portfolio. The default backup solver is chuffed
-    
   --g12
     Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
     This is equivalent to set -P g12cbc,g12cpx,g12fd,g12lazyfd and -b g12cpx
-    
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
     knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
     README file in SUNNY_HOME/kb folder
-  
   -s <SCHEDULE>
     Specifies a static schedule to be run before executing the SUNNY algorithm. 
     The schedule must be passed in the form: 
       s_1,t_1,s_2,t_2,...,s_m,t_m
     where each s_i belongs to the specified portfolio, and t_i is the timeout 
     (in seconds) for s_i. The static schedule is empty by default
-    
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is mzn2feat, but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
-    
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system
-  
   -m <MEM_PERCENTAGE>
     Sets the maximum memory allowed in percentage for sunny-cp. By default, this
-    value is set to 50%.
-    
+    value is set to 100%, since the memory check can be resource consuming: it 
+    is suggested to set a value lower than 100 only if you are sure that the 
+    solving process is very space consuming.
+
+Solvers Options:    
   --fzn-options "<OPTIONS>"
     Allows to run each selected solver on its specific FlatZinc model by using 
     the options specified in <OPTIONS> string. No checks are performed on that 
@@ -79,13 +69,11 @@ Options:
     problem, according to the MiniZinc Challenge rules.
   --fzn-options-<SOLVER_NAME> "<OPTIONS>"
     Runs the solver <SOLVER_NAME> with the options specified in <OPTIONS>
-
   --wait-time <TIME>
     Don't stop a running solver if it has produced a solution in the last <TIME> 
     seconds. By default, <TIME> is 2 seconds. Also the constant +inf is allowed
   --wait-time-<SOLVER> <TIME>
-    Don't stop <SOLVER> if it has produced a solution in the last <TIME> seconds
-  
+    Don't stop <SOLVER> if it has produced a solution in the last <TIME> seconds  
   --restart-time <TIME>
     Restart a constituent solver if its best solution is obsolete and it has not 
     produced a solution in the last <TIME> seconds. 
@@ -93,39 +81,31 @@ Options:
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
-
-  --max-memory <MEM_PERCENTAGE>
-    The maximum memory allowed in percentage for a constituent solver. If such
-    a value is exceeded, the solver process is killed. The default value is 50%
-  --max-memory-<SOLVER> <MEM_PERCENTAGE>
-    The maximum memory allowed in percentage for <SOLVER>
     
+Helper Options:
+  -h, --help
+    Print this message
   -x <AUX_VAR>
     Specifies the name of the auxiliary variable used for tracking the objective 
     function value (for COPs). Note that such variable must not appear in the 
-    MiniZinc model to be solved. The default variable name is o__b__j__v__a__r
-    
+    MiniZinc model to be solved. The default variable name is o__b__j__v__a__r    
   -d <PATH> 
     Absolute path of the folder in which the temporary files created by the 
     solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
-    such files are deleted after sunny-cp execution  
-    
+    such files are deleted after sunny-cp execution      
   --keep
     Do not erase the temporary files created by the solver and stored in the 
-    specified directory (useful for debugging). This option is unset by default
-    
+    specified directory (useful for debugging). This option is unset by default    
   --csp-<OPTION> <VALUE>
     Allows to set the specific option only if the input problem is a CSP. Note 
     that the '-' character of <OPTION> must be omitted
     For example, --csp-T 900 set the T parameter to 900 only if the problem is a 
-    CSP, while such option is ignored for COPs
-    
+    CSP, while such option is ignored for COPs    
   --cop-<OPTION> <VALUE>
     Allows to set the specific option only if the input problem is a COP. Note 
     that the '-' character of <OPTION> must be omitted.
     For example, --cop-T 900 set the T parameter to 900 only if the problem is a 
     COP, while such option is ignored for CSPs
-  
   -a, -f
     For compatibility with MiniZinc Challenge rules. Note that these options are 
     deprecated, since always ignored: if needed, use --fzn-options
@@ -160,7 +140,6 @@ def parse_arguments(args):
       'options': DEF_OPTIONS_CSP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      'max_memory': DEF_MEM_LIMIT
       }) for s in DEF_PFOLIO_CSP
     )
   else:
@@ -168,7 +147,6 @@ def parse_arguments(args):
       'options': DEF_OPTIONS_COP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      'max_memory': DEF_MEM_LIMIT
       }) for s in DEF_PFOLIO_COP
     )
   
@@ -285,18 +263,6 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():  
           item['restart_time'] = rest_time
-    elif o.startswith('--max-memory'):
-      mem = float(a)
-      if mem < 0 or mem > 100:
-	print >> sys.stderr, 'Error!',mem,'is not between 0 and 100'
-        print >> sys.stderr, 'For help use --help'
-        sys.exit(2)
-      if len(o) > 12:
-	solver = o[13:]
-        solver_options[solver]['max_memory'] = mem
-      else:
-	for item in solver_options.values():  
-          item['max_memory'] = mem
     elif o == '-x':
       aux_var = a
     elif o == '--keep':

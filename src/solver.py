@@ -48,9 +48,6 @@ class RunningSolver:
   # solution in the last restart_time sec.
   restart_time = -1
   
-  # Maximum memory usage allowed (in percentage) for the solving process.
-  max_memory = -1
-  
   # Timeout in seconds of the solving process.
   timeout = -1
   
@@ -84,8 +81,7 @@ class RunningSolver:
   process = None
   
   def __init__(
-    self, solver, solve, fzn_path, options, 
-    wait_time, restart_time, max_memory, timeout
+    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
   ):
     self.status       = 'ready'
     self.solver       = solver
@@ -98,7 +94,6 @@ class RunningSolver:
     self.fzn_options  = options
     self.wait_time    = wait_time
     self.restart_time = restart_time
-    self.max_memory   = max_memory
     self.timeout      = timeout
   
   def name(self):
