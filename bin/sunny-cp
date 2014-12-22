@@ -113,25 +113,21 @@ def run_schedule(
       print '% Extracting features...'
       feat_vector = extractor.extract_features([problem, lims])
       feat_extracted = True
-    
-    if sum(s.mem_percent() for s in RUNNING_SOLVERS) > mem_limit:
-      solver = max(RUNNING_SOLVERS, key = lambda s: s.mem_percent())
-      print '% Warning! sunny-cp exceeded the maximum allowed memory'
-      print '% Killing solver',solver.name()
-      kill_process(solver.process)
-      solver_terminated(solver, problem, schedule)
-      continue
+
+    if mem_limit < 100:
+      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
+      if sum(mems.values()) > mem_limit:
+	solver = max(mems.items(), key = lambda x: x[1])[0]
+	print '% Warning! sunny-cp exceeded the maximum allowed memory'
+	print '% Killing solver',solver.name()
+	kill_process(solver.process)
+	solver_terminated(solver, problem, schedule)
+        continue
     
     for solver in RUNNING_SOLVERS:
-      if solver.process.memory_percent() > solver.max_memory:
-	print '% Error!',solver.name(),'exceeded the maximum allowed memory'
-	solver_terminated(solver, problem, schedule)
-	if presolve:
-	  black_list.append(solver.name())
-	continue
       
       # Read and process lines from the output stream of each process.
-      lines = read_lines(solver.process)  
+      lines = read_lines(solver.process)
       if lines:
 	process_output(solver, problem, lines)
       
@@ -150,22 +146,27 @@ def run_schedule(
       # Expired timeout.
       if time.time() - solver.start_time > solver.timeout and \
 	 time.time() - solver.solution_time > solver.wait_time:
-	   kill_process(solver.process)
-	   RUNNING_SOLVERS.remove(solver)
 	   print '% Timeout expired for',solver.name()
 	   if schedule:
-             solver = schedule.pop(0)
-             if solver.timeout == 0:
-	       # FIXME: In this case, all the scheduled solvers have been run 
-	       # (or are running on another core) while the removed solver ran 
-	       # out of time. There is still (at least) a solver that never run, 
-	       # but we don't know how much time assign to it. This happens when 
-	       # the global timeout T is reached. However, note that T refers to 
-	       # the timeout of SUNNY algorithm and not of the solving process.
-	       # At the moment we simply ignore that solver (and all subsequent 
-	       # solvers). Alternative choices?
-	       schedule = []
+             new_solver = schedule.pop(0)
+             if new_solver.timeout == 0:
+	       # In this case, all the scheduled solvers have been run (or are 
+	       # running on another core). This happens at time t >= T, where T 
+	       # is the timeout T of SUNNY algorithm.
+	       if len(RUNNING_SOLVERS) == 1:
+		 print '% Solver not interrupted: it is the only running solver'
+	         solver.timeout = float("+inf")
+	       #elif: TODO: best_solver in SUSPENDED_SOLVERS: run best_solver 
+	       # with solver.timeout = float("+inf")
+	       else:
+		 kill_process(solver.process)
+	         RUNNING_SOLVERS.remove(solver)
+	         schedule = []
 	     else:
+	       # TODO: suspend_process
+	       kill_process(solver.process)
+	       RUNNING_SOLVERS.remove(solver)
+	       solver = new_solver
                print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
                run_solver(solver, problem)
 	   continue
@@ -342,8 +343,7 @@ def init_schedule(schedule, solver_options, solve, tmp_id):
     opts = solver_options[s]['options']
     wt   = float(solver_options[s]['wait_time'])
     rt   = solver_options[s]['restart_time']
-    mem  = solver_options[s]['max_memory']
-    solver = RunningSolver(eval(s), solve, fzn_path, opts, wt, rt, mem, t)
+    solver = RunningSolver(eval(s), solve, fzn_path, opts, wt, rt, t)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
