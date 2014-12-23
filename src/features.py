@@ -1,13 +1,13 @@
 '''
 Module for defining a feature extractor that computes the feature vector of a 
-new instance. A feature extractor is simply a class that implements the static 
-method extract_features(args) to return the feature vector. 
+problem. A feature extractor is simply a class that implements the static method
+extract_features(args) to return the feature vector. 
 The default extractor is mzn2feat, but the user can define its own extractor by 
 simply implementing a corresponding new class (see example below).
 
 Actually using a static class is no more powerful than using only functions. 
-This is done for keeping all the auxiliary functions in the same class and 
-for possible future extensions.
+This is done for keeping all the auxiliary functions in the same class and for 
+possible future extensions.
 '''
 
 from math import isnan

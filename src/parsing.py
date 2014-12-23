@@ -16,7 +16,8 @@ In a nutshell, sunny-cp relies on two sequential steps:
   2. SOLVING: consists in the parallel execution of a number of predicted 
               solvers, selected by means of SUNNY algorithm.
               (possibly) selected by means of SUNNY algorithm
-  
+
+
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
 Portfolio Options

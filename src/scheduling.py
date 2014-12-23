@@ -8,9 +8,9 @@ from combinations import *
 from multiprocessing import cpu_count
 
 def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, size = cpu_count()):
-  '''
+  """
   Returns the sequential schedule computed by SUNNY algorithm.
-  '''
+  """
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
   infos = {}
   feat_vectors = {}
@@ -57,7 +57,7 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size):
         solved[solver].add(inst)
       times[solver] += time
   max_solved = 0
-  min_time = 1000000
+  min_time = float('+inf')
   best_pfolio = []
   m = len(pfolio)
   # Select the best sub-portfolio. size is the minimum cardinality.
@@ -120,8 +120,8 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
       times[solver] += item[solver]['time']
       areas[solver] += item[solver]['area']
   max_score = 0
-  min_time = 1000000000
-  min_area = 1000000000
+  min_time = float('+inf')
+  min_area = float('+inf')
   best_pfolio = []
   # Select the best sub-portfolio.
   m = len(pfolio)
@@ -169,9 +169,9 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
   return sorted_schedule
 
 def parallelize(seq_sched, cores, timeout):
-  '''
+  """
   Given a sequential schedule of n > cores solvers, returns its parallelization.
-  '''
+  """
   sort_sched = sorted(seq_sched, key = lambda x: x[1], reverse = True)
   par_sched = [(s, float('+inf')) for (s, _) in sort_sched[:cores - 1]]
   seq_sched = [x for x in seq_sched if x[0] not in dict(par_sched).keys()]
