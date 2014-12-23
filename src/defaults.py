@@ -12,16 +12,13 @@ DEF_K_COP = 70
 DEF_TOUT_CSP = 1800
 DEF_TOUT_COP = 1800
 
-# FIXME: Change this ordering.
 DEF_PFOLIO_CSP = [
-  'chuffed',  'g12cpx', 'minisatid', 'gecode',
-  'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc',
-  'haifacsp', 'ortools', 'choco', 'izplus'
+  'chuffed','g12cpx','haifacsp','izplus','g12lazyfd','minisatid',
+  'g12fd','choco','gecode','ortools','g12gurobi','g12cbc'
 ]
 DEF_PFOLIO_COP = [
-  'chuffed',  'g12cpx', 'minisatid', 'gecode',
-  'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc',
-  'haifacsp', 'ortools', 'choco', 'izplus'
+  'chuffed','g12cpx','haifacsp','izplus','g12lazyfd','minisatid',
+  'g12fd','choco','gecode','ortools','g12gurobi','g12cbc'
 ]
 
 DEF_BACKUP_CSP = 'chuffed'

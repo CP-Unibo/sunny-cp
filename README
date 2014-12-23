@@ -3,7 +3,7 @@ SUNNY-CP
 
 Parallel CP Portfolio Solver
 
-sunny-cp tool allows to solve a Constraint (Satisfaction / Optimization) Problem 
+sunny-cp tool allows to solve a Constraint (Satisfaction/Optimization) Problem
 defined in the MiniZinc language by using a portfolio approach.
 It essentially implements the SUNNY algorithm described in [1][2][3].
 sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
@@ -26,13 +26,12 @@ described in [4], which attended the MiniZinc Challenge 2014 [5].
 AUTHORS
 =======
 
-sunny-cp is developed by Roberto Amadini and Jacopo Mauro (University of Bologna 
-/ Lab. Focus INRIA). For any question or information, please contact us at:
+sunny-cp is developed by Roberto Amadini and Jacopo Mauro (University of Bologna
+/Lab. Focus INRIA). For any question or information, please contact us at:
 
   amadini at cs.unibo.it
 
   jmauro  at cs.unibo.it
-
 
 
 PREREQUISITES
@@ -57,17 +56,17 @@ portable on other platforms. Some of the main requirements are:
 CONTENTS
 ========
 
-+ bin     contains the executables of sunny-cp
++ bin       contains the executables of sunny-cp
 
-+ kb      contains the utilities for the knowledge base of sunny-cp
++ kb        contains the utilities for the knowledge base of sunny-cp
 
-+ src     contains the sources of sunny-cp
++ src       contains the sources of sunny-cp
 
-+ solvers contains the utilities for the constituent solvers of sunny-cp
++ solvers   contains the utilities for the constituent solvers of sunny-cp
 
-+ test    contains some MiniZinc examples for testing sunny-cp
++ test      contains some MiniZinc examples for testing sunny-cp
 
-+ tmp     is aimed at containing the temporary files produced by sunny-cp.
++ tmp       is aimed at containing the temporary files produced by sunny-cp.
 
 
 INSTALLATION
@@ -78,7 +77,7 @@ Once downloaded the sources, move into sunny-cp folder and run install.sh:
   sunny-cp$ ./install.sh
 
 This is a minimal installation script that checks the proper installation of 
-Python (and psutil), MiniZinc, mzn2feat. In addition, it checks the installation 
+Python (and psutil), MiniZinc, mzn2feat. In addition, it checks the installation
 of the constituent solvers (in the corresponding folder) and compiles all the 
 python sources of sunny-cp. If the installation is successful, the following 
 message will be printed on standard output:
@@ -138,8 +137,8 @@ FEATURES
 During the presolving phase (in parallel with the static schedule execution) 
 sunny-cp extracts a feature vector of the problem in order to compute the 
 solvers schedule possibly run in the solving phase. By default, the feature 
-vector is extracted by mzn2feat tool. sunny-cp provide the sources of this tool: 
-for its installation, decompress the mzn2feat-1.0.tar.bz2 archive and follow the 
+vector is extracted by mzn2feat tool. sunny-cp provide the sources of this tool:
+for its installation, decompress the mzn2feat-1.0.tar.bz2 archive and follow the
 instruction in the README file of that folder. However, the user can define its 
 own extractor by implementing a corresponding class in src/features.py
 
@@ -149,7 +148,7 @@ KNOWLEDGE BASE
 
 The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that 
 consists of a folder containing the information relevant for the schedule 
-computation. The default sunny-cp knowledge base is in kb/all_T1800. It consists 
+computation. The default sunny-cp knowledge base is in kb/all_T1800. It consists
 of 5527 CSP instances and 4988 COP instances. However, the user has the 
 possibility of defining its own knowledge bases. For more details about the 
 knowledge base management see the README file in SUNNY_HOME/kb folder.

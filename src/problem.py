@@ -8,9 +8,9 @@ from copy import copy
 from string import replace
 
 class Problem:
-  '''
-  Abstraction of a problem.
-  '''
+  """
+  Abstraction of a MiniZinc Model.
+  """
    
   # Absolute path of the MiniZinc model of the problem.
   mzn_path = ''
@@ -18,7 +18,7 @@ class Problem:
   # Absolute path of the data of the problem.
   dzn_path = ''
   
-  # Absolute path of the output specification file.
+  # Absolute path of the output specification of the problem.
   ozn_path = ''
   
   # Absolute path of the MiniZinc model that actually contains the output string
@@ -35,8 +35,11 @@ class Problem:
   # Best known objective function value for this problem.
   best_bound = None
   
+  # Name of the solver that found the best bound for this problem.
+  best_solver = ''
+  
   # Auxiliary variable possibly introduced for tracking the objective function 
-  # value (that will be printed on std output).
+  # value (that will be printed on std output as a comment).
   aux_var = ''
   
   def isCSP(self):
@@ -95,8 +98,8 @@ class Problem:
   def make_cpy(self, mzn_path, out_path, aux = False):
     """
     Creates a copy of the original MiniZinc model at the specified path and 
-    returns the corresponding object. If aux flag is set, it also introduces in 
-    the copy the variable aux_var for printing the objective value on stdout.
+    returns the corresponding object. If the aux flag is set, it also introduces
+    in the copy the variable aux_var for printing the objective value on stdout.
     """
     cpy = copy(self)
     cpy.mzn_path = mzn_path
@@ -108,7 +111,7 @@ class Problem:
     var_expr = 'var int: ' + self.aux_var + ' = ' + self.obj_expr + ';\n'
     out_expr = 'output [show(' + self.aux_var + ')] ++ '
     
-    # The output item is included in the original model
+    # The output item is included in the original model.
     if self.mzn_path == self.out_path:
       with open(self.mzn_path, 'r') as infile:
         with open(mzn_path, 'w') as outfile:
@@ -119,7 +122,7 @@ class Problem:
             outfile.write(line)
       return cpy
     
-    # No output item defined in the original model.
+    # No output item defined for this problem.
     if not self.out_path:
       with open(self.mzn_path, 'r') as infile:
         with open(mzn_path, 'w') as outfile:
@@ -129,7 +132,7 @@ class Problem:
             outfile.write(line)
       return cpy
    
-    # Output item is not included in the original model
+    # The output item is not included in the original model.
     with open(self.mzn_path, 'r') as infile:
       with open(mzn_path, 'w') as outfile:
         for line in infile:
