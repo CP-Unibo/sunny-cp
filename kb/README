@@ -3,7 +3,7 @@ WHAT IS A KNOWLEDGE BASE
 
 A knowledge base essentially consists in a folder named <KB> containing (at 
 least) two CSV files separated by "|", namely: <KB>_csp and <KB>_cop.
-These two "symmetric" files that encode the knowledge bases for CSPs and COPs 
+These two "symmetric" files encodes the knowledge bases for CSPs and COPs 
 respectively. In particular, each of them has records of the form:
 
   inst|feat|info
@@ -85,20 +85,19 @@ CSV files, namely:
                
                - values: is a dictionary of the form {t_1: v_1, ..., t_k: v_k} 
                          mapping the anytime performance of solver on inst. 
-                         In particular v_i is the objective value found by 
+                         In particular v_i is the objective value found by the 
                          solver at the time t_i (in seconds). 
                          Note that the following invariant must hold:
                          
                           t_i < T AND v_k = val AND (values = {} <==> val = nan)
                          
                          where T is the solving timeout and i = 1, ..., k.
-                         
-                         
+                                                  
   The "values" dictionary is used by SUNNY for computing the solving area. 
-  Since it may be difficult to retrieve such values --- and since area is just 
-  used in the COP schedule computation for breaking ties --- it is possible to 
+  Since it may be difficult to retrieve such values ---and since area is just 
+  used in the COP schedule computation for breaking ties--- it is possible to 
   meet the above invariants even when the anytime performance of a solver is not 
-  available by setting: values = {time: val}.
+  known by setting the values dictionary to {time: val}.
 
 Once you have <FEAT_FILE> and <INFO_FILE>, just use the csv2kb.py script (in the 
 folder SUNNY_HOME/kb/util) for creating a new knowledge base <KB>:
@@ -112,7 +111,7 @@ By default a knowledge base is created in the folder SUNNY_HOME/kb/<KB> by using
 a timeout of T = 1800 seconds, removing the constant features and scaling the 
 feature values in the range [-1, 1]. The solving score and area are computed by 
 scaling the partial solutions in the range [0.25, 0.75]. For more informations 
-about the SUNNY algorithm and the score/area metrics we defer the interested 
+about the SUNNY algorithm and the score/area metrics we refer the interested 
 reader to [1][2][3].
 
 
@@ -121,14 +120,14 @@ CUSTOMIZING A KNOWLEDGE BASE
 
 The user can change the default settings. For more details, type:
 
-  csv2kb.py --help
+  python csv2kb.py --help
 
 You can try the simple example provided in the util folder:
 
   python csv2kb.py -p . -f 0,1 kb_example example.feat example.info
 
 that builds a knowledge base named "kb_example" starting from example.feat and 
-example.feat files by using 3 problems, 5 solvers and 10 features that will be 
+example.info files by using 3 problems, 5 solvers and 10 features that will be 
 scaled in the range [0, 1].
 
 The default sunny-cp knowledge base is in kb/all_T1800. It consists of 5527 CSP 
