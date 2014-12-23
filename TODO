@@ -1,12 +1,8 @@
-- togliere --mem-limit, tenere solo -m con FIXME e default 100%
+- documentare
+  
+- Docker (www.docker.com) 
 
-- sospendere solvers (status susp_mzn, susp_fzn)
-  timeout --> SUSP.
-  run_solver --> if ready, check SUSP.
-  fails --> check not_sched,SUSP.
-  clean SUSP.
-
-- Docker (www.docker.com) documenting + testing (coverage?)
+- testing (coverage?)
 
 - integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
 

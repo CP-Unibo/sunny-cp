@@ -34,12 +34,11 @@ class RunningSolver:
   # Object of class Solver, identifying the running solver.
   solver = None
   
-  # State of the solving process. It can be either:
+  # Status of the solving process. It can be either:
   #     'ready': solver is ready to execute the mzn2fzn conversion
   #   'mzn2fzn': solver is running mzn2fzn converter
   #  'flatzinc': solver is running the FlatZinc interpreter
-  # 'suspended': solver has been suspended
-  state = ''
+  status = ''
   
   # Don't stop solver if it has produced a solution in the last wait_time sec.
   wait_time = -1
