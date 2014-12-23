@@ -26,6 +26,8 @@ from pfolio_solvers import *
 
 # List of the running solvers.
 RUNNING_SOLVERS = []
+# List of the suspended solvers.
+SUSP_SOLVERS = []
 # If KEEP, don't delete temporary files.
 KEEP = False
 # List of temporary file paths.
@@ -44,19 +46,16 @@ def handler(signum = None, frame = None):
 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
   signal.signal(sig, handler)
 
-def kill_process(proc):
-  """
-  Kills a process.
-  """
+def send_signal_solver(signal, solver):
+  proc = solver.process
   if proc.poll() is None:
-    pid = proc.pid
     for p in proc.children(recursive = True):
       try:
-        p.kill()
+        p.send_signal(signal)
       except psutil.NoSuchProcess:
 	pass
     try:
-      proc.kill()
+      proc.send_signal(signal)
     except psutil.NoSuchProcess:
       pass
 
@@ -66,8 +65,8 @@ def clean():
   execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  for solver in RUNNING_SOLVERS:
-    kill_process(solver.process)
+  for solver in RUNNING_SOLVERS + SUSP_SOLVERS:
+    send_signal_solver(signal.SIGKILL, solver)
   # Possibly remove temporary files.
   if not KEEP:
     for f in TMP_FILES:
@@ -102,7 +101,6 @@ def run_schedule(
   for _ in range(cores):
     if schedule:
       solver = schedule.pop(0)
-      print '% Starting',solver.name(),'for',solver.timeout,'seconds'
       run_solver(solver, problem)
       
   # Loop for dealing with runnning solvers.
@@ -120,12 +118,11 @@ def run_schedule(
 	solver = max(mems.items(), key = lambda x: x[1])[0]
 	print '% Warning! sunny-cp exceeded the maximum allowed memory'
 	print '% Killing solver',solver.name()
-	kill_process(solver.process)
+	send_signal_solver(signal.SIGKILL, solver)
 	solver_terminated(solver, problem, schedule)
         continue
     
     for solver in RUNNING_SOLVERS:
-      
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
@@ -139,43 +136,22 @@ def run_schedule(
           if lines:
 	    process_output(solver, problem, lines)
         solver_terminated(solver, problem, schedule)
-        if presolve and solver.process.returncode != 0:
+        if presolve and solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
         continue
       
       # Expired timeout.
       if time.time() - solver.start_time > solver.timeout and \
 	 time.time() - solver.solution_time > solver.wait_time:
-	   print '% Timeout expired for',solver.name()
-	   if schedule:
-             new_solver = schedule.pop(0)
-             if new_solver.timeout == 0:
-	       # In this case, all the scheduled solvers have been run (or are 
-	       # running on another core). This happens at time t >= T, where T 
-	       # is the timeout T of SUNNY algorithm.
-	       if len(RUNNING_SOLVERS) == 1:
-		 print '% Solver not interrupted: it is the only running solver'
-	         solver.timeout = float("+inf")
-	       #elif: TODO: best_solver in SUSPENDED_SOLVERS: run best_solver 
-	       # with solver.timeout = float("+inf")
-	       else:
-		 kill_process(solver.process)
-	         RUNNING_SOLVERS.remove(solver)
-	         schedule = []
-	     else:
-	       # TODO: suspend_process
-	       kill_process(solver.process)
-	       RUNNING_SOLVERS.remove(solver)
-	       solver = new_solver
-               print '% Starting',solver.name(),'for',str(solver.timeout),'sec.'
-               run_solver(solver, problem)
+	   solver_timeout(solver, problem, schedule)
 	   continue
 	 
-      # Restart a solver if its solution is obsolete.
+      # Restart a solver if its solution is obsolete and its restart time is 
+      # actually expired.
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
-	kill_process(solver.process)
+	send_signal_solver(signal.SIGKILL, solver)
 	RUNNING_SOLVERS.remove(solver)
 	print '% Restarting',solver.name()
 	solver.timeout = max(
@@ -192,8 +168,12 @@ def run_solver(solver, problem):
   Executes a solver according to its status.
   """
   global RUNNING_SOLVERS
-  
   if solver.status == 'ready':
+    susp = [s for s in SUSP_SOLVERS if s.name() == solver.name()]
+    if susp:
+      resume_solver(susp[0], solver.timeout)
+      return
+    print '% Starting',solver.name(),'for',str(solver.timeout),'seconds'
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
@@ -203,16 +183,15 @@ def run_solver(solver, problem):
     if problem.isCOP() and not solver.obj_var:
       # Extract and set the objective variable from the FlatZinc model.
       solver.set_obj_var()
-    if solver.name == problem.best_solver or \
+    if solver.name() == problem.best_solver or \
     problem.bound_better_than(solver.obj_value):
       # Restart solver with a better bound.
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
     cmd = solver.flatzinc_cmd(problem)
-  #elif solver.status == 'suspended':
   else:
-    print 'Unknown status',solver.status
+    print '% Unknown status',solver.status
     assert False
   
   if solver.status == 'flatzinc':
@@ -294,27 +273,106 @@ def solver_terminated(solver, problem, schedule):
     else:
       print '% Error! MiniZinc model not converted by',solver.name()
       # Launch a new solver if any.
-      for s in schedule:
+      for s in schedule + SUSP_SOLVERS:
 	if s.name() == solver.name():
 	  schedule.remove(s)
+	  if s.status != 'ready':
+	    send_signal_solver(signal.SIGKILL, solver)
       if schedule:
 	new_solver = schedule.pop(0)
 	new_solver.timeout += solver.timeout + solver.start_time - time.time()
 	print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
 	run_solver(new_solver, problem)
+      elif SUSP_SOLVERS:
+	new_solver = SUSP_SOLVERS.pop(0)
+	new_timeout = \
+	  new_solver.timeout + solver.timeout + solver.start_time - time.time()
+	resume_solver(new_solver, new_timeout)
   else:
     if solver.process.returncode != 0:
       # Premature termination of solver execution.
       print '% Solver',solver.name(),'failed prematurely'
-      for s in schedule:
+      for s in schedule + SUSP_SOLVERS:
 	if s.name() == solver.name():
 	  schedule.remove(s)
+	  if s.status != 'ready':
+	    send_signal_solver(signal.SIGKILL, solver)
     # Launch a new solver if any.
     if schedule:
       new_solver = schedule.pop(0)
       new_solver.timeout += solver.timeout + solver.start_time - time.time()
       print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
       run_solver(new_solver, problem)
+    elif SUSP_SOLVERS:
+      new_solver = SUSP_SOLVERS.pop(0)
+      new_timeout = \
+	new_solver.timeout + solver.timeout + solver.start_time - time.time()
+      resume_solver(new_solver, new_timeout)
+
+def solver_timeout(solver, problem, schedule):
+  """
+  Handles the timeout of a solver process, possibly launching a new solver.
+  """
+  print '% Timeout expired for',solver.name()
+  if schedule:
+    new_solver = schedule.pop(0)
+    if new_solver.timeout == 0:
+      # In this case, all the scheduled solvers have been run (or are 
+      # running on another core). This happens at time t >= T, where T 
+      # is the timeout T of SUNNY algorithm.
+      if len(RUNNING_SOLVERS) == 1:
+	print '% Solver not interrupted: it is the only running solver'
+	solver.timeout = float("+inf")
+      elif solver.name() == problem.best_solver:
+	print '% Solver not interrupted: it is the best one so far'
+	solver.timeout = float("+inf")
+      else:
+	send_signal_solver(signal.SIGKILL, solver)
+	RUNNING_SOLVERS.remove(solver)
+	susp = [
+	  s for s in SUSP_SOLVERS if s.name() == problem.best_solver
+	]
+	if susp:
+	  # Resuming the best solver so far, it it was suspended.
+	  solver = susp[0]
+	  resume_solver(solver, float("+inf"))
+	# No other scheduling is now needed.
+	schedule = []
+	for solver in SUSP_SOLVERS:
+	  send_signal_solver(signal.SIGKILL, solver)
+    else:
+      if new_solver.name() != solver.name():
+	suspend_solver(solver)
+	print '% Starting',new_solver.name(),'for', \
+	  str(new_solver.timeout),'seconds'
+	run_solver(new_solver, problem)
+      else:
+	print '% Solver',solver.name(),'not interrupted: it has to run again.'
+  else:
+    suspend_solver(solver)
+
+def suspend_solver(solver):
+  """
+  Suspends a solver that reached its timeout.
+  """
+  global SUSP_SOLVERS
+  print '% Suspending solver',solver.name()
+  send_signal_solver(signal.SIGSTOP, solver)
+  SUSP_SOLVERS.append(solver)
+  RUNNING_SOLVERS.remove(solver)
+  
+def resume_solver(solver, timeout):
+  """
+  Resumes a solver, and run it for timeout seconds.
+  """
+  global RUNNING_SOLVERS
+  print '% Resuming solver',solver.name(),'for',str(timeout),'seconds'
+  solver.timeout = timeout
+  send_signal_solver(signal.SIGCONT, solver)
+  solver.start_time = time.time()
+  solver.solution_time = time.time()
+  SUSP_SOLVERS.remove(solver)
+  RUNNING_SOLVERS.append(solver)
 
 def init_problem(problem, tmp_id):
   """
