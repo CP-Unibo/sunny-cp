@@ -28,12 +28,12 @@ SUNNY_HOME/src/pfolio_solvers.py:
   <SOLVER>.lt_constraint = <SOLVER> redefinition of the constraint llt < rlt
   <SOLVER>.gt_constraint = <SOLVER> redefinition of the constraint lgt < rgt
   
-In this way, <SOLVER> object becomes part of the sources and will be by sunny-cp
+In this way, <SOLVER> object becomes part of the sources and usable by sunny-cp 
 for the <SOLVER> execution. Note that once <SOLVER> is installed, it is however 
 possible to modify its settings by manipulating the corresponding parameters in 
 SUNNY_HOME/src/pfolio_solvers.py
 Moreover, a (new) solver can be added or modified even after the sunny-cp 
-installation: it is enough to follow the above steps 1-3 and running the python 
+installation: it is enough to follow the above steps 1-3 and then run the python
 script SUNNY_HOME/solvers/make_pfolio.py in place of step 4 (for avoiding the 
 recompilation of all the other sources).
 Finally, note that all the solvers must have unique names.
