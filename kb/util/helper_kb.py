@@ -127,7 +127,6 @@ def get_score(info, val, lb, ub, min_val, max_val, goal, check):
   if min_val == max_val:
     return ub
   s = (ub - lb) * (val - min_val) / (max_val - min_val)
-  #print info, val, lb, ub, min_val, max_val, goal, s
   if check:
     assert 0 <= round(s, 5) <= ub - lb
   if goal == 'min':
@@ -153,16 +152,12 @@ def get_area(
   #print a, 
   for i in range(0, n):
     a += scaled_vals[i][1] * (scaled_vals[i + 1][0] - scaled_vals[i][0])
-    #print a,
   if info == 'opt':
     t = time
   else:
     t = timeout
-  #print scaled_vals[n][1], (t - scaled_vals[n][0]), t, scaled_vals[n][0]
   a += scaled_vals[n][1] * (t - scaled_vals[n][0])
-  #print solver_info, a, lb, ub
   if check:
-    #print t, scaled_vals[n][0], values, info
     assert t >= scaled_vals[n][0]
     assert 0 <= round(a, 5) <= timeout
   return a
