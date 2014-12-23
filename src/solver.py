@@ -38,6 +38,7 @@ class RunningSolver:
   #     'ready': solver is ready to execute the mzn2fzn conversion
   #   'mzn2fzn': solver is running mzn2fzn converter
   #  'flatzinc': solver is running the FlatZinc interpreter
+  # Note that the status is preserved even when a solver process is suspended.
   status = ''
   
   # Don't stop solver if it has produced a solution in the last wait_time sec.
@@ -96,9 +97,15 @@ class RunningSolver:
     self.timeout      = timeout
   
   def name(self):
+    """
+    Returns the name of the running solver.
+    """
     return self.solver.name
   
   def mem_percent(self):
+    """
+    Returns the memory usage (in percent) of the solver process.
+    """
     m = self.process.memory_percent()
     for p in self.process.children(recursive = True):
       try:
@@ -108,23 +115,26 @@ class RunningSolver:
     return m
   
   def mzn2fzn_cmd(self, pb):
-    '''
+    """
     Returns the command for converting a given MiniZinc model to FlatZinc by 
     using solver-specific redefinitions.
-    '''
+    """
     cmd = 'mzn2fzn -I ' + self.solver.mznlib + ' ' + pb.mzn_path + ' '     + \
            pb.dzn_path + ' -o ' + self.fzn_path + ' --output-ozn-to-file ' + \
            pb.ozn_path
     return cmd.split()
     
   def flatzinc_cmd(self, pb):
-    '''
+    """
     Returns the command for executing the FlatZinc model.
-    '''
+    """
     cmd = self.solver.fzn_exec + ' ' + self.fzn_options + ' ' + self.fzn_path
     return cmd.split()
   
   def set_obj_var(self):
+    """
+    Retrieve and set the name of the objective variable in the FlatZinc model.
+    """
     with open(self.fzn_path, 'r') as infile:
       for line in reversed(infile.readlines()):
         tokens = line.split()
@@ -133,9 +143,9 @@ class RunningSolver:
           break
   
   def inject_bound(self, bound):
-    '''
+    """
     Injects a new bound to the FlatZinc model.
-    '''
+    """
     if self.solve == 'min':
       lt = self.solver.lt_constraint
       constraint = lt.replace('llt', self.obj_var).replace('rlt', str(bound))

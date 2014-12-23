@@ -94,7 +94,7 @@ variables are set, check the installation by typing the command:
   sunny-cp --help
 
 for printing the help page. Note that the installation process will also create 
-the file SUNNY_HOME/src/pfolio_solvers.py containing an object for each 
+the file SUNNY_HOME/src/pfolio_solvers.py file containing an object for each 
 installed solver (see below for more details about the constituent solvers).
 
 
@@ -103,8 +103,8 @@ SOLVERS
 
 This package does not contain neither the sources and the binaries of the 
 constituent solvers, that should be installed separately.
-Note that once a solver is installed on your machine, it is easy to add it to 
-the portfolio and to customize its settings. For more details, see the README 
+However, sunny-cp provides utilites for adding the installed solvers to the 
+portfolio and for customizing their settings. For more details, see the README 
 file in the SUNNY_HOME/solvers folder and the sunny-cp usage. A part of the 
 solvers already included in MiniZinc 1.6, the other publicly available solvers 
 used by sunny-cp are:
