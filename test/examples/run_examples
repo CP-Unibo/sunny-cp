@@ -1,5 +1,5 @@
 #!/bin/bash
-# Runs the instances of the examples folder.
+# Runs the instances of the test/examples folder.
 
 IN_PATH=$SUNNY_HOME/test/examples
 OZN=$IN_PATH/tmp.ozn
