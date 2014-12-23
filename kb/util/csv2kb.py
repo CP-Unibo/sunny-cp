@@ -21,7 +21,7 @@ Options:
     By default, lb = -1 and ub = 1.
     
   -s <lb>,<ub>
-    Computes the solving score of the COPs in <INFO_FILE> by scaling the partial 
+    Computes the solving score of the COPs in <INFO_FILE> by scaling the partial
     solutions in the range [lb, ub], where 0 <= lb < lb <= 1. 
     By default, lb = 0.25 and ub = 0.75
     
@@ -141,7 +141,6 @@ def main(args):
     )
   except Exception as e:
     traceback.print_exc()
-    #print e
     if os.path.exists(kb_path):
       from shutil import rmtree
       rmtree(kb_path)
