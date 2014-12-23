@@ -20,12 +20,19 @@ In a nutshell, sunny-cp relies on two sequential steps:
               solvers, selected by means of SUNNY algorithm.
 
 This version is a major enhancement of the sequential sunny-cp portfolio solver 
-described in [4], which attended the MiniZinc Challenge 2014 [5]. For more 
-details about tool utilization, see the usage by typing sunny-cp --help.
-sunny-cp solver was developed by Roberto Amadini and Jacopo Mauro (University of 
-Bologna / Lab. Focus INRIA).
-Most of its constituent solvers are publicly available, except for Chuffed and 
-G12/Gurobi which have been kindly granted by NICTA Optimization Research Group.
+described in [4], which attended the MiniZinc Challenge 2014 [5].
+
+
+AUTHORS
+=======
+
+sunny-cp is developed by Roberto Amadini and Jacopo Mauro (University of Bologna 
+/ Lab. Focus INRIA). For any question or information, please contact us at:
+
+  amadini at cs.unibo.it
+
+  jmauro  at cs.unibo.it
+
 
 
 PREREQUISITES
@@ -121,6 +128,9 @@ used by sunny-cp are:
 + OR-Tools
   https://code.google.com/p/or-tools/
 
+Chuffed and G12/Gurobi are instead not publicly available, and have been kindly 
+granted by NICTA Optimization Research Group of Melbourne (Australia).
+
 
 FEATURES
 ========
@@ -160,16 +170,6 @@ or alternatively you can test all the models of the folder by typing:
 The run_examples script also produces output.log and errors.log files in the 
 SUNNY_HOME/test/examples folder, where the standard output/error of the tested 
 models is respectively redirected.
-
-
-FURTHER INFORMATION
-===================
-
-For any question or information, please contact us at:
-
-  amadini at cs.unibo.it
-
-  jmauro  at cs.unibo.it
 
 
 ACKNOWLEDGMENTS
