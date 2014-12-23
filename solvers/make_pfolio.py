@@ -1,7 +1,7 @@
 '''
-Module for creating a Solver subclass for each constituent solver of the 
-portfolio, according to the input/output conventions specified in the README 
-file of this folder.
+Module for creating a Solver object for each constituent solver of the 
+portfolio by automatically generating the SUNNY_HOME/src/pfolio_solvers.py file,
+according to the conventions specified in the README file of this folder.
 '''
 
 import os
@@ -42,9 +42,6 @@ for solver in solvers:
     print err
     print 'Error! Solver',solver,'not installed'
     continue
-    #pfolio_file.close()
-    #os.remove(pfolio_path)
-    #sys.exit(proc.returncode)
   for line in out.split(';\n'):
     if 'constraint ' in line:
       if 'llt' in line:

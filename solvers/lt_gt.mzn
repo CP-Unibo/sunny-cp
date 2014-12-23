@@ -1,7 +1,7 @@
 % Basic MiniZinc model for capturing the solver-specific redefinitions of 
-% "x < y" and "x > y" constraints.
+% "llt < rlt" and "lgt > rgt" constraints.
 %
-% mzn2fzn --no-output-ozn --output-to-stdout -I SOLVER/mzn-lib lt_gt.mzn
+% mzn2fzn --no-output-ozn --output-to-stdout -I <SOLVER>/mzn-lib lt_gt.mzn
 
 var int: llt;
 var int: rlt;
