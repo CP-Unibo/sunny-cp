@@ -1,26 +1,34 @@
 '''
-sunny-cp: a parallel CP portfolio solver consisting of 12 constituent solvers:
+sunny-cp: a parallel CP portfolio solver. 
+
+sunny-cp tool allows to solve a Constraint (Satisfaction / Optimization) Problem 
+defined in MiniZinc language by using the SUNNY portfolio approach.
+sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
 
   Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, 
   G12/CBC, Gecode, HaifaCSP, iZplus, MinisatID, OR-Tools
 
 In a nutshell, sunny-cp relies on two sequential steps:
 
-  1. PRE-SOLVING: consists in the (possible) execution of a static schedule and 
-                  the feature extraction
+  1. PRE-SOLVING: consists in the parallel execution of a static schedule and 
+                  the feature extraction;
                   
-  2. SOLVING: consists in the execution of a number of constituent solvers, 
+  2. SOLVING: consists in the parallel execution of a number of predicted 
+              solvers, selected by means of SUNNY algorithm.
               (possibly) selected by means of SUNNY algorithm
   
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
-SUNNY-CP Options:    
+Portfolio Options
+=================
   -T <TIMEOUT>
     Timeout (in seconds) of SUNNY algorithm, used at runtime for predicting the 
     schedule of solvers to be run. Actually, T will be subtracted by C seconds 
     where C is the time taken by the pre-solving phase (i.e., static schedule 
-    and feature extraction). Note that T IS NOT the timeout of the whole solving 
-    process, which has to be set externally. The default value is T = 1800.
+    and feature extraction). Note that T IS NOT the timeout of the whole solving
+    process: indeed, sunny-cp is an "anytime process", which is run indefinitely 
+    until a solution is reached. So, the timeout of the whole solving process 
+    has to be set externally by the user. The default value is T = 1800.
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
     k is 70, while the distance metric is the Euclidean one
@@ -31,7 +39,9 @@ SUNNY-CP Options:
     in case of failure of the scheduled solvers, the other solvers will be 
     executed according to such ordering. This option can be used to select a 
     particular sub-portfolio or even to change the default ordering of the 
-    solvers, which is by default: TODO
+    solvers, which is by default: 
+      chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
+      g12fd,choco,gecode,ortools,g12gurobi,g12cbc
   -b <SOLVER>
     Set the backup solver of the portfolio. It must belong to the specified 
     portfolio. The default backup solver is chuffed
@@ -47,20 +57,23 @@ SUNNY-CP Options:
     The schedule must be passed in the form: 
       s_1,t_1,s_2,t_2,...,s_m,t_m
     where each s_i belongs to the specified portfolio, and t_i is the timeout 
-    (in seconds) for s_i. The static schedule is empty by default
+    (in seconds) for s_i. Note that in general when a timeout t_i expires the 
+    solver s_i is not killed, but just suspended (and then resumed if s_i has to 
+    run again later). The static schedule is empty by default.
   -e <EXTRACTOR>
-    Feature extractor used by sunny-cp. By default is mzn2feat, but it can be 
+    Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system
   -m <MEM_PERCENTAGE>
-    Sets the maximum memory allowed in percentage for sunny-cp. By default, this
-    value is set to 100%, since the memory check can be resource consuming: it 
-    is suggested to set a value lower than 100 only if you are sure that the 
-    solving process is very space consuming.
+    Sets the maximum memory limit (in percentage) for sunny-cp solving process. 
+    By default, this value is set to 100%, since the memory check can be pretty 
+    resource consuming: it is suggested to set a value lower than 100 only if 
+    you are sure that the solving process can be very memory consuming.
 
-Solvers Options:    
+Solvers Options
+===============
   --fzn-options "<OPTIONS>"
     Allows to run each selected solver on its specific FlatZinc model by using 
     the options specified in <OPTIONS> string. No checks are performed on that 
@@ -82,7 +95,8 @@ Solvers Options:
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
     
-Helper Options:
+Helper Options
+==============
   -h, --help
     Print this message
   -x <AUX_VAR>
@@ -98,17 +112,17 @@ Helper Options:
     specified directory (useful for debugging). This option is unset by default    
   --csp-<OPTION> <VALUE>
     Allows to set the specific option only if the input problem is a CSP. Note 
-    that the '-' character of <OPTION> must be omitted
-    For example, --csp-T 900 set the T parameter to 900 only if the problem is a 
-    CSP, while such option is ignored for COPs    
+    that the '-' character of <OPTION> must be omitted. For example, --csp-T 900 
+    set the T parameter to 900 only if the problem is a CSP, while such option 
+    is ignored if the problem is a COP.
   --cop-<OPTION> <VALUE>
     Allows to set the specific option only if the input problem is a COP. Note 
-    that the '-' character of <OPTION> must be omitted.
-    For example, --cop-T 900 set the T parameter to 900 only if the problem is a 
-    COP, while such option is ignored for CSPs
+    that the '-' character of <OPTION> must be omitted. For example, --cop-T 900 
+    set the T parameter to 900 only if the problem is a COP, while such option 
+    is ignored if the problem is a COP.
   -a, -f
     For compatibility with MiniZinc Challenge rules. Note that these options are 
-    deprecated, since always ignored: if needed, use --fzn-options
+    deprecated, since are always ignored: if needed, use --fzn-options.
 '''
 
 import sys
@@ -120,13 +134,15 @@ from problem  import *
   
 def parse_arguments(args):
   """
-  Parse the input arguments and returns the corresponding values.
+  Parse the options specified by the user and returns the corresponding 
+  arguments properly set.
   """
   
   # Get the arguments and parse the input model to get auxiliary information. 
   mzn, dzn, opts = get_args(args)
   k, timeout, pfolio, backup, kb, lims, \
   static, solve, obj_expr, mzn_out = parse_model(mzn)
+  # Initialize variables with the default values.
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
@@ -219,7 +235,13 @@ def parse_arguments(args):
     elif o == '-s':
       s = a.split(',')
       for i in range(0, len(s) / 2):
-        static.append((s[2 * i], int(s[2 * i + 1])))
+	solver = s[2 * i]
+	time = int(s[2 * i + 1])
+	if time < 0:
+	  print >> sys.stderr, 'Error! Not acceptable negative time'
+          print >> sys.stderr, 'For help use --help'
+          sys.exit(2)
+        static.append((solver, time))
     elif o == '-d':
       if not os.path.exists(a):
         print >> sys.stderr, 'Error! Directory ' + a + ' not exists.'
@@ -289,20 +311,11 @@ def parse_arguments(args):
     print >> sys.stderr, 'For help use --help'
     sys.exit(2)
   st = 0
-  for (s, t) in static:
-    st += t
-    if t <= 0 or t >= timeout:
-      print >> sys.stderr, 'Error! Not valid time slot',t,'for static schedule'
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
+  for (s, _) in static:
     if s not in pfolio:
       print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
       print >> sys.stderr, 'For help use --help'
       sys.exit(2)
-  if st > timeout:
-    print >> sys.stderr, \
-    'Error! Static schedule allocated time exceeds the timeout'
-    print >> sys.stderr, 'For help use --help'
     
   problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
@@ -310,7 +323,7 @@ def parse_arguments(args):
 
 def get_args(args):
   """
-  Get the arguments.
+  Get the input arguments.
   """
   dzn = ''
   try:
@@ -353,7 +366,8 @@ def get_args(args):
 
 def parse_model(mzn):
   """
-  Parse the input model to get auxiliary information (e.g., objective function).
+  Parse the input model to get auxiliary information (i.e., solve and output 
+  items).
   """
   # Set default arguments.
   k = DEF_K_CSP
