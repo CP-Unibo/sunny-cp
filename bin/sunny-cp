@@ -441,7 +441,9 @@ def main(args):
       print '% SUNNY sequential schedule:',seq_sched
       if len(seq_sched) <= cores:
 	print '% Schedule size <= No. of cores! No re-scheduling needed!'
-	par_sched = [(s, float('+inf')) for (s, t) in seq_sched]
+	par_sched = [(s, float('+inf')) for (s, t) in 
+	  sorted(seq_sched, key = lambda x : x[0], reverse = True)
+	]
 	not_sched = [
 	  (s, float('+inf')) for s in pfolio if s not in dict(par_sched).keys()
 	]
@@ -451,7 +453,7 @@ def main(args):
         par_sched = parallelize(seq_sched, cores, timeout)
     par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
     print '% SUNNY parallel schedule:',par_sched    
-    schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_dir)
+    schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_id)
     run_schedule(schedule, problem, cores, mem_limit)
     
   except Exception as e:
