@@ -284,7 +284,6 @@ def solver_terminated(solver, problem, schedule):
       if schedule:
 	new_solver = schedule.pop(0)
 	new_solver.timeout += solver.timeout + solver.start_time - time.time()
-	print '% Starting',new_solver.name(),'for',str(new_solver.timeout),'sec'
 	run_solver(new_solver, problem)
       elif SUSP_SOLVERS:
 	new_solver = SUSP_SOLVERS.pop(0)
@@ -346,8 +345,6 @@ def solver_timeout(solver, problem, schedule):
     else:
       if new_solver.name() != solver.name():
 	suspend_solver(solver)
-	print '% Starting',new_solver.name(),'for', \
-	  str(new_solver.timeout),'seconds'
 	run_solver(new_solver, problem)
       else:
 	print '% Solver',solver.name(),'not interrupted: it has to run again.'
