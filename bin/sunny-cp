@@ -291,7 +291,7 @@ def solver_terminated(solver, problem, schedule):
 	  new_solver.timeout + solver.timeout + solver.start_time - time.time()
 	resume_solver(new_solver, new_timeout)
   else:
-    if solver.process.returncode != 0:
+    if solver.process.returncode not in [None, 0]:
       # Premature termination of solver execution.
       print '% Solver',solver.name(),'failed prematurely'
       for s in schedule + SUSP_SOLVERS:
@@ -441,14 +441,16 @@ def main(args):
       print '% SUNNY sequential schedule:',seq_sched
       if len(seq_sched) <= cores:
 	print '% Schedule size <= No. of cores! No re-scheduling needed!'
-	par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
-	not_sched = [s for s in pfolio if s not in dict(par_sched).keys()]
-	for s in not_sched:
-	  par_sched.append((s, float('+inf')))
+	par_sched = [(s, float('+inf')) for (s, t) in seq_sched]
+	not_sched = [
+	  (s, float('+inf')) for s in pfolio if s not in dict(par_sched).keys()
+	]
+	par_sched += not_sched[:cores - len(seq_sched)]
       else:
 	print '% Parallelizing schedule on',cores,'cores'
         par_sched = parallelize(seq_sched, cores, timeout)
-    print '% SUNNY parallel schedule:',par_sched
+    par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
+    print '% SUNNY parallel schedule:',par_sched    
     schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_dir)
     run_schedule(schedule, problem, cores, mem_limit)
     
