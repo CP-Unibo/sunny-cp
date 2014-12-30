@@ -136,14 +136,14 @@ class Problem:
     with open(self.mzn_path, 'r') as infile:
       with open(mzn_path, 'w') as outfile:
         for line in infile:
-          # Replace mzn_out inclusion with mzn_out_cpy inclusion
+          # Replace inclusion in mzn_path.
           line = replace(
-            line, '"' + self.out_path + '"', '"' + self.out_cpy + '"'
+            line, '"' + self.out_path + '"', '"' + out_path + '"'
           )
           outfile.write(line)
     with open(self.out_path, 'r') as infile:
       with open(out_path, 'w') as outfile:
-        # Replace the output item in mzn_out_cpy
+        # Replace the output item in out_path.
         outfile.write(var_expr)
         for line in infile:
           if 'output' in line.split() or 'output[' in line.split():
