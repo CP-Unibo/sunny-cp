@@ -63,9 +63,8 @@ class RunningSolver:
   # String of the options used by the FlatZinc interpreter of the solver.
   fzn_options = ''
   
-  # Array of the best solution currently found by solver, where each element 
-  # corresponds to a line <VARIABLE> = <VALUE> printed by solver on std output.
-  solution = []
+  # Dictionary (variable, value) of the best solution currently found by solver.
+  solution = {}
   
   # Can be either 'sat', 'min', or 'max' for satisfaction, minimization, or 
   # maximization problems respectively.
