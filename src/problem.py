@@ -137,9 +137,7 @@ class Problem:
       with open(mzn_path, 'w') as outfile:
         for line in infile:
           # Replace inclusion in mzn_path.
-          line = replace(
-            line, '"' + self.out_path + '"', '"' + out_path + '"'
-          )
+          line = replace(line, '"' + self.out_path + '"', '"' + out_path + '"')
           outfile.write(line)
     with open(self.out_path, 'r') as infile:
       with open(out_path, 'w') as outfile:
