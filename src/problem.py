@@ -138,7 +138,7 @@ class Problem:
         for line in infile:
           # Replace mzn_out inclusion with mzn_out_cpy inclusion
           line = replace(
-            line, '"' + self.out_path + '"', '"' + out_cpy + '"'
+            line, '"' + self.out_path + '"', '"' + self.out_cpy + '"'
           )
           outfile.write(line)
     with open(self.out_path, 'r') as infile:
