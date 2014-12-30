@@ -106,7 +106,7 @@ def run_schedule(
       solver = schedule.pop(0)
       run_solver(solver, problem)
       
-  # Loop for dealing with solvers exection.
+  # Loop for dealing with solvers execution.
   while (extractor and not feat_extracted) or RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
     
@@ -226,8 +226,8 @@ def process_output(solver, problem, lines):
     if line == '----------':
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
-	for s in solver.solution:
-	  print s
+	for (var, val) in solver.solution.items():
+	  print var,'=',val
 	print line
 	if '-a ' not in solver.fzn_options and ' -a ' not in solver.fzn_options:
 	  print '% Search completed by',solver.name()
@@ -237,11 +237,14 @@ def process_output(solver, problem, lines):
 	# The objective value found is the best so far.
 	problem.best_bound = solver.obj_value
 	print '%',solver.name(),'found a new solution'
-	for s in solver.solution:
-	  print s
+	for (var, val) in solver.solution.items():
+	  if var == problem.aux_var:
+	    print '%',var,'=',val
+	  else:
+	    print var,'=',val
 	print line
 	problem.best_solver = solver.name()
-      solver.solution = []
+      solver.solution = {}
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
       if not problem.has_bound():
@@ -252,13 +255,12 @@ def process_output(solver, problem, lines):
       clean()
       sys.exit(0)
     elif ' = ' in line:
-      if problem.aux_var in line:
-	# Actual objective value.
-	solver.obj_value = int(
-	  line[line.index(' = ') + 3 : len(line)].split(';')[0]
-	)
-	line = '% ' + line
-      solver.solution.append(line)
+      idx = line.index(' = ')
+      val = line[idx + 3:].split(';')[0]
+      var = line[:idx]
+      if var == problem.aux_var:
+	solver.obj_value = int(val)
+      solver.solution[var] = val
       solver.solution_time = time.time()
 
 def solver_terminated(solver, problem, schedule):
