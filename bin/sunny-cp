@@ -439,7 +439,9 @@ def main(args):
     else:
       print '% Computing solvers schedule...'
       timeout -= round(static_time)
-      seq_sched = sunny(problem, pfolio, backup, feat_vector, k, timeout, kb)
+      seq_sched = sunny(
+	problem, pfolio, backup, feat_vector, k, timeout, kb, cores
+      )
       print '% SUNNY sequential schedule:',seq_sched
       if len(seq_sched) <= cores:
 	print '% Schedule size <= No. of cores! No re-scheduling needed!'

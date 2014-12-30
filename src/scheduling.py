@@ -5,9 +5,8 @@ Module for computing and parallelizing the solvers schedule of SUNNY algorithm.
 import csv
 from math import sqrt
 from combinations import *
-from multiprocessing import cpu_count
 
-def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, size = cpu_count()):
+def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, min_size = 1):
   """
   Returns the sequential schedule computed by SUNNY algorithm.
   """
@@ -24,9 +23,9 @@ def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, size = cpu_count()):
   neighbours = [inst for (d, inst) in distances[0 : k]]
   
   if pb.isCSP():
-    return sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size)
+    return sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size)
   else:
-    return sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size)
+    return sunny_cop(neighbours, infos, k, timeout, pfolio, backup, min_size)
   
 def euclidean_distance(fv1, fv2):
   """
@@ -39,7 +38,7 @@ def euclidean_distance(fv1, fv2):
     distance += d * d
   return sqrt(distance)
 
-def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size):
+def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size):
   """
   Given the neighborhood of a given CSP and the runtime infos, returns the 
   corresponding SUNNY schedule.
@@ -60,8 +59,8 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size):
   min_time = float('+inf')
   best_pfolio = []
   m = len(pfolio)
-  # Select the best sub-portfolio. size is the minimum cardinality.
-  for i in range(size, m + 1):
+  # Select the best sub-portfolio. min_size is the minimum cardinality.
+  for i in range(min_size, m + 1):
     for j in range(0, binom(m, i)):
       solved_instances = set([])
       solving_time = 0
@@ -100,7 +99,7 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, size):
   assert(round(sum(t for (s, t) in sorted_schedule)) <= timeout)
   return sorted_schedule
 
-def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
+def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, min_size):
   """
   Given the neighborhood of a given COP and the runtime infos, returns the 
   corresponding SUNNY schedule.
@@ -125,7 +124,7 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, size):
   best_pfolio = []
   # Select the best sub-portfolio.
   m = len(pfolio)
-  for i in range(size, m + 1):
+  for i in range(min_size, m + 1):
     for j in range(0, binom(m, i)):
       score = 0
       time = 0
@@ -172,6 +171,7 @@ def parallelize(seq_sched, cores, timeout):
   """
   Given a sequential schedule of n > cores solvers, returns its parallelization.
   """
+  assert len(seq_sched) > cores
   sort_sched = sorted(seq_sched, key = lambda x: x[1], reverse = True)
   par_sched = [(s, float('+inf')) for (s, _) in sort_sched[:cores - 1]]
   seq_sched = [x for x in seq_sched if x[0] not in dict(par_sched).keys()]

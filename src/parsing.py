@@ -48,7 +48,7 @@ Portfolio Options
     portfolio. The default backup solver is chuffed
   --g12
     Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
-    This is equivalent to set -P g12cbc,g12cpx,g12fd,g12lazyfd and -b g12cpx
+    This is equivalent to set -P g12cpx,g12cbc,g12lazyfd,g12fd and -b g12cpx
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
     knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
@@ -291,7 +291,7 @@ def parse_arguments(args):
     elif o == '--keep':
       keep = True
     elif o == '--g12':
-      pfolio = ['g12cbc', 'g12cpx', 'g12fd', 'g12lazyfd']
+      pfolio = ['g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc']
       backup = 'g12cpx'
     elif o.startswith('--csp-') and solve == 'sat' or \
          o.startswith('--cop-') and solve != 'sat':
