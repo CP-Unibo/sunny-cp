@@ -86,7 +86,7 @@ message will be printed on standard output:
   To complete sunny-cp installation you just have to add/modify the
   environment variables SUNNY_HOME and PATH:
   1. SUNNY_HOME must point to: "$PWD"/sunny-cp
-  2. PATH must be extended to include: "$PWD"/bin"
+  2. PATH must be extended to include: "$PWD"/bin
 
 It is important to set such variables in order to use sunny-cp. Once the 
 variables are set, check the installation by typing the command: 
@@ -94,7 +94,7 @@ variables are set, check the installation by typing the command:
   sunny-cp --help
 
 for printing the help page. Note that the installation process will also create 
-the file SUNNY_HOME/src/pfolio_solvers.py file containing an object for each 
+the file SUNNY_HOME/src/pfolio_solvers.py containing an object for each 
 installed solver (see below for more details about the constituent solvers).
 
 
@@ -136,7 +136,7 @@ FEATURES
 
 During the presolving phase (in parallel with the static schedule execution) 
 sunny-cp extracts a feature vector of the problem in order to compute the 
-solvers schedule possibly run in the solving phase. By default, the feature 
+solvers schedule (possibly) run in the solving phase. By default, the feature 
 vector is extracted by mzn2feat tool. sunny-cp provide the sources of this tool:
 for its installation, decompress the mzn2feat-1.0.tar.bz2 archive and follow the
 instruction in the README file of that folder. However, the user can define its 
@@ -168,7 +168,7 @@ or alternatively you can test all the models of the folder by typing:
 
 The run_examples script also produces output.log and errors.log files in the 
 SUNNY_HOME/test/examples folder, where the standard output/error of the tested 
-models is respectively redirected.
+models are respectively redirected.
 
 
 ACKNOWLEDGMENTS
