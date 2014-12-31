@@ -1,4 +1,6 @@
-- validare su diversi benchmarks
+- validare su diversi benchmarks COP/CSP
+
+- mettere calcolo dynamic schedule nel presolve.
   
 - Docker (www.docker.com) 
 
