@@ -53,11 +53,12 @@ then
 fi
 echo 'OK!'
 
+export SUNNY_HOME=$PWD
 echo 'Checking solvers installation...'
 python solvers/make_pfolio.py
 
 echo 'Compiling python sources...'
-for f in `find . -name *.py` ./bin/sunny-cp
+for f in `find src -name *.py` `find kb -name *.py` ./bin/sunny-cp
 do
   echo -n 'Compiling '$f'...'
   python $f --help 1>/dev/null
