@@ -173,7 +173,9 @@ def run_solver(solver, problem):
   global RUNNING_SOLVERS
   susp = [s for s in SUSP_SOLVERS if s.name() == solver.name()]
   if susp:
-    resume_solver(susp[0], solver.timeout)
+    solver = susp[0]
+    SUSP_SOLVERS.remove(solver)
+    resume_solver(solver, solver.timeout)
     return
   if solver.status == 'ready':
     print '% Starting',solver.name(),'for',str(solver.timeout),'seconds'
@@ -337,12 +339,12 @@ def solver_timeout(solver, problem, schedule):
 	]
 	if susp:
 	  # Resuming the best solver so far, it it was suspended.
-	  solver = susp[0]
-	  resume_solver(solver, float("+inf"))
+	  resume_solver(susp[0], float("+inf"))
 	# The schedule is no more needed.
 	schedule = []
 	for solver in SUSP_SOLVERS:
 	  send_signal_solver(signal.SIGKILL, solver)
+	SUSP_SOLVERS = []
     else:
       if new_solver.name() != solver.name():
 	suspend_solver(solver)
@@ -372,7 +374,6 @@ def resume_solver(solver, timeout):
   send_signal_solver(signal.SIGCONT, solver)
   solver.start_time = time.time()
   solver.solution_time = time.time()
-  SUSP_SOLVERS.remove(solver)
   RUNNING_SOLVERS.append(solver)
 
 def init_problem(problem, tmp_id):
