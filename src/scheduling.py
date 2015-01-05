@@ -5,10 +5,11 @@ Module for computing and parallelizing the solvers schedule of SUNNY algorithm.
 import csv
 from math import sqrt
 from combinations import *
-
-def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, min_size = 1):
+  
+def get_neighbours(feat_vector, k, kb):
   """
-  Returns the sequential schedule computed by SUNNY algorithm.
+  Returns a dictionary (inst_name, inst_info) of the k instances closer to the 
+  feat_vector in the knowledge base kb.
   """
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
   infos = {}
@@ -20,16 +21,11 @@ def sunny(pb, pfolio, backup, feat_vector, k, timeout, kb, min_size = 1):
     distances.append((d, inst))
     infos[inst] = row[2]
   sorted_dist = distances.sort(key = lambda x : x[0])
-  neighbours = [inst for (d, inst) in distances[0 : k]]
-  
-  if pb.isCSP():
-    return sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size)
-  else:
-    return sunny_cop(neighbours, infos, k, timeout, pfolio, backup, min_size)
-  
+  return dict((inst, infos[inst]) for (d, inst) in distances[0 : k])
+ 
 def euclidean_distance(fv1, fv2):
   """
-  Computes the Euclidean distance between two instances.
+  Computes the Euclidean distance between two feature vectors fv1 and fv2.
   """
   assert len(fv1) == len(fv2)
   distance = 0.0
@@ -38,7 +34,7 @@ def euclidean_distance(fv1, fv2):
     distance += d * d
   return sqrt(distance)
 
-def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size):
+def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
   """
   Given the neighborhood of a given CSP and the runtime infos, returns the 
   corresponding SUNNY schedule.
@@ -48,8 +44,8 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size):
   for solver in pfolio:
     solved[solver] = set([])
     times[solver]  = 0.0
-  for inst in neighbours:
-    item = eval(infos[inst])
+  for inst, item in neighbours.items():
+    item = eval(item)
     for solver in pfolio:
       time = item[solver]['time']
       if time < timeout:
@@ -99,7 +95,7 @@ def sunny_csp(neighbours, infos, k, timeout, pfolio, backup, min_size):
   assert(round(sum(t for (s, t) in sorted_schedule)) <= timeout)
   return sorted_schedule
 
-def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, min_size):
+def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
   """
   Given the neighborhood of a given COP and the runtime infos, returns the 
   corresponding SUNNY schedule.
@@ -112,8 +108,8 @@ def sunny_cop(neighbours, infos, k, timeout, pfolio, backup, min_size):
     scores[solver] = []
     times[solver] = 0.0
     areas[solver] = 0.0
-  for inst in neighbours:
-    item = eval(infos[inst])
+  for inst, item in neighbours.items():
+    item = eval(item)
     for solver in pfolio:
       scores[solver].append(item[solver]['score']) 
       times[solver] += item[solver]['time']
