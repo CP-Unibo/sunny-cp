@@ -1,4 +1,6 @@
 - validare su diversi benchmarks COP/CSP
+
+- get_neighbours in presolving; passare neighbours, infos a sunny nel solving
   
 - Docker (www.docker.com) 
 
