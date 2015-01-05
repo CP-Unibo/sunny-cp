@@ -14,7 +14,7 @@ sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
 In a nutshell, sunny-cp relies on two sequential steps:
 
   1. PRE-SOLVING: consists in the parallel execution of a static schedule and 
-                  the feature extraction;
+                  the neighborhood computation of underlying k-NN algorithm;
                   
   2. SOLVING: consists in the parallel execution of a number of predicted 
               solvers, selected by means of SUNNY algorithm.
@@ -135,12 +135,13 @@ FEATURES
 ========
 
 During the presolving phase (in parallel with the static schedule execution) 
-sunny-cp extracts a feature vector of the problem in order to compute the 
-solvers schedule (possibly) run in the solving phase. By default, the feature 
-vector is extracted by mzn2feat tool. sunny-cp provide the sources of this tool:
-for its installation, decompress the mzn2feat-1.0.tar.bz2 archive and follow the
-instruction in the README file of that folder. However, the user can define its 
-own extractor by implementing a corresponding class in src/features.py
+sunny-cp extracts a feature vector of the problem in order to apply the k-NN 
+algorithm for determining the solvers schedule to be run in the following 
+solving phase. By default, the feature vector is extracted by mzn2feat tool. 
+sunny-cp provides the sources of this tool: for its installation, decompress the
+mzn2feat-1.0.tar.bz2 archive and follow the instruction in the README file of 
+that folder. However, the user can define its own extractor by implementing a 
+corresponding class in src/features.py
 
 
 KNOWLEDGE BASE

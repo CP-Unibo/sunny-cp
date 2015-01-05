@@ -78,27 +78,26 @@ def clean():
 
 def run_schedule(
   schedule, problem, cores, mem_limit, 
-  presolve = False, extractor = None, lims = None
+  presolve = False, extractor = None, k = 0, kb = None, lims = None
 ):
   """
   Runs (possibly in parallel on different cores) a schedule of solvers.
   Note that this function is used for both the static and the dynamic schedule.
   If it is used for static schedule, the flag "presolve" must be set to True. 
-  If presolve = True, it is also possible to perform the feature extraction by 
-  setting the "extractor" and "lims" parameters. Feature extraction is performed 
-  as soon as a free core is available. 
-  If presolve = True this function returns a triplet (t, f, b) where:
+  If presolve = True, it is also possible to perform the k-Nearest Neighbours 
+  computation of the input problem by setting the "extractor", "k", "kb", and 
+  "lims" parameters. The neighbours are computed as soon as a free core is 
+  available. If presolve = True this function returns a triplet (t, n, b) where:
     - t  is the time taken by the presolve phase;
-    - f  is the (possibly empty) feature vector of the problem;
+    - n  is the (possibly empty) neighborhood of the problem;
     - b  is the (possibly empry) black list of the name of the solvers that 
          failed during the pre-solving fase.
   """
   if presolve:
     start_time = time.time()
-    feat_vector = []
     black_list = []
-    if extractor:
-      feat_extracted = False
+    neighbours = []
+    neigh_computed = False
     
   # Launch the solvers (if any).
   for _ in range(cores):
@@ -107,13 +106,18 @@ def run_schedule(
       run_solver(solver, problem)
       
   # Loop for dealing with solvers execution.
-  while (extractor and not feat_extracted) or RUNNING_SOLVERS:
+  while (presolve and not neigh_computed) or RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
     
-    if extractor and not feat_extracted and len(RUNNING_SOLVERS) < cores:
+    if presolve and not neigh_computed and len(RUNNING_SOLVERS) < cores:
       print '% Extracting features...'
       feat_vector = extractor.extract_features([problem, lims])
-      feat_extracted = True
+      if feat_vector:
+	print '% Computing the',k,'nearest neighbors of the problem'
+        neighbours = get_neighbours(feat_vector, k, kb)
+      else:
+	print '% Features extraction failed!'
+      neigh_computed = True
 
     if mem_limit < 100:
       mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
@@ -164,7 +168,7 @@ def run_schedule(
 	continue
 
   if presolve:
-    return feat_vector, time.time() - start_time, black_list
+    return neighbours, time.time() - start_time, black_list
 
 def run_solver(solver, problem):
   """
@@ -425,24 +429,24 @@ def main(args):
       print '% Features extraction not needed!'
       extractor = None
       lims = None
-    feat_vector, static_time, black_list = run_schedule(
-      static, problem, cores, mem_limit, True, extractor, lims
+    neighbours, static_time, black_list = run_schedule(
+      static, problem, cores, mem_limit, True, extractor, k, kb, lims
     )
     
     print '%%%%% Solving %%%%%'
     pfolio = [s for s in pfolio if s not in black_list]
-    if not feat_vector or len(pfolio) <= cores:
-      if extractor:
-        print '% Features extraction failed! Switching to backup solver(s).'
+    if not neighbours or len(pfolio) <= cores:
       if len(pfolio) <= cores:
 	print '% Portfolio size <= No. of cores: no prediction needed!'
+      print '% Switching to backup solver(s)'
       par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
     else:
       print '% Computing solvers schedule...'
       timeout -= round(static_time)
-      seq_sched = sunny(
-	problem, pfolio, backup, feat_vector, k, timeout, kb, cores
-      )
+      if problem.isCSP():
+	seq_sched = sunny_csp(neighbours, k, timeout, pfolio, backup, cores)
+      else:
+	seq_sched = sunny_cop(neighbours, k, timeout, pfolio, backup, cores)
       print '% SUNNY sequential schedule:',seq_sched
       if len(seq_sched) <= cores:
 	print '% Schedule size <= No. of cores! No re-scheduling needed!'
