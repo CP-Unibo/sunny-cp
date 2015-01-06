@@ -68,6 +68,7 @@ def clean():
   processes at the end of the solving process (even when the termination is 
   forced externally).
   """
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   for solver in RUNNING_SOLVERS + SUSP_SOLVERS:
     send_signal_solver(signal.SIGKILL, solver)
   # Possibly remove temporary files.
@@ -93,6 +94,7 @@ def run_schedule(
     - b  is the (possibly empry) black list of the name of the solvers that 
          failed during the pre-solving fase.
   """
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   if presolve:
     start_time = time.time()
     black_list = []
@@ -174,7 +176,7 @@ def run_solver(solver, problem):
   """
   Executes a solver according to its status.
   """
-  global RUNNING_SOLVERS
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   susp = [s for s in SUSP_SOLVERS if s.name() == solver.name()]
   if susp:
     solver = susp[0]
@@ -273,6 +275,7 @@ def solver_terminated(solver, problem, schedule):
   """
   Handles the termination of a solver process, possibly launching a new solver.
   """
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   RUNNING_SOLVERS.remove(solver)
   if solver.status == 'mzn2fzn':
     if solver.process.returncode == 0:
@@ -322,6 +325,7 @@ def solver_timeout(solver, problem, schedule):
   """
   Handles the timeout of a solver process, possibly launching a new solver.
   """
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   print '% Timeout expired for',solver.name()
   if schedule:
     new_solver = schedule.pop(0)
@@ -362,7 +366,7 @@ def suspend_solver(solver):
   """
   Suspends a solver that reached its timeout.
   """
-  global SUSP_SOLVERS
+  global RUNNING_SOLVERS, SUSP_SOLVERS
   print '% Suspending solver',solver.name()
   send_signal_solver(signal.SIGSTOP, solver)
   SUSP_SOLVERS.append(solver)
