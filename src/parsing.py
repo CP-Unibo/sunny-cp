@@ -30,6 +30,7 @@ Portfolio Options
     process: indeed, sunny-cp is an "anytime process", which is run indefinitely 
     until a solution is reached. So, the timeout of the whole solving process 
     has to be set externally by the user. The default value is T = 1800.
+    Also the constant +inf is allowed
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
     k is 70, while the distance metric is the Euclidean one
@@ -61,6 +62,7 @@ Portfolio Options
     (in seconds) for s_i. Note that in general when a timeout t_i expires the 
     solver s_i is not killed, but just suspended (and then resumed if s_i has to 
     run again later). The static schedule is empty by default.
+    Also the constant +inf is allowed for the times t_i
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
@@ -190,7 +192,7 @@ def parse_arguments(args):
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
     elif o == '-T':
-      timeout= int(a)
+      timeout = float(a)
       if timeout<= 0:
         print >> sys.stderr, 'Error! Non-positive value ' + a + ' for timeout.'
         print >> sys.stderr, 'For help use --help'
@@ -237,7 +239,7 @@ def parse_arguments(args):
       s = a.split(',')
       for i in range(0, len(s) / 2):
 	solver = s[2 * i]
-	time = int(s[2 * i + 1])
+	time = float(s[2 * i + 1])
 	if time < 0:
 	  print >> sys.stderr, 'Error! Not acceptable negative time'
           print >> sys.stderr, 'For help use --help'
