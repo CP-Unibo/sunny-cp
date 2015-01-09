@@ -99,7 +99,10 @@ def run_schedule(
     start_time = time.time()
     black_list = []
     neighbours = []
-    neigh_computed = False
+    if extractor:
+      neigh_computed = False
+    else:
+      neigh_computed = True
     
   # Launch the solvers (if any).
   for _ in range(cores):
