@@ -20,6 +20,11 @@ In a nutshell, sunny-cp relies on two sequential steps:
 
 Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
+Warning: the order in [OPTIONS] matters! For instance, by typing the command:
+         sunny-cp -p 1 -p 2 <MODEL.mzn> [DATA.dzn] the option -p will be set to 
+         the value 2, since the the option -p 1 will be overwritten by -p 2.
+  
+
 Portfolio Options
 =================
   -T <TIMEOUT>
@@ -179,7 +184,7 @@ def parse_arguments(args):
       if n < 1:
         print >> sys.stderr, 'Warning: -p parameter set to 1.'
         cores = 1
-      elif n > cores:
+      elif n > DEF_CORES:
         print >> sys.stderr, 'Warning: -p parameter set to',cores
       else:
         cores = n
