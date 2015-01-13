@@ -1,6 +1,6 @@
 '''
 Solver is the abstraction of a constituent solver of the portfolio. Each solver 
-must be a subclass of Solver.
+must be an object of class Solver.
 
 RunningSolver is instead a solver running on a given FlatZinc model.
 '''
@@ -21,10 +21,15 @@ class Solver:
   mznlib = ''
   # Absolute path of the command used for executing a FlatZinc model.
   fzn_exec = ''
-  # Solver representation of a MiniZinc constraint "llt < rlt".
+  # Solver-specific FlatZinc translation of the MiniZinc constraint "llt < rlt".
   lt_constraint = ''
-  # Solver representation of a MiniZinc constraint "lgt < rgt".
+  # Solver-specific FlatZinc translation of the MiniZinc constraint "lgt < rgt".
   gt_constraint = ''
+  # Solver-specific option for printing all the solutions (for CSPs only) or all
+  # the sub-optimal solutions (for COPs only).
+  all_opt = ''
+  # Solver-specific option for free search (i.e., to ignore search annotations).
+  free_opt = ''
   
 class RunningSolver:
   """
@@ -110,7 +115,7 @@ class RunningSolver:
       try:
         m += p.memory_percent()
       except psutil.NoSuchProcess:
-	pass
+        pass
     return m
   
   def mzn2fzn_cmd(self, pb):

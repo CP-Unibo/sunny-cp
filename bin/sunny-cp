@@ -48,7 +48,7 @@ for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
 
 def send_signal_solver(signal, solver):
   """
-  Sends the specified signal to the solver process, and to all its childs.
+  Sends the specified signal to the solver process, and to all its children.
   """
   proc = solver.process
   if proc.poll() is None:
@@ -77,32 +77,11 @@ def clean():
       if os.path.exists(f):
         os.remove(f)
 
-def run_schedule(
-  schedule, problem, cores, mem_limit, 
-  presolve = False, extractor = None, k = 0, kb = None, lims = None
-):
+def solve(schedule, problem, cores, mem_limit, all_opt):
   """
-  Runs (possibly in parallel on different cores) a schedule of solvers.
-  Note that this function is used for both the static and the dynamic schedule.
-  If it is used for static schedule, the flag "presolve" must be set to True. 
-  If presolve = True, it is also possible to perform the k-Nearest Neighbours 
-  computation of the input problem by setting the "extractor", "k", "kb", and 
-  "lims" parameters. The neighbours are computed as soon as a free core is 
-  available. If presolve = True this function returns a triplet (t, n, b) where:
-    - t  is the time taken by the presolve phase;
-    - n  is the (possibly empty) neighborhood of the problem;
-    - b  is the (possibly empry) black list of the name of the solvers that 
-         failed during the pre-solving fase.
+  Runs (possibly in parallel on different cores) the solving phase.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-  if presolve:
-    start_time = time.time()
-    black_list = []
-    neighbours = []
-    if extractor:
-      neigh_computed = False
-    else:
-      neigh_computed = True
     
   # Launch the solvers (if any).
   for _ in range(cores):
@@ -111,10 +90,91 @@ def run_schedule(
       run_solver(solver, problem)
       
   # Loop for dealing with solvers execution.
-  while (presolve and not neigh_computed) or RUNNING_SOLVERS:
+  while RUNNING_SOLVERS:
+    time.sleep(SLEEP_TIME)
+
+    if mem_limit < 100:
+      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
+      if sum(mems.values()) > mem_limit:
+	solver = max(mems.items(), key = lambda x: x[1])[0]
+	print '% Warning! sunny-cp exceeded the maximum allowed memory'
+	print '% Killing solver',solver.name()
+	send_signal_solver(signal.SIGKILL, solver)
+	RUNNING_SOLVERS.remove(solver)
+        continue
+    
+    for solver in RUNNING_SOLVERS:
+      # Read and process lines from the output stream of each process.
+      lines = read_lines(solver.process)
+      if lines:
+	process_output(solver, problem, lines, all_opt)
+      
+      # Solver process terminated.
+      if solver.process.poll() is not None:
+	if solver.status == 'flatzinc':
+	  # Sometimes not all the lines are read from solver output.
+	  lines = read_lines(solver.process)  
+          if lines:
+	    process_output(solver, problem, lines, all_opt)
+        solver_terminated(solver, problem, schedule)
+        continue
+      
+      # Expired timeout: the solver has to be suspended.
+      if time.time() - solver.start_time > solver.timeout and \
+	 time.time() - solver.solution_time > solver.wait_time:
+	   solver_timeout(solver, problem, schedule)
+	   continue
+	 
+      # Restart a solver if its solution is obsolete and its restart time is 
+      # actually expired.
+      if solver.status == 'flatzinc' \
+      and problem.bound_better_than(solver.obj_value) \
+      and time.time() - solver.solution_time > solver.restart_time:
+	send_signal_solver(signal.SIGKILL, solver)
+	RUNNING_SOLVERS.remove(solver)
+	print '% Restarting',solver.name()
+	solver.timeout = max(
+	  solver.timeout - (time.time() - solver.start_time), 0
+	)
+	run_solver(solver, problem)
+	continue
+
+def presolve(
+  schedule, problem, cores, mem_limit, all_opt,
+  extractor = None, k = 0, kb = None, lims = None
+):
+  """
+  Runs (possibly in parallel on different cores) the pre-solving phase.
+  A part from the (possibly empty) static schedule execution, by properly 
+  setting the "extractor", "k", "kb", and "lims" this function also allows to 
+  extract the feature vector and then to compute the k-nearest neighbours of 
+  the problem (as soon as a free core is available). 
+  This function returns a triplet (t, n, b) where:
+    t  is the time taken by the whole pre-solving phase;
+    n  is the (possibly empty) neighborhood of the problem;
+    b  is the (possibly empty) black list the solvers that failed during the 
+       pre-solving phase.
+  """
+  global RUNNING_SOLVERS, SUSP_SOLVERS
+  start_time = time.time()
+  black_list = []
+  neighbours = []
+  if extractor:
+    neigh_computed = False
+  else:
+    neigh_computed = True
+    
+  # Launch the solvers (if any).
+  for _ in range(cores):
+    if schedule:
+      solver = schedule.pop(0)
+      run_solver(solver, problem)
+      
+  # Loop for dealing with solvers execution.
+  while RUNNING_SOLVERS or not neigh_computed:
     time.sleep(SLEEP_TIME)
     
-    if presolve and not neigh_computed and len(RUNNING_SOLVERS) < cores:
+    if not neigh_computed and len(RUNNING_SOLVERS) < cores:
       print '% Extracting features...'
       feat_vector = extractor.extract_features([problem, lims])
       if feat_vector:
@@ -138,7 +198,7 @@ def run_schedule(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines)
+	process_output(solver, problem, lines, all_opt)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -146,9 +206,9 @@ def run_schedule(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines)
+	    process_output(solver, problem, lines, all_opt)
         solver_terminated(solver, problem, schedule)
-        if presolve and solver.process.returncode not in [None, 0]:
+        if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
         continue
       
@@ -172,8 +232,7 @@ def run_schedule(
 	run_solver(solver, problem)
 	continue
 
-  if presolve:
-    return neighbours, time.time() - start_time, black_list
+  return neighbours, time.time() - start_time, black_list
 
 def run_solver(solver, problem):
   """
@@ -229,7 +288,7 @@ def read_lines(proc):
   except:
     return ''
 
-def process_output(solver, problem, lines):
+def process_output(solver, problem, lines, all_opt):
   """
   Processes the output of a solver.
   """
@@ -240,27 +299,37 @@ def process_output(solver, problem, lines):
 	for (var, val) in solver.solution.items():
 	  print var,'=',val
 	print line
-	if '-a ' not in solver.fzn_options and ' -a ' not in solver.fzn_options:
+	if not all_opt:
 	  print '% Search completed by',solver.name()
 	  clean()
-          sys.exit(0)
+	  sys.exit(0)
       elif problem.bound_worse_than(solver.obj_value):
 	# The objective value found is the best so far.
 	problem.best_bound = solver.obj_value
-	print '%',solver.name(),'found a new solution'
-	for (var, val) in solver.solution.items():
-	  if var == problem.aux_var:
-	    print '%',var,'=',val
-	  else:
-	    print var,'=',val
-	print line
+	print '%',solver.name(),'found a new, better solution'
+	if all_opt:
+	  for (var, val) in solver.solution.items():
+	    if var == problem.aux_var:
+	      print '%',var,'=',val
+	    else:
+	      print var,'=',val
+	  print line
+	  solver.solution = {}
+	else:
+	  print '%',problem.aux_var,'=',solver.obj_value
 	problem.best_solver = solver.name()
-      solver.solution = {}
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
       if not problem.has_bound():
 	print line
       else:
+	if not all_opt:
+	  for (var, val) in solver.solution.items():
+	    if var == problem.aux_var:
+	      print '%',var,'=',val
+	    else:
+	      print var,'=',val
+	  print '----------'
 	print '=========='
       print '% Search completed by',solver.name()
       clean()
@@ -403,18 +472,23 @@ def init_problem(problem, tmp_id):
     TMP_FILES += [mzn_path, out_path]
   return problem
 
-def init_schedule(schedule, solver_options, solve, tmp_id):
+def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
   """
   Initializes a schedule, making it ready to be executed.
   """
   global TMP_FILES
   running_schedule = []  
   for (s, t) in schedule:
+    so = eval(s)
     fzn_path = tmp_id + '.' + s + '.fzn'
     opts = solver_options[s]['options']
-    wt   = float(solver_options[s]['wait_time'])
-    rt   = solver_options[s]['restart_time']
-    solver = RunningSolver(eval(s), solve, fzn_path, opts, wt, rt, t)
+    if all_opt or solve != 'sat':
+      opts += ' ' + so.all_opt
+    if free_opt:
+      opts += ' ' + so.free_opt
+    wt = float(solver_options[s]['wait_time'])
+    rt = solver_options[s]['restart_time']
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
@@ -424,10 +498,13 @@ def main(args):
   try:
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_dir, mem_limit, KEEP = parse_arguments(args)
+    solver_options, tmp_dir, mem_limit, KEEP, all_opt, free_opt            = \
+      parse_arguments(args)
     tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
     problem = init_problem(problem, tmp_id)
-    static  = init_schedule(static, solver_options, problem.solve, tmp_id)
+    static  = init_schedule(
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+    )
     
     print '%%%%% Pre-solving %%%%%'
     if cores >= len(pfolio):
@@ -436,8 +513,8 @@ def main(args):
       print '% Features extraction not needed!'
       extractor = None
       lims = None
-    neighbours, static_time, black_list = run_schedule(
-      static, problem, cores, mem_limit, True, extractor, k, kb, lims
+    neighbours, static_time, black_list = presolve(
+      static, problem, cores, mem_limit, all_opt, extractor, k, kb, lims
     )
     
     print '%%%%% Solving %%%%%'
@@ -469,8 +546,10 @@ def main(args):
         par_sched = parallelize(seq_sched, cores, timeout)
     par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
     print '% SUNNY parallel schedule:',par_sched    
-    schedule = init_schedule(par_sched, solver_options, problem.solve, tmp_id)
-    run_schedule(schedule, problem, cores, mem_limit)
+    schedule = init_schedule(
+      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
+    )
+    solve(schedule, problem, cores, mem_limit, all_opt)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
@@ -479,6 +558,8 @@ def main(args):
     sys.exit(1)
     
   print '% Search not completed by any constituent solver. Bye!!!'
+  if not problem.has_bound():
+    print '=====UNKNOWN====='
   clean()
   
 if __name__ == '__main__':
