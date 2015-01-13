@@ -18,9 +18,9 @@ In a nutshell, sunny-cp relies on two sequential steps:
               (possibly) selected by means of SUNNY algorithm
 
 
-Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
+USAGE: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
 
-Warning: the order in [OPTIONS] matters! For instance, by typing the command:
+WARNING: the order in [OPTIONS] matters! For instance, by typing the command:
          sunny-cp -p 1 -p 2 <MODEL.mzn> [DATA.dzn] the option -p will be set to 
          the value 2, since the the option -p 1 will be overwritten by -p 2.
   
@@ -71,6 +71,11 @@ Portfolio Options
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
+  -a
+    Prints to standard output all the solutions of the problem (for CSPs only) 
+    or all the sub-optimal solutions until the optimum is found (for COPs only)
+  -f
+    Free search: ignore any search annotations on the solve item.
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system
@@ -83,13 +88,13 @@ Portfolio Options
 Solvers Options
 ===============
   --fzn-options "<OPTIONS>"
-    Allows to run each selected solver on its specific FlatZinc model by using 
-    the options specified in <OPTIONS> string. No checks are performed on that 
-    string. By default, the options string is empty for CSPs, while is "-a" for 
-    COPs. Note that this option should allow to print all the solutions of the 
-    problem, according to the MiniZinc Challenge rules.
+    Allows to run each solver of the portfolio on its specific FlatZinc model by
+    using the options specified in <OPTIONS> string. No checks are performed on 
+    that string. This setting does not overwrite the current options string, but
+    just append <OPTIONS> to it. By default, the options string is empty.
   --fzn-options-<SOLVER_NAME> "<OPTIONS>"
-    Runs the solver <SOLVER_NAME> with the options specified in <OPTIONS>
+    As above, with the difference that <OPTIONS> are set only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio. 
   --wait-time <TIME>
     Don't stop a running solver if it has produced a solution in the last <TIME> 
     seconds. By default, <TIME> is 2 seconds. Also the constant +inf is allowed
@@ -128,17 +133,15 @@ Helper Options
     that the '-' character of <OPTION> must be omitted. For example, --cop-T 900 
     set the T parameter to 900 only if the problem is a COP, while such option 
     is ignored if the problem is a COP.
-  -a, -f
-    For compatibility with MiniZinc Challenge rules. Note that these options are 
-    deprecated, since are always ignored: if needed, use --fzn-options.
 '''
 
 import sys
 import getopt
 from string   import replace
-from defaults import *
-from features import *
-from problem  import *
+from defaults       import *
+from features       import *
+from problem        import *
+from pfolio_solvers import *
   
 def parse_arguments(args):
   """
@@ -159,16 +162,18 @@ def parse_arguments(args):
   restart_time = DEF_RESTART_TIME
   aux_var = DEF_AUX_VAR
   mem_limit = DEF_MEM_LIMIT
+  all_opt = DEF_ALL
+  free_opt = DEF_FREE
   if solve == 'sat':
     solver_options = dict((s, {
-      'options': DEF_OPTIONS_CSP, 
+      'options': DEF_OPT_CSP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
       }) for s in DEF_PFOLIO_CSP
     )
   else:
     solver_options = dict((s, {
-      'options': DEF_OPTIONS_COP, 
+      'options': DEF_OPT_COP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
       }) for s in DEF_PFOLIO_COP
@@ -243,10 +248,10 @@ def parse_arguments(args):
     elif o == '-s':
       s = a.split(',')
       for i in range(0, len(s) / 2):
-	solver = s[2 * i]
-	time = float(s[2 * i + 1])
-	if time < 0:
-	  print >> sys.stderr, 'Error! Not acceptable negative time'
+        solver = s[2 * i]
+        time = float(s[2 * i + 1])
+        if time < 0:
+          print >> sys.stderr, 'Error! Not acceptable negative time'
           print >> sys.stderr, 'For help use --help'
           sys.exit(2)
         static.append((solver, time))
@@ -262,13 +267,17 @@ def parse_arguments(args):
         tmp_dir = a
     elif o == '-m':
       mem_limit = float(a)
+    elif o == '-a':
+      all_opt = True
+    elif o == '-f':
+      free_opt = True
     elif o.startswith('--fzn-options'):
       if len(o) > 13:
         solver = o[14:]
-        solver_options[solver]['options'] = a
+        solver_options[solver]['options'] += ' ' + a
       else:
         for item in solver_options.values():  
-          item['options'] = a
+          item['options'] += ' ' + a
     elif o.startswith('--wait-time'):
       wait_time = float(a)
       if wait_time < 0:
@@ -327,7 +336,7 @@ def parse_arguments(args):
     
   problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_dir, mem_limit, keep
+    cores, solver_options, tmp_dir, mem_limit, keep, all_opt, free_opt
 
 def get_args(args):
   """

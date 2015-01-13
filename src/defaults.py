@@ -32,9 +32,6 @@ DEF_LIMS_COP = SUNNY_HOME + '/kb/all_T1800/all_T1800_lims_cop'
 DEF_STATIC_CSP = []
 DEF_STATIC_COP = []
 
-DEF_OPTIONS_CSP = ''
-DEF_OPTIONS_COP = '-a'
-
 DEF_EXTRACTOR = 'mzn2feat'
 
 DEF_CORES = cpu_count()
@@ -50,3 +47,8 @@ DEF_WAIT_TIME = 2
 DEF_RESTART_TIME = 5
 
 DEF_MEM_LIMIT = 100
+
+DEF_OPT_CSP = ''
+DEF_OPT_COP = ''
+DEF_ALL = False
+DEF_FREE = False

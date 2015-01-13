@@ -16,6 +16,18 @@ suggested procedure *before the sunny-cp installation* is to:
     the command used by <SOLVER> to execute its FlatZinc interpreter
     (also a symbolic link to another executable is fine)
     
+ 4. create a text file SUNNY_HOME/solvers/<SOLVER>/opts which contains two lines
+    of the form:
+      all_opt = '<OPTION>'
+      free_opt = '<OPTION>'
+    where:
+      all_opt:  is the solver-specific option for printing all the solutions 
+                (for CSPs only) or all the sub-optimal solutions (for COPs only)
+      free_opt: is the solver-specific option for the free search (i.e., for 
+                ignore the search annotations)
+    Note that OPTION can also be empty; e.g., if a solver always ignores the 
+    search annotations then just set free_opt = ''
+    
  4. run the SUNNY_HOME/install.sh script for checking <SOLVER> installation
   
 If this procedure succeeds, the following code will be added to the file 
@@ -27,6 +39,8 @@ SUNNY_HOME/src/pfolio_solvers.py:
   <SOLVER>.fzn_exec = 'SUNNY_HOME/solvers/<SOLVER>/fzn-exec'
   <SOLVER>.lt_constraint = <SOLVER> redefinition of the constraint llt < rlt
   <SOLVER>.gt_constraint = <SOLVER> redefinition of the constraint lgt < rgt
+  <SOLVER>.all_opt = <SOLVER> option string for printing all the solutions
+  <SOLVER>.free_opt = <SOLVER> option string for free search
   
 In this way, <SOLVER> object becomes part of the sources and usable by sunny-cp 
 for the <SOLVER> execution. Note that once <SOLVER> is installed, it is however 
