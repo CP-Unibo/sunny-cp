@@ -241,9 +241,9 @@ def run_solver(solver, problem):
   global RUNNING_SOLVERS, SUSP_SOLVERS
   susp = [s for s in SUSP_SOLVERS if s.name() == solver.name()]
   if susp:
-    solver = susp[0]
-    SUSP_SOLVERS.remove(solver)
-    resume_solver(solver, solver.timeout)
+    susp_solver = susp[0]
+    SUSP_SOLVERS.remove(susp_solver)
+    resume_solver(susp_solver, solver.timeout)
     return
   if solver.status == 'ready':
     print '% Starting',solver.name(),'for',str(solver.timeout),'seconds'
