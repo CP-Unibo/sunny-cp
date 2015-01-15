@@ -344,11 +344,13 @@ def get_args(args):
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'a', 'f', 'm']
+    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'm']
     long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
     long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]
+    csp_opts += ['csp-a', 'csp-f']
+    cop_opts += ['cop-a', 'cop-f']
     long_options = [o + '=' for o in long_options]
     long_options += ['help', 'keep', 'g12'] + csp_opts + cop_opts
     opts, args = getopt.getopt(
@@ -358,8 +360,9 @@ def get_args(args):
     print msg
     print >> sys.stderr, 'For help use --help'
     sys.exit(2)
-  
+    
   if len(args) == 0:
+    print opts, args
     for o, a in opts:
       if o in ('-h', '--help'):
         print __doc__
