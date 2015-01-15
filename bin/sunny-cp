@@ -527,6 +527,8 @@ def main(args):
     else:
       print '% Computing solvers schedule...'
       timeout -= round(static_time)
+      if backup not in pfolio:
+	backup = pfolio[0]
       if problem.isCSP():
 	seq_sched = sunny_csp(neighbours, k, timeout, pfolio, backup, cores)
       else:
