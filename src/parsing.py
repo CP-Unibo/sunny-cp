@@ -235,8 +235,8 @@ def parse_arguments(args):
         pb = 'cop'
       else:
         pb = 'csp'
-      kb = path + 'kb_' + pb + '_' + name
-      lims = path + 'lims_' + pb + '_' + name
+      kb = path + name + '_' + pb
+      lims = path + name + '_lims_' + pb
       if not os.path.exists(kb):
         print >> sys.stderr, 'Error! File ' + kb + ' not exists.'
         print >> sys.stderr, 'For help use --help'
