@@ -2,11 +2,10 @@ Each folder corresponds to a different scenario. If <SCEN> is the name of the sc
 
 0. aslib_data: the original <SCEN> folder as in the corresponding aslib_data folder of ASLib.
 
-1. data2cv.py: creates a folder cv that in turn contains R * F sub-folders where R is the number of repetitions and F the number of folds of R-repeated F-fold cross validation as specified in aslib_data/cv.arff file. In particular each of these sub-folder will be called rep_I_fold_J (for I = 1, ..., R and J = 1, ..., F) and will contain 4 files: 
-  train_feature_values.arff: the original aslib_data/feature_values.arff file without the instances of the corresponding repetition/fold 
-  train_feature_runstatus.arff: the original aslib_data/feature_runstatus.arff file without the instances of the corresponding repetition/fold 
-  train_algorithm_runs.arff: the original aslib_data/algorithm_runs.arff file without the instances of the corresponding repetition/fold 
-  test_instances: the instance IDs of the corresponding repetition/fold
+1. data2cv.py: creates a folder "cv" that in turn contains R * F sub-folders where R is the number of repetitions and F the number of folds of R-repeated F-fold cross validation as specified in aslib_data/cv.arff file. In particular each of these sub-folder will be called rep_I_fold_J (for I = 1, ..., R and J = 1, ..., F) and will contain 3 files: 
+  train_feature_values.arff: the original aslib_data/feature_values.arff data without the instances of the corresponding repetition/fold
+  train_algorithm_runs.arff: the original aslib_data/algorithm_runs.arff data without the instances of the corresponding repetition/fold 
+  test_feature_values.arff:  the original aslib_data/feature_values.arff data containing only the instances of the corresponding repetition/fold
 
 2. cv2csv.py: a script that for each repetition I and fold J creates two .csv files in rep_I_fold_J folder: <SCEN>.feat and <SCEN>.info. These files contain all the feature and the runtime information needed for generating the SUNNY knowledge base.
 
