@@ -19,3 +19,5 @@ Each folder corresponds to a different scenario. If <SCEN> is the name of the sc
    where [(s_1,t_1),...,(s_k,t_k)] is the schedule predicted by SUNNY for the instance instance_id
    
 6. evaluate.py: a script for evaluating the performance of SUNNY according to predictions.csv
+
+7. run_scenario.py: executes steps 1-6 and prints the proper output
