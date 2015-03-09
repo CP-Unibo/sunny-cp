@@ -1,15 +1,9 @@
-1.  ASP-POTASSCO
-2.  SAT12-INDU
-3.  SAT12-HAND  
-4.  SAT12-RAND
-5.  SAT12-ALL
-6.  MAXSAT12-PMS
-7.  SAT11-HAND  
-8.  SAT11-RAND
-9.  SAT11-INDU
-10. QBF-2011
-11. PREMARSHALLING-ASTAR-2013
-12. PROTEUS-2014
-13. CSP-2010
-14. CSP-MZN-2013
-15. COP-MZN-2013
+- Docker (www.docker.com) 
+
+- velocizzare calcolo scedule
+
+- testing (coverage?)
+
+- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
+
+- filtrare dataset, solvers, features x ridurre complessità
