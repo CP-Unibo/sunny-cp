@@ -1,9 +1,0 @@
-- Docker (www.docker.com) 
-
-- velocizzare calcolo scedule
-
-- testing (coverage?)
-
-- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
-
-- filtrare dataset, solvers, features x ridurre complessità
