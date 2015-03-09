@@ -1,0 +1,22 @@
+Each folder corresponds to a different scenario. If <SCEN> is the name of the scenario in ASLib, then the folder must be called <SCEN> and must contain the following files/directory:
+
+0. aslib_data: the original <SCEN> folder as in the corresponding aslib_data folder of ASLib.
+
+1. data2cv.py: creates a folder cv that in turn contains R * F sub-folders where R is the number of repetitions and F the number of folds of R-repeated F-fold cross validation as specified in aslib_data/cv.arff file. In particular each of these sub-folder will be called rep_I_fold_J (for I = 1, ..., R and J = 1, ..., F) and will contain 4 files: 
+  train_feature_values.arff: the original aslib_data/feature_values.arff file without the instances of the corresponding repetition/fold 
+  train_feature_runstatus.arff: the original aslib_data/feature_runstatus.arff file without the instances of the corresponding repetition/fold 
+  train_algorithm_runs.arff: the original aslib_data/algorithm_runs.arff file without the instances of the corresponding repetition/fold 
+  test_instances: the instance IDs of the corresponding repetition/fold
+
+2. cv2csv.py: a script that for each repetition I and fold J creates two .csv files in rep_I_fold_J folder: <SCEN>.feat and <SCEN>.info. These files contain all the feature and the runtime information needed for generating the SUNNY knowledge base.
+
+3. csv2kb.py: a script that for each repetition I and fold J creates a folder kb_<SCEN> in rep_I_fold_J folder. This folder is the SUNNY knowledge base, and contains two files: <SCEN>_infos, containing the feature/runtime information, and <SCEN>_lims, containing the max/min value for each feature (for more details, see README file in kb folder of sunny-cp solver)
+
+4. kb2args.py: a script that for each repetition I and fold J produces a file args_<SCEN>.txt for encoding the arguments with which must be invoked SUNNY on the corresponding test instances. It is a plain text file of the form:
+    -T <timeout (in seconds) of solving process> -b <name of the backup solver> -k <neighbourhood size of underlying k-NN algorithm> -K <absolute path of the knowledge base kb_<SCEN>>
+
+5. predict.py: a script that for each repetition I and fold J produces a file predictions.csv of the form:
+     instance_id,I,J,[(s_1,t_1),...,(s_k,t_k)]
+   where [(s_1,t_1),...,(s_k,t_k)] is the schedule predicted by SUNNY for the instance instance_id
+   
+6. evaluate.py: a script for evaluating the performance of SUNNY according to predictions.csv
