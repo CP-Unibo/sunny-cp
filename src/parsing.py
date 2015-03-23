@@ -362,7 +362,6 @@ def get_args(args):
     sys.exit(2)
     
   if len(args) == 0:
-    print opts, args
     for o, a in opts:
       if o in ('-h', '--help'):
         print __doc__
