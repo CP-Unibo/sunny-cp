@@ -57,6 +57,7 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
   m = len(pfolio)
   # Select the best sub-portfolio. min_size is the minimum cardinality.
   for i in range(min_size, m + 1):
+    old_pfolio = best_pfolio
     for j in range(0, binom(m, i)):
       solved_instances = set([])
       solving_time = 0
@@ -71,6 +72,8 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
           min_time = solving_time
           max_solved = num_solved
           best_pfolio = sub_pfolio
+    if old_pfolio == best_pfolio:
+      break
   # n is the number of instances solved by each solver plus the instances 
   # that no solver can solver.
   n = sum([len(solved[s]) for s in best_pfolio]) + (k - max_solved)
@@ -121,6 +124,7 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
   # Select the best sub-portfolio.
   m = len(pfolio)
   for i in range(min_size, m + 1):
+    old_pfolio = best_pfolio
     for j in range(0, binom(m, i)):
       score = 0
       time = 0
@@ -141,6 +145,8 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
           min_area  = area
           max_score = score
           best_pfolio = sub_pfolio
+    if old_pfolio == best_pfolio:
+      break
   # n is the number of instances solved by each solver plus the instances 
   # that no solver can solver.
   n = sum([sum(scores[s]) for s in best_pfolio]) + (k - max_score)
