@@ -41,11 +41,10 @@ Portfolio Options
     k is 70, while the distance metric is the Euclidean one
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
-    form s_1,s_2,...,s_m. Note that such solvers must be a not empty subset of 
-    the default portfolio. The specified ordering of solvers matters: indeed, 
-    in case of failure of the scheduled solvers, the other solvers will be 
+    form s_1,s_2,...,s_m. The specified ordering of solvers matters: indeed, 
+    in case of failure of all the scheduled solvers, the other solvers will be 
     executed according to such ordering. This option can be used to select a 
-    particular sub-portfolio or even to change the default ordering of the 
+    particular portfolio or even to change the default ordering of the 
     solvers, which is by default: 
       chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
       g12fd,choco,gecode,ortools,g12gurobi,g12cbc
@@ -213,9 +212,6 @@ def parse_arguments(args):
         print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
-      if not set(p) <= set(pfolio):
-        print >> sys.stderr, 'Error! The portfolio',a,'is not a subset of', \
-          str(pfolio)
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
       pfolio = p
