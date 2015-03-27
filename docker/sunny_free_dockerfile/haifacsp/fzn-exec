@@ -1,0 +1,5 @@
+#! /bin/sh
+
+eval last_arg=\${$#}
+#LD_PRELOAD="$HOME"/solvers/glibc/build/lib/libc.so.6 "$HOME"/solvers/glibc/build/lib/ld-2.20.90.so "$HOME"/solvers/hcsp-1.1.0-x86-64/hcsp.big -F fzn $last_arg
+/solvers_exec/haifacsp_exec/hcsp.big -F fzn $last_arg

@@ -1,0 +1,3 @@
+#! /bin/sh
+
+minisatid-3.10.0 -f=fz "$@"
