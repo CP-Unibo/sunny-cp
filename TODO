@@ -1,11 +1,18 @@
-- Docker
+* RunningSolver ISA Solver
 
-- parametro -z per bound iniziale, -X,-A exclude/add from/to the default pfolio, --switch-search, RunningSolver ISA Solver
+* Aggiungere nuovi parametri: --switch-search, -z per bound iniziale, 
+  -X/-A for excluding/adding solver(s) from/to the default pfolio
+  --max-restart X: max. no. of restarts allowed
 
-- velocizzare calcolo scedule
+* python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
+  con mzn2feat
 
-- testing (coverage?)
+* velocizzare calcolo scedule
+  
+* MiniZinc 2.0 (anche mzn2feat) e nuovi solvers per mznc15
 
-- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
+* Docker
 
-- filtrare dataset, solvers, features x ridurre complessità
+* pytdoc + unit test (con code coverage)
+
+* Release sunny-cp 2.1 prima di mznc15
