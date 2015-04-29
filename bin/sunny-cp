@@ -1,41 +1,102 @@
 #! /usr/bin/env python
 '''
-sunny-cp executable module.
+sunny-cp: a CP portfolio solver consisting of 8 constituent solvers:
+
+  Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, MinisatID
+
+*******************************************************************************
+Note that the MiniZinc model in input MUST NOT contain the reserved keyword
+o__b__j__v__a__r and the output produced is not formatted (in this regard, is 
+possible to use the solns2out tool of MiniZinc suite for formatting the output)
+*******************************************************************************
+Don't forget to properly set the SUNNY_HOME and PATH environment variables!!!
+*******************************************************************************
+  
+Usage: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
+
+Options:
+
+  -h, --help  		
+    Print this message
+    
+  -T <timeout>
+    Timeout (in seconds) of SUNNY algorithm. Note that this IS NOT the timeout 
+    of the whole solving process: if the instance is still not solved within T 
+    seconds by the scheduled solvers, the others non-scheduled solvers of the 
+    portfolio will be executed for T seconds following a default ordering. 
+    Anyway, note that none of the solvers will be executed for more than T 
+    seconds.
+    The default value is T = 1800, while the default 'backup' ordering is:
+      chuffed, g12cpx, minisatid, gecode, g12lazyfd, g12fd, g12gurobi, g12cbc    
+  
+  -k <size>
+    Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
+    k is 70, while the distance metric is the Euclidean one
+  
+  -P <portfolio>
+    Specifies the portfolio through a comma-separated list of solvers of the 
+    form s_1,s_2,...,s_m. Note that such solvers must be a not empty subset of 
+    the default portfolio. Moreover, also the specified ordering of solvers is 
+    important: indeed, in case of failure of the scheduled solvers, the other 
+    solvers will be executed according to such ordering. This option can be used 
+    to select a particular sub-portfolio or even to change the default ordering 
+    of the solvers in case of failures
+  
+  -b <solver>
+    Set the backup solver of the portfolio. The default backup solver is chuffed
+    
+  -K <path>
+    Absolute path of the folder which contains the knowledge bases. The default 
+    knowledge bases are in SUNNY_HOME/kb/all. For more details, see the README 
+    file in SUNNY_HOME/kb folder
+  
+  -s <schedule>
+    Specifies a static schedule to be run before executing the SUNNY algorithm 
+    on a given COP. The schedule must be passed in the form: 
+      s_1,t_1,s_2,t_2,...,s_m,t_m
+    where each s_i belongs to the specified portfolio, 0 < t_i <= T, and 
+    C = t_1 + ... + t_m <= T, where T is the specified solving timeout for COPs. 
+    Passing a static schedule has the purpose of providing a 'warm start' to the 
+    SUNNY algorithm in the first C seconds: first s_1 is run for t_1 seconds, 
+    then s_2 is run for t_2 seconds, ..., and finally s_m is run for t_m seconds 
+    by exploiting each sub-optimal solution found by the previous solver. If the 
+    problem is still not solved after running the static schedule, the schedule 
+    resulting from SUNNY algorithm is run in the remaining T - C seconds. The 
+    static schedule is empty by default
+    
+  -d <path> 
+    Absolute path of the folder in which the temporary files created by the 
+    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
+    such files are deleted after sunny-cp execution
+    
+  --keep
+    Do not erase the temporary files created by the solver and stored in the 
+    specified directory. This option is unset by default.
 '''
 
 import os
 import sys
-import time
-import fcntl
-import psutil
+import getopt
 import signal
 import traceback
-import multiprocessing
-from string import replace
-from socket import gethostname
-from subprocess import PIPE
+from subprocess import Popen, PIPE
+from socket     import gethostname
+from string	import replace
 
+# SUNNY_HOME environment variable must be set!!!
 SUNNY_HOME = os.environ['SUNNY_HOME']
 sys.path.append(SUNNY_HOME + '/src')
-from problem        import *
-from parsing        import *
-from solver         import *
-from features       import *
-from scheduling     import *
-from pfolio_solvers import *
+from sunny_alg  import *
+from sunny_exe  import *
 
-# List of the running solvers.
-RUNNING_SOLVERS = []
-# List of the suspended solvers.
-SUSP_SOLVERS = []
-# If KEEP, don't delete temporary files.
+# If KEEP == True, do not remove temporary files.
 KEEP = False
-# List of temporary file paths.
-TMP_FILES = []
-# Sleep time (in seconds) for multiprocessing.
-SLEEP_TIME = 0.1
-# FIXME: Temporary.
-SWITCH = False
+# Directory where temporary files will put.
+TMP_DIR = SUNNY_HOME + '/tmp'
+# Unique identifier of temporary files.
+TMP_ID = TMP_DIR + '/tmp_' + gethostname() + '_' + str(os.getpid())
+# Variable artificially introduced for keeping track of the objective function.
+OBJ_VAR = 'o__b__j__v__a__r'
 
 def handler(signum = None, frame = None):
   """
@@ -43,544 +104,320 @@ def handler(signum = None, frame = None):
   """
   print >> sys.stderr, '% Signal handler called with signal',signum
   clean()
-  sys.stdout.close()
   sys.exit(signum)
 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
   signal.signal(sig, handler)
 
-def send_signal_solver(signal, solver):
-  """
-  Sends the specified signal to the solver process, and to all its children.
-  """
-  proc = solver.process
-  if proc.poll() is None:
-    for p in proc.children(recursive = True):
-      try:
-        p.send_signal(signal)
-      except psutil.NoSuchProcess:
-	pass
-    try:
-      proc.send_signal(signal)
-    except psutil.NoSuchProcess:
-      pass
-
 def clean():
   """
-  Utility for (possibly) cleaning temporary files and killing the solvers 
-  processes at the end of the solving process (even when the termination is 
+  Utility for (possibly) cleaning temporary files and stopping the solver 
+  execution at the end of the solving process (even when the termination is 
   forced externally).
   """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  for solver in RUNNING_SOLVERS + SUSP_SOLVERS:
-    send_signal_solver(signal.SIGKILL, solver)
+  global KEEP, TMP_DIR, TMP_ID
+  # Get the PID of the solver currently in execution (see sunny_exe.py).
+  pid = get_pid()
+  if pid:
+    try:
+      os.killpg(pid, signal.SIGKILL)
+    except OSError:
+      pass
+  name = os.path.splitext(os.path.basename(TMP_ID))[0]
   # Possibly remove temporary files.
   if not KEEP:
-    for f in TMP_FILES:
-      if os.path.exists(f):
-        os.remove(f)
+    for f in os.listdir(TMP_DIR):
+      if os.path.splitext(f)[0] == os.path.basename(TMP_ID):
+	os.remove(TMP_DIR + '/' + f)  
+  sys.stdout.close() 
 
-def solve(schedule, problem, cores, mem_limit, all_opt):
+def extract_features(mzn, dzn):
   """
-  Runs (possibly in parallel on different cores) the solving phase.
+  Extracts the features from a MiniZinc model by exploiting the mzn2feat
+  features extractor.
   """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-    
-  # Launch the solvers (if any).
-  for _ in range(cores):
-    if schedule:
-      solver = schedule.pop(0)
-      run_solver(solver, problem)
-      
-  # Loop for dealing with solvers execution.
-  while RUNNING_SOLVERS:
-    time.sleep(SLEEP_TIME)
-
-    if mem_limit < 100:
-      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
-      if sum(mems.values()) > mem_limit:
-	solver = max(mems.items(), key = lambda x: x[1])[0]
-	print '% Warning! sunny-cp exceeded the maximum allowed memory'
-	print '% Killing solver',solver.name()
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-        continue
-    
-    for solver in RUNNING_SOLVERS:
-      # Read and process lines from the output stream of each process.
-      lines = read_lines(solver.process)
-      if lines:
-	process_output(solver, problem, lines, all_opt)
-      
-      # Solver process terminated.
-      if solver.process.poll() is not None:
-	if solver.status == 'flatzinc':
-	  # Sometimes not all the lines are read from solver output.
-	  lines = read_lines(solver.process)  
-          if lines:
-	    process_output(solver, problem, lines, all_opt)
-        solver_terminated(solver, problem, schedule)
-        continue
-      
-      # Expired timeout: the solver has to be suspended.
-      if time.time() - solver.start_time > solver.timeout and \
-	 time.time() - solver.solution_time > solver.wait_time:
-	   solver_timeout(solver, problem, schedule)
-	   continue
-	 
-      # Restart a solver if its solution is obsolete and its restart time is 
-      # actually expired.
-      if solver.status == 'flatzinc' \
-      and problem.bound_better_than(solver.obj_value) \
-      and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
-
-def presolve(
-  schedule, problem, cores, mem_limit, all_opt,
-  extractor = None, k = 0, kb = None, lims = None
-):
-  """
-  Runs (possibly in parallel on different cores) the pre-solving phase.
-  A part from the (possibly empty) static schedule execution, by properly 
-  setting the "extractor", "k", "kb", and "lims" this function also allows to 
-  extract the feature vector and then to compute the k-nearest neighbours of 
-  the problem (as soon as a free core is available). 
-  This function returns a triplet (t, n, b) where:
-    t  is the time taken by the whole pre-solving phase;
-    n  is the (possibly empty) neighborhood of the problem;
-    b  is the (possibly empty) black list the solvers that failed during the 
-       pre-solving phase.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  start_time = time.time()
-  black_list = []
-  neighbours = []
-  if extractor:
-    neigh_computed = False
-  else:
-    neigh_computed = True
-    
-  # Launch the solvers (if any).
-  for _ in range(cores):
-    if schedule:
-      solver = schedule.pop(0)
-      run_solver(solver, problem)
-      
-  # Loop for dealing with solvers execution.
-  while RUNNING_SOLVERS or not neigh_computed:
-    time.sleep(SLEEP_TIME)
-    
-    if not neigh_computed and len(RUNNING_SOLVERS) < cores:
-      print '% Extracting features...'
-      feat_vector = extractor.extract_features([problem, lims])
-      if feat_vector:
-	print '% Computing the',k,'nearest neighbors of the problem'
-        neighbours = get_neighbours(feat_vector, k, kb)
-      else:
-	print '% Features extraction failed!'
-      neigh_computed = True
-
-    if mem_limit < 100:
-      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
-      if sum(mems.values()) > mem_limit:
-	solver = max(mems.items(), key = lambda x: x[1])[0]
-	print '% Warning! sunny-cp exceeded the maximum allowed memory'
-	print '% Killing solver',solver.name()
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-        continue
-    
-    for solver in RUNNING_SOLVERS:
-      # Read and process lines from the output stream of each process.
-      lines = read_lines(solver.process)
-      if lines:
-	process_output(solver, problem, lines, all_opt)
-      
-      # Solver process terminated.
-      if solver.process.poll() is not None:
-	if solver.status == 'flatzinc':
-	  # Sometimes not all the lines are read from solver output.
-	  lines = read_lines(solver.process)  
-          if lines:
-	    process_output(solver, problem, lines, all_opt)
-        solver_terminated(solver, problem, schedule)
-        if solver.process.returncode not in [None, 0]:
-	  black_list.append(solver.name())
-        continue
-      
-      # Expired timeout: the solver has to be suspended.
-      if time.time() - solver.start_time > solver.timeout and \
-	 time.time() - solver.solution_time > solver.wait_time:
-	   solver_timeout(solver, problem, schedule)
-	   continue
-	 
-      # Restart a solver if its solution is obsolete and its restart time is 
-      # actually expired.
-      if solver.status == 'flatzinc' \
-      and problem.bound_better_than(solver.obj_value) \
-      and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
-
-  return neighbours, time.time() - start_time, black_list
-
-def run_solver(solver, problem):
-  """
-  Executes a solver according to its status.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  susp = [s for s in SUSP_SOLVERS if s.name() == solver.name()]
-  if susp:
-    susp_solver = susp[0]
-    SUSP_SOLVERS.remove(susp_solver)
-    resume_solver(susp_solver, solver.timeout)
-    return
-  if solver.status == 'ready':
-    print '% Starting',solver.name(),'for',str(solver.timeout),'seconds'
-    cmd = solver.mzn2fzn_cmd(problem)
-    solver.status = 'mzn2fzn'
-  elif solver.status == 'mzn2fzn':
-    cmd = solver.flatzinc_cmd(problem)
-    solver.status = 'flatzinc'
-  elif solver.status == 'flatzinc':
-    if problem.isCOP() and not solver.obj_var:
-      # Extract and set the objective variable from the FlatZinc model.
-      solver.set_obj_var()
-    if solver.name() == problem.best_solver or \
-    problem.bound_better_than(solver.obj_value):
-      # Starts the solver with a better bound.
-      bound = problem.best_bound
-      print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
-      solver.inject_bound(bound)
-    # FIXME: Temporary.
-    if SWITCH:
-      opts = solver.fzn_options.split()
-      if solver.solver.free_opt in opts:
-        print '% Switching from free to fixed!'
-        opts.remove(solver.solver.free_opt)
-        solver.fzn_options = ' '.join(opts) + ' '
-      elif solver.solver.free_opt:
-        print '% Switching from fixed to free!'
-        solver.fzn_options += ' ' + solver.solver.free_opt + ' '
-    cmd = solver.flatzinc_cmd(problem)
-  else:
-    print '% Unknown status',solver.status
-    assert False
-  
-  if solver.status == 'flatzinc':
-    solver.process = psutil.Popen(cmd, stdout = PIPE)
-    # For non-blocking read.
-    fd = solver.process.stdout.fileno()
-    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-  else:
-    solver.process = psutil.Popen(cmd)
-  solver.start_time = time.time()
-  solver.solution_time = time.time()
-  RUNNING_SOLVERS.append(solver)
-
-def read_lines(proc):
-  """
-  Returns the stream of the read lines of a process.
-  """
-  try:
-    return proc.stdout.read()
-  except:
-    return ''
-
-def process_output(solver, problem, lines, all_opt):
-  """
-  Processes the output of a solver.
-  """
-  for line in lines.split('\n'):
-    if line == '----------':
-      if problem.isCSP():
-	print '%',solver.name(),'found a solution'
-	for (var, val) in solver.solution.items():
-	  print var,'=',val
-	print line
-	if not all_opt:
-	  print '% Search completed by',solver.name()
-	  clean()
-	  sys.exit(0)
-      elif problem.bound_worse_than(solver.obj_value):
-	# The objective value found is the best so far.
-	problem.best_bound = solver.obj_value
-	print '%',solver.name(),'found a new, better solution'
-	if all_opt:
-	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
-	      print '%',var,'=',val
-	    else:
-	      print var,'=',val
-	  print line
-	  solver.solution = {}
-	else:
-	  print '%',problem.aux_var,'=',solver.obj_value
-	problem.best_solver = solver.name()
-      solver.solution_time = time.time()
-    elif line == '==========' or line == '=====UNSATISFIABLE=====':
-      if not problem.has_bound():
-	print line
-      else:
-	if not all_opt:
-	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
-	      print '%',var,'=',val
-	    else:
-	      print var,'=',val
-	  print '----------'
-	print '=========='
-      print '% Search completed by',solver.name()
-      clean()
-      sys.exit(0)
-    elif ' = ' in line:
-      idx = line.index(' = ')
-      val = line[idx + 3:].split(';')[0]
-      var = line[:idx]
-      if var == problem.aux_var:
-	solver.obj_value = int(val)
-      solver.solution[var] = val
-      solver.solution_time = time.time()
-
-def solver_terminated(solver, problem, schedule):
-  """
-  Handles the termination of a solver process, possibly launching a new solver.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  RUNNING_SOLVERS.remove(solver)
-  if solver.status == 'mzn2fzn':
-    if solver.process.returncode == 0:
-      print '% MiniZinc model converted by ' + solver.name() + '.',
-      timeout = max(solver.timeout - (time.time() - solver.start_time), 0)
-      print 'Starting the FlatZinc execution for',str(timeout),'seconds'
-      solver.timeout = timeout
-      run_solver(solver, problem)
-    else:
-      print '% Error! MiniZinc model not converted by',solver.name()
-      # Launch a new solver if any.
-      for s in schedule + SUSP_SOLVERS:
-	if s.name() == solver.name():
-	  schedule.remove(s)
-	  if s.status != 'ready':
-	    send_signal_solver(signal.SIGKILL, solver)
-      if schedule:
-	new_solver = schedule.pop(0)
-	new_solver.timeout += solver.timeout + solver.start_time - time.time()
-	run_solver(new_solver, problem)
-      elif SUSP_SOLVERS:
-	new_solver = SUSP_SOLVERS.pop(0)
-	new_timeout = \
-	  new_solver.timeout + solver.timeout + solver.start_time - time.time()
-	resume_solver(new_solver, new_timeout)
-  else:
-    if solver.process.returncode not in [None, 0]:
-      # Premature termination of solver execution.
-      print '% Solver',solver.name(),'failed prematurely'
-      for s in schedule + SUSP_SOLVERS:
-	if s.name() == solver.name():
-	  schedule.remove(s)
-	  if s.status != 'ready':
-	    send_signal_solver(signal.SIGKILL, solver)
-    # Launch a new solver if any.
-    if schedule:
-      new_solver = schedule.pop(0)
-      new_solver.timeout += solver.timeout + solver.start_time - time.time()
-      run_solver(new_solver, problem)
-    elif SUSP_SOLVERS:
-      new_solver = SUSP_SOLVERS.pop(0)
-      new_timeout = \
-	new_solver.timeout + solver.timeout + solver.start_time - time.time()
-      resume_solver(new_solver, new_timeout)
-
-def solver_timeout(solver, problem, schedule):
-  """
-  Handles the timeout of a solver process, possibly launching a new solver.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  print '% Timeout expired for',solver.name()
-  if schedule:
-    new_solver = schedule.pop(0)
-    if new_solver.timeout == 0:
-      # In this case, all the scheduled solvers have been run (or are running on
-      # another core). This happens at time t >= T, where T is the timeout T of 
-      # the SUNNY algorithm.
-      if len(RUNNING_SOLVERS) == 1:
-	print '% Solver not interrupted: it is the only running solver'
-	solver.timeout = float("+inf")
-      elif solver.name() == problem.best_solver:
-	print '% Solver not interrupted: it is the best one so far'
-	solver.timeout = float("+inf")
-      else:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	susp = [
-	  s for s in SUSP_SOLVERS if s.name() == problem.best_solver
-	]
-	if susp:
-	  # Resuming the best solver so far, it it was suspended.
-	  resume_solver(susp[0], float("+inf"))
-	# The schedule is no more needed.
-	schedule = []
-	for solver in SUSP_SOLVERS:
-	  send_signal_solver(signal.SIGKILL, solver)
-	SUSP_SOLVERS = []
-    else:
-      if new_solver.name() != solver.name():
-	suspend_solver(solver)
-	run_solver(new_solver, problem)
-      else:
-	print '% Solver',solver.name(),'not interrupted: it has to run again.'
-  else:
-    suspend_solver(solver)
-
-def suspend_solver(solver):
-  """
-  Suspends a solver that reached its timeout.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  print '% Suspending solver',solver.name()
-  send_signal_solver(signal.SIGSTOP, solver)
-  SUSP_SOLVERS.append(solver)
-  RUNNING_SOLVERS.remove(solver)
-  
-def resume_solver(solver, timeout):
-  """
-  Resumes a solver, and run it for timeout seconds.
-  """
-  global RUNNING_SOLVERS
-  print '% Resuming solver',solver.name(),'for',str(timeout),'seconds'
-  solver.timeout = timeout
-  send_signal_solver(signal.SIGCONT, solver)
-  solver.start_time = time.time()
-  solver.solution_time = time.time()
-  RUNNING_SOLVERS.append(solver)
-
-def init_problem(problem, tmp_id):
-  """
-  Initializes a problem, making it ready to be solved.
-  """
-  global TMP_FILES
-  ozn_path = tmp_id + '.ozn'
-  problem.ozn_path = ozn_path
-  TMP_FILES = [ozn_path]
-  if problem.isCOP():
-    # Make a copy of the original MiniZinc model.
-    mzn_path = tmp_id + '.mzn'
-    out_path = tmp_id + '.out'
-    problem = problem.make_cpy(mzn_path, out_path, aux = True)
-    TMP_FILES += [mzn_path, out_path]
-  return problem
-
-def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
-  """
-  Initializes a schedule, making it ready to be executed.
-  """
-  global TMP_FILES
-  running_schedule = []  
-  for (s, t) in schedule:
-    so = eval(s)
-    fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = solver_options[s]['options']
-    if all_opt or solve != 'sat':
-      opts += ' ' + so.all_opt
-    if free_opt:
-      opts += ' ' + so.free_opt
-    wt = float(solver_options[s]['wait_time'])
-    rt = solver_options[s]['restart_time']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
-    running_schedule.append(solver)
-    TMP_FILES.append(fzn_path)
-  return running_schedule
+  cmd = 'mzn2feat -i ' + mzn
+  if dzn:
+    cmd += ' -d ' + dzn
+  proc = Popen(cmd.split(), stdout = PIPE)
+  (out, err) = proc.communicate()
+  # Failure in features extraction.
+  if proc.returncode != 0:
+    return None
+  features = out.split(",")
+  feat_vector = [float(features[i]) for i in range(1, len(features))]
+  return feat_vector
 
 def main(args):
-  global KEEP, SWITCH
+  global SUNNY_HOME, KEEP, TMP_DIR, TMP_ID
+  # Default values. Despite default values are the same for both CSPs and COPs, 
+  # it is however possible to differentiate them.
+  dzn = ''
+  k_csp = 70
+  k_cop = 70
+  T_csp = 1800
+  T_cop = 1800
+  pfolio_csp = [
+    'chuffed',  'g12cpx', 'minisatid', 'gecode',
+    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc'
+  ]
+  pfolio_cop = [
+    'chuffed',  'g12cpx', 'minisatid', 'gecode',
+    'g12lazyfd', 'g12fd', 'g12gurobi', 'g12cbc'
+  ]
+  backup_csp = 'chuffed'
+  backup_cop = 'chuffed'
+  kb_csp = SUNNY_HOME + '/kb/all/kb_csp_all'
+  kb_cop = SUNNY_HOME + '/kb/all/kb_cop_all'
+  lims_csp = SUNNY_HOME + '/kb/all/lims_csp_all'
+  lims_cop = SUNNY_HOME + '/kb/all/lims_cop_all'
+  static = []
+  obj_var = ''
+  
+  # Getting arguments.
   try:
-
-    #FIXME: Temporary trick.
-    if args[0] == '--switch-search':
-      print '% Search switching activated'
-      SWITCH = True
-      args.pop(0)
-
-    # Input arguments parsing and initialization.
-    problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_dir, mem_limit, KEEP, all_opt, free_opt            = \
-      parse_arguments(args)
-    tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-    problem = init_problem(problem, tmp_id)
-    static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+    opts, args = getopt.getopt(
+      args, 'ahT:k:P:b:K:s:d:p:', ['help', 'keep']
     )
-    
-    print '%%%%% Pre-solving %%%%%'
-    if cores >= len(pfolio):
-      # If the number of specified cores exceeds the portfolio size, then no 
-      # prediction is needed: we simply allocate a core per solver.
-      print '% Features extraction not needed!'
-      extractor = None
-      lims = None
-    neighbours, static_time, black_list = presolve(
-      static, problem, cores, mem_limit, all_opt, extractor, k, kb, lims
-    )
-    
-    print '%%%%% Solving %%%%%'
-    pfolio = [s for s in pfolio if s not in black_list]
-    if not neighbours or len(pfolio) <= cores:
-      if len(pfolio) <= cores:
-	print '% Portfolio size <= No. of cores: no prediction needed!'
-      print '% Switching to backup solver(s)'
-      par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
+  except getopt.error, msg:
+    print msg
+    print >> sys.stderr, 'For help use --help'
+    sys.exit(2)
+  
+  if len(args) == 0:
+    for o, a in opts:
+      if o in ('-h', '--help'):
+        print __doc__
+        return
+    print >> sys.stderr, 'Error! No arguments given.'
+    print >> sys.stderr, 'For help use --help'
+    sys.exit(2)
+  mzn = args[0]
+  if not mzn.endswith('.mzn'):
+    print >> sys.stderr, 'Error! MiniZinc input model must have .mzn extension.'
+    print >> sys.stderr, 'For help use --help'
+    sys.exit(2)
+  if len(args) > 1:
+    dzn = args[1]
+    if not dzn.endswith('.dzn'):
+      print >> sys.stderr, \
+      'Error! MiniZinc input data must have .dzn extension.'
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+  
+  # Setting arguments.
+  k = k_csp
+  T = T_csp
+  pfolio = pfolio_csp
+  backup = backup_csp
+  kb = kb_csp
+  lims = lims_csp
+  obj = 'sat'
+  solve_item = False
+  output_item = False
+  include_list = [mzn]
+  out_mzn = None
+  # Possibly extract solve and output items (for COPs).
+  while include_list and not (solve_item and output_item):
+    model = include_list.pop()
+    if os.path.exists(model):
+      lines = open(model, 'r').read().split(';')
+    else:
+      continue
+    for line in lines:
+      include = False
+      new_line = ''
+      ignore = False
+      for l in line:
+	# Ignore comments.
+        if ignore or l == '%':
+          ignore = True
+          if l == '\n':
+            ignore = False
+        else:
+          new_line += l
+      tokens = new_line.split()
+      i = 0
+      for token in tokens:
+        if token == 'include' or token == 'include"':
+          include = True
+        # Looking for included models.
+        if include and token[-1] == '"' or token[-1] == '";':
+	  include = \
+	    replace(replace(replace(token, 'include"', ''),'"', ''), "'", '')
+	  include_list.append(include)
+          include = False
+	elif token.endswith('satisfy'):
+	  include_list = []
+	  break
+	elif token in ['minimize', 'maximize']:
+	  solve_item = True
+	  k = k_cop
+	  T = T_cop
+	  pfolio = pfolio_cop
+	  backup = backup_cop
+	  kb = kb_cop
+	  lims = lims_cop
+	  if token == 'minimize':
+	    obj = 'min'
+	  else:
+	    obj = 'max'
+          obj_var = ''
+          for j in range(i + 1, len(tokens)):
+	    obj_var += tokens[j] + ' '
+	  if output_item:
+	    include_list = []
+	    break
+	elif token in ['output', 'output[']:
+	  out_mzn = model
+          output_item = True
+	  if solve_item:
+	    include_list = []
+	    break
+        i += 1
+ 
+  # Arguments parsing.
+  for o, a in opts:
+    if o in ('-h', '--help'):
+      print __doc__
+      return
+    # FIXME: Manage better -a and -p options:
+    elif o == '-a':
+      if obj == 'sat':
+	print >> sys.stderr, 'Warning: ignoring -a option'
+    elif o == '-p':
+      print >> sys.stderr, 'Warning: ignoring -p option (parallel solving ' \
+                           'not yet implemented, -p is fixed to 1)'
+    elif o == '-k':
+      k = int(a)
+      if k < 0:
+	print >> sys.stderr, 'Error! Negative value ' + a + ' for k value.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+    elif o == '-T':
+      T = int(a)
+      if T <= 0:
+	print >> sys.stderr, 'Error! Non-positive value ' + a + ' for timeout.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+    elif o == '-P':
+      p = a.split(',')
+      if not p:
+	print >> sys.stderr, \
+	'Error! The portfolio ' + a + ' is not valid.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+      if not set(p) <= set(pfolio):
+	print >> sys.stderr, \
+	'Error! The portfolio ' + a + ' is not a subset of ' + str(pfolio)
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+      pfolio = p
+    elif o == '-b':
+      backup = a
+    elif o == '-K':
+      if not os.path.exists(a):
+	print >> sys.stderr, 'Error! Directory ' + a + ' not exists.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+      name = [token for token in a.split('/') if token][-1]
+      if a[-1] != '/':
+	path = a + '/'
+      else:
+	path = a
+      if obj in ['min', 'max']:
+	pb = 'cop'
+      else:
+        pb = 'csp'
+      kb = path + 'kb_' + pb + '_' + name
+      lims = path + 'lims_' + pb + '_' + name
+      if not os.path.exists(kb):
+	print >> sys.stderr, 'Error! File ' + kb + ' not exists.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+      if not os.path.exists(lims):
+	print >> sys.stderr, 'Error! File ' + kb + ' not exists.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+    elif o == '-s':
+      s = a.split(',')
+      for i in range(0, len(s) / 2):
+	static.append((s[2 * i], int(s[2 * i + 1])))
+    elif o == '-d':
+      if not os.path.exists(a):
+	print >> sys.stderr, 'Error! Directory ' + a + ' not exists.'
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
+      name = [token for token in a.split('/') if token][-1]
+      if a[-1] == '/':
+	TMP_DIR = a[0 : -1]
+      else:
+	TMP_DIR = a
+    elif o == '--keep':
+      KEEP = True
+      
+  # Additional checks.
+  if backup not in pfolio:
+    print >> sys.stderr, \
+    'Error! Backup solver ' + backup + ' is not in ' + str(pfolio)
+    print >> sys.stderr, 'For help use --help'
+    sys.exit(2)
+  if not (set(s for (s, t) in static) <= set(pfolio)):
+    print >> sys.stderr, \
+    'Error! Static schedule is not a subset of ' + str(pfolio)
+    print >> sys.stderr, 'For help use --help'
+    sys.exit(2)
+  st = 0
+  for (s, t) in static:
+    st += t
+    if t <= 0 or t > T:
+      print >> sys.stderr, \
+      'Error! Not valid time slot ' + t + ' for static schedule'
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+    if s not in pfolio:
+      print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+  if st > T:
+    print >> sys.stderr, \
+    'Error! Static schedule allocated time exceeds the timeout'
+    print >> sys.stderr, 'For help use --help'
+  
+  # Here the solving process starts.
+  try:
+    print '% Extracting features...'
+    feat_vector = extract_features(mzn, dzn)
+    if not feat_vector:
+      print '% Features extraction failed! Switching to backup solver(s).'
+      schedule = [(s, T) for s in pfolio]
+      exe_schedule(schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn, T)
     else:
       print '% Computing solvers schedule...'
-      timeout -= round(static_time)
-      if backup not in pfolio:
-	backup = pfolio[0]
-      if problem.isCSP():
-	seq_sched = sunny_csp(neighbours, k, timeout, pfolio, backup, cores)
-      else:
-	seq_sched = sunny_cop(neighbours, k, timeout, pfolio, backup, cores)
-      print '% SUNNY sequential schedule:',seq_sched
-      if len(seq_sched) <= cores:
-	print '% Schedule size <= No. of cores! No re-scheduling needed!'
-	par_sched = [(s, float('+inf')) for (s, t) in 
-	  sorted(seq_sched, key = lambda x : x[0], reverse = True)
-	]
-	not_sched = [
-	  (s, float('+inf')) for s in pfolio if s not in dict(par_sched).keys()
-	]
-	par_sched += not_sched[:cores - len(seq_sched)]
-      else:
-	print '% Parallelizing schedule on',cores,'cores'
-        par_sched = parallelize(seq_sched, cores, timeout)
-    par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
-    print '% SUNNY parallel schedule:',par_sched    
-    schedule = init_schedule(
-      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
-    )
-    solve(schedule, problem, cores, mem_limit, all_opt)
-    
+      schedule = get_schedule(
+	feat_vector, k, T, pfolio, backup, kb, lims, obj, static
+      )
+      print '% Resulting schedule:',schedule
+      print '% Executing solvers...'
+      obj_bound = exe_schedule(
+	schedule, mzn, dzn, obj, obj_var, None, TMP_ID, out_mzn, T
+      )
+      print '% Search not completed by scheduled solvers! Trying others.'
+      others = [
+	(s, T) for s in pfolio if s not in [s1 for (s1, t1) in schedule]
+      ]
+      exe_schedule(
+        others, mzn, dzn, obj, obj_var, obj_bound, TMP_ID, out_mzn, T
+      )
+  except SearchCompleted:
+    # Everything went well.
+    clean()
+    return 0
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
-    traceback.print_exc()
-    sys.exit(1)
-    
-  print '% Search not completed by any constituent solver. Bye!!!'
-  if not problem.has_bound():
-    print '=====UNKNOWN====='
+    #traceback.print_exc()
+    #print e
+    return 1
   clean()
   
 if __name__ == '__main__':

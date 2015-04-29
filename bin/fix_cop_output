@@ -1,0 +1,15 @@
+#!/bin/bash
+# Properly manipulates the FlatZinc output stream for a given COP.
+
+OUT=$1
+
+while read line
+do
+  # On std output only partial solutions are kept, while o__b__j__v__a__r value 
+  # is printed as a comment.
+  echo $line | grep " = \|----------" | \
+  sed 's/o__b__j__v__a__r/% o__b__j__v__a__r/g' | sed '/^$/d'
+  
+  # On output file we need just the best solution found and the solver outcome.
+  echo $line | grep "o__b__j__v__a__r\|=====\|----------" >> $OUT
+done

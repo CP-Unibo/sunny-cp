@@ -1,16 +1,9 @@
 #!/bin/bash
-# Runs the instances of the test/examples folder.
+# Runs the instances of the examples folder.
 
 IN_PATH=$SUNNY_HOME/test/examples
 OZN=$IN_PATH/tmp.ozn
-OUT=$IN_PATH/out
-ERR=$IN_PATH/err
-CORES=2
-TIMEOUT=10
-OUTPUT=$IN_PATH/output.log
-ERRORS=$IN_PATH/errors.log
 cd $IN_PATH
-rm $OUTPUT $ERRORS 2>/dev/null
 
 for m in `ls *.mzn`
 do
@@ -20,59 +13,31 @@ do
   then
     for d in domino.1.dzn domino.2.dzn
     do
-      mzn2fzn $m $d --output-ozn-to-file $OZN
-      cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m $d"
-      $cmd 1>$OUT 2>$ERR
-      ret=$?
-      cat $OUT | solns2out $OZN | solns2dzn -l
-      echo '********** Instance: '$cmd >> $OUTPUT
-      echo '********** Instance: '$cmd >> $ERRORS
-      cat $OUT >> $OUTPUT
-      cat $ERR >> $ERRORS
-      if
-        [ $ret -ne 0 ]
-      then
-        if
-          [ $ret -eq 124 ]
-        then
-          echo "Timeout while solving $m!!!"
-        else
-	  echo "Error while solving $m!!! Test aborted."
-	  echo "Have a look at the log files $OUTPUT and $ERRORS"
-	  rm *.fzn
-	  exit $ret
-        fi
-      fi
+       mzn2fzn $m $d --output-ozn-to-file $OZN
+       sunny-cp -T 30 $m $d | solns2out $OZN | solns2dzn -l
+       ret=$?
+       if
+         [ $ret -ne 0 ]
+       then
+         echo "Error while solving $m!!! Test aborted."
+         exit $ret
+       fi
     done
   else
     mzn2fzn $m --output-ozn-to-file $OZN
-    cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m"
-    $cmd 1>$OUT 2>$ERR
+    sunny-cp -T 30 $m | solns2out $OZN | solns2dzn -l
     ret=$?
-    cat $OUT | solns2out $OZN | solns2dzn -l
-    echo '********** Instance: '$cmd >> $OUTPUT
-    echo '********** Instance: '$cmd >> $ERRORS
-    cat $OUT >> $OUTPUT
-    cat $ERR >> $ERRORS
     if
       [ $ret -ne 0 ]
     then
-      if
-        [ $ret -eq 124 ]
-      then
-        echo "Timeout while solving $m!!!"
-      else
-	echo "Error while solving $m!!! Test aborted."
-	echo "Have a look at the log files $OUTPUT and $ERRORS"
-	rm *.fzn
-	exit $ret
-      fi
+      echo "Error while solving $m!!! Test aborted."
+      rm *.fzn
+      exit $ret
     fi
   fi
-  echo "$m processed!"
+  echo "$m sucessfully tested!!!"
   echo -e "==========\n"
 done
 rm *.fzn
-rm $OZN $OUT $ERR
-echo "All the examples processed without errors."
-echo "Have a look at the log files $OUTPUT and $ERRORS"
+rm $OZN
+echo "All went well!!! Test passed."
