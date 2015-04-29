@@ -200,3 +200,6 @@ REFERENCES
 
   [5]  MiniZinc Challenge 2014.
        http://www.minizinc.org/challenge2014/results2014.html
+       
+  [6]  R. Amadini, M. Gabbrielli, and J. Mauro. A Multicore Tool for Constraint 
+       Solving. In IJCAI, 2015.
