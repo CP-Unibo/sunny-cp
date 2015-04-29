@@ -41,17 +41,15 @@ Portfolio Options
     k is 70, while the distance metric is the Euclidean one
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
-    form s_1,s_2,...,s_m. Note that such solvers must be a not empty subset of 
-    the default portfolio. The specified ordering of solvers matters: indeed, 
-    in case of failure of the scheduled solvers, the other solvers will be 
+    form s_1,s_2,...,s_m. The specified ordering of solvers matters: indeed, 
+    in case of failure of all the scheduled solvers, the other solvers will be 
     executed according to such ordering. This option can be used to select a 
-    particular sub-portfolio or even to change the default ordering of the 
+    particular portfolio or even to change the default ordering of the 
     solvers, which is by default: 
       chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
       g12fd,choco,gecode,ortools,g12gurobi,g12cbc
   -b <SOLVER>
-    Set the backup solver of the portfolio. It must belong to the specified 
-    portfolio. The default backup solver is chuffed
+    Set the backup solver of the portfolio. The default backup solver is chuffed
   --g12
     Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
     This is equivalent to set -P g12cpx,g12cbc,g12lazyfd,g12fd and -b g12cpx
@@ -164,19 +162,34 @@ def parse_arguments(args):
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
+  opt = dict(opts)
+  if '-P' in opt.keys():
+    p = opt['-P'].split(',')
+    if not p:
+      print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+    pfolio = p
+  else:
+    if solve == 'sat':
+      pfolio = DEF_PFOLIO_CSP
+    else:
+      pfolio = DEF_PFOLIO_COP
   if solve == 'sat':
     solver_options = dict((s, {
       'options': DEF_OPT_CSP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      }) for s in DEF_PFOLIO_CSP
+      }) for s in pfolio
     )
   else:
     solver_options = dict((s, {
       'options': DEF_OPT_COP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
-      }) for s in DEF_PFOLIO_COP
+      }) for s in pfolio
     )
   
   # Arguments parsing.
@@ -207,18 +220,6 @@ def parse_arguments(args):
         print >> sys.stderr, 'Error! Non-positive value ' + a + ' for timeout.'
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
-    elif o == '-P':
-      p = a.split(',')
-      if not p:
-        print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
-        print >> sys.stderr, 'For help use --help'
-        sys.exit(2)
-      if not set(p) <= set(pfolio):
-        print >> sys.stderr, 'Error! The portfolio',a,'is not a subset of', \
-          str(pfolio)
-        print >> sys.stderr, 'For help use --help'
-        sys.exit(2)
-      pfolio = p
     elif o == '-b':
       backup = a
     elif o == '-K':
@@ -317,22 +318,22 @@ def parse_arguments(args):
              opts.append(['--' + o[6:], a])
            
   # Additional checks.
-  if backup not in pfolio:
-    print >> sys.stderr, \
-    'Error! Backup solver ' + backup + ' is not in ' + str(pfolio)
-    print >> sys.stderr, 'For help use --help'
-    sys.exit(2)
-  if not (set(s for (s, t) in static) <= set(pfolio)):
-    print >> sys.stderr, \
-    'Error! Static schedule is not a subset of ' + str(pfolio)
-    print >> sys.stderr, 'For help use --help'
-    sys.exit(2)
-  st = 0
-  for (s, _) in static:
-    if s not in pfolio:
-      print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
+  #if backup not in pfolio:
+    #print >> sys.stderr, \
+    #'Error! Backup solver ' + backup + ' is not in ' + str(pfolio)
+    #print >> sys.stderr, 'For help use --help'
+    #sys.exit(2)
+  #if not (set(s for (s, t) in static) <= set(pfolio)):
+    #print >> sys.stderr, \
+    #'Error! Static schedule is not a subset of ' + str(pfolio)
+    #print >> sys.stderr, 'For help use --help'
+    #sys.exit(2)
+  #st = 0
+  #for (s, _) in static:
+    #if s not in pfolio:
+      #print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
+      #print >> sys.stderr, 'For help use --help'
+      #sys.exit(2)
     
   problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
@@ -362,7 +363,6 @@ def get_args(args):
     sys.exit(2)
     
   if len(args) == 0:
-    print opts, args
     for o, a in opts:
       if o in ('-h', '--help'):
         print __doc__

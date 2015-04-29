@@ -34,6 +34,8 @@ KEEP = False
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
+# FIXME: Temporary.
+SWITCH = False
 
 def handler(signum = None, frame = None):
   """
@@ -262,6 +264,16 @@ def run_solver(solver, problem):
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
+    # FIXME: Temporary.
+    if SWITCH:
+      opts = solver.fzn_options.split()
+      if solver.solver.free_opt in opts:
+        print '% Switching from free to fixed!'
+        opts.remove(solver.solver.free_opt)
+        solver.fzn_options = ' '.join(opts) + ' '
+      elif solver.solver.free_opt:
+        print '% Switching from fixed to free!'
+        solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
   else:
     print '% Unknown status',solver.status
@@ -494,8 +506,15 @@ def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
   return running_schedule
 
 def main(args):
-  global KEEP
+  global KEEP, SWITCH
   try:
+
+    #FIXME: Temporary trick.
+    if args[0] == '--switch-search':
+      print '% Search switching activated'
+      SWITCH = True
+      args.pop(0)
+
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
     solver_options, tmp_dir, mem_limit, KEEP, all_opt, free_opt            = \

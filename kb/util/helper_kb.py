@@ -50,7 +50,7 @@ def compute_infos(
       check_invariant(
         't_i < T AND v_k = val AND (values = {} <==> val = nan)',
         True,
-        not [t for t in values.keys() if t >= timeout] and \
+        not [t for t in values.keys() if t > timeout] and \
         (not last_val or last_val[0] == val)           and \
         (not values or val == val) and (values or val != val),
         inst,
