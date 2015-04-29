@@ -1,7 +1,7 @@
-sunny-cp
-========
+sunny-cp 1.0
+============
 
-CP portfolio based solver
+Sequential CP Portfolio Solver
 
 The CP portfolio solver sunny-cp was developed by Roberto Amadini and Jacopo 
 Mauro (University of Bologna / Lab. Focus INRIA).
@@ -11,6 +11,8 @@ defined in MiniZinc language by using a portfolio approach.
 It essentially implements the SUNNY algorithm described in [1][2][3].
 Most of its constituent solvers are publicly available, except for Chuffed and 
 G12/Gurobi which have been kindly granted by NICTA Optimization Research Group.
+This is essentially the version of sunny-cp that attended the MiniZinc Challenge 
+2014 [4]. A paper describing this tool is available at [5].
 
 CONTENTS
 ========
@@ -107,3 +109,9 @@ REFERENCES
 
   [3] R. Amadini, and P.J. Stuckey. Sequential Time Splitting and Bounds 
       Communication for a Portfolio of Optimization Solvers. In CP, 2014.
+
+  [4] MiniZinc Challenge 2014. 
+      http://www.minizinc.org/challenge2014/results2014.html
+      
+  [5] R. Amadini, M. Gabbrielli, and J. Mauro. SUNNY-CP: a Sequential CP 
+      Portfolio Solver. In SAC, 2015.
