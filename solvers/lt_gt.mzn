@@ -3,6 +3,11 @@
 %
 % mzn2fzn --no-output-ozn --output-to-stdout -I <SOLVER>/mzn-lib lt_gt.mzn
 
+% FIXME: Change.
+%var int: LHS;
+%var int: RHS;
+%constraint LHS < RHS;
+%solve satisfy;
 var int: llt;
 var int: rlt;
 var int: lgt;
