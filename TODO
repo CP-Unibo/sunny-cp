@@ -1,4 +1,8 @@
-* RunningSolver ISA Solver
+* MiniZinc 2.0 (anche mzn2feat) e nuovi solvers per mznc15
+
+* velocizzare calcolo scedule
+
+* rimuovere solver.solver...
 
 * Aggiungere nuovi parametri: --switch-search, -z per bound iniziale, 
   -X/-A for excluding/adding solver(s) from/to the default pfolio
@@ -6,13 +10,9 @@
 
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
   con mzn2feat
-
-* velocizzare calcolo scedule
   
-* MiniZinc 2.0 (anche mzn2feat) e nuovi solvers per mznc15
-
 * Docker
 
 * pytdoc + unit test (con code coverage)
 
-* Release sunny-cp 2.1 prima di mznc15
+* Release sunny-cp 2.x prima di mznc15 (con CHANGELOG)

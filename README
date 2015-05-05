@@ -1,5 +1,7 @@
-SUNNY-CP 2.0
-============
+SUNNY-CP 2.X
+
+*** SWITCHING TO MINIZINC 2.0 ***
+=================================
 
 Parallel CP Portfolio Solver
 
@@ -8,7 +10,7 @@ defined in the MiniZinc language by using a portfolio approach.
 It essentially implements the SUNNY algorithm described in [1][2][3].
 sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
 
-  Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, 
+  Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi,
   G12/CBC, Gecode, HaifaCSP, iZplus, MinisatID, OR-Tools
 
 In a nutshell, sunny-cp relies on two sequential steps:
@@ -19,10 +21,9 @@ In a nutshell, sunny-cp relies on two sequential steps:
   2. SOLVING: consists in the parallel execution of a number of predicted 
               solvers, selected by means of SUNNY algorithm.
 
-This version is a major enhancement of sunny-cp 1.0, i.e., the sequential CP
-portfolio solver described in [4] that attended the MiniZinc Challenge 2014 [5].
-A paper describing this version of sunny-cp (called sunny-cp2 in the paper) is 
-available at [6].
+This version is an improvement of sunny-cp 2.0 (see [6] for more details).
+*** TBD ***
+see CHANGELOG
 
 
 AUTHORS
@@ -45,11 +46,8 @@ portable on other platforms. Some of the main requirements are:
 + Python 2.x
   https://www.python.org/
 
-+ MiniZinc 1.6
++ MiniZinc 2.0
   http://www.minizinc.org/
-
-+ mzn2feat 1.0
-  http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
 
 + psutil 2.x
   https://pypi.python.org/pypi/psutil
@@ -72,6 +70,8 @@ CONTENTS
 
 
 INSTALLATION
+
+*** TBD ***
 =============
 
 Once downloaded the sources, move into sunny-cp folder and run install.sh:
@@ -101,7 +101,9 @@ installed solver (see below for more details about the constituent solvers).
 
 
 SOLVERS
-=======
+
+*** TBD *** 
+===========
 
 This package does not contain neither the sources and the binaries of the 
 constituent solvers, that should be installed separately.
@@ -113,6 +115,9 @@ used by sunny-cp are:
 
 + Choco 
   http://choco-solver.org/
+  
++ CPX
+  *** TBD ***
 
 + Gecode
   http://www.gecode.org/
@@ -134,7 +139,10 @@ granted by NICTA Optimization Research Group of Melbourne (Australia).
 
 
 FEATURES
-========
+
+*** TBD ***
+===========
+
 
 During the presolving phase (in parallel with the static schedule execution) 
 sunny-cp extracts a feature vector of the problem in order to apply the k-NN 
@@ -147,6 +155,8 @@ corresponding class in src/features.py
 
 
 KNOWLEDGE BASE
+
+*** TBD ***
 ==============
 
 The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that 
@@ -158,7 +168,9 @@ knowledge base management see the README file in SUNNY_HOME/kb folder.
 
 
 TESTING
-=======
+
+*** TBD ***
+===========
 
 In test/examples there is a number of simple MiniZinc models. You can run them 
 individually, e.g.:
