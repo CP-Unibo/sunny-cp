@@ -35,7 +35,7 @@ for solver in solvers:
     solver + ".fzn_exec = '" + solvers_path + solver + "/fzn-exec'\n"
   )
   cmd = 'mzn2fzn -I ' + solvers_path + solver + '/mzn-lib ' + solvers_path \
-      + 'lt_gt.mzn --output-to-stdout --no-output-ozn'
+      + 'constraint.mzn --output-to-stdout --no-output-ozn'
   proc = psutil.Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   out, err = proc.communicate()
   if proc.returncode != 0:
@@ -43,11 +43,16 @@ for solver in solvers:
     print 'Error! Solver',solver,'not installed'
     continue
   for line in out.split(';\n'):
-    if 'constraint ' in line:
-      if 'llt' in line:
-        pfolio_file.write(solver + ".lt_constraint = '" + line + "'\n")
-      elif 'lgt' in line:
-        pfolio_file.write(solver + ".gt_constraint = '" + line + "'\n")
+    intro = 'X_INTRODUCED_0 = '
+    idx = line.find(intro)
+    if idx >= 0:
+      val = line[idx + len(intro):]
+      continue
+    if 'constraint' in line:
+      line = line.replace('X_INTRODUCED_0', val)
+      constraint = solver + ".constraint = '" + line + "'\n"
+      pfolio_file.write(solver + ".constraint = '" + line + "'\n")
+      break
   opts = open(solvers_path + solver + '/opts', 'r')
   for line in opts:
     pfolio_file.write(solver + '.' + line)

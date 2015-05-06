@@ -8,7 +8,8 @@ Parallel CP Portfolio Solver
 sunny-cp tool allows to solve a Constraint (Satisfaction/Optimization) Problem
 defined in the MiniZinc language by using a portfolio approach.
 It essentially implements the SUNNY algorithm described in [1][2][3].
-sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
+sunny-cp is a parallel portfolio solver built on top of various state-of-the-art 
+constraint solvers, including:
 
   Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi,
   G12/CBC, Gecode, HaifaCSP, iZplus, MinisatID, OR-Tools
@@ -22,9 +23,7 @@ In a nutshell, sunny-cp relies on two sequential steps:
               solvers, selected by means of SUNNY algorithm.
 
 This version is an improvement of sunny-cp 2.0 (see [6] for more details).
-*** TBD ***
-see CHANGELOG
-
+*** TBD - see CHANGELOG ***
 
 AUTHORS
 =======
@@ -101,23 +100,21 @@ installed solver (see below for more details about the constituent solvers).
 
 
 SOLVERS
-
-*** TBD *** 
-===========
+=======
 
 This package does not contain neither the sources and the binaries of the 
 constituent solvers, that should be installed separately.
 However, sunny-cp provides utilites for adding the installed solvers to the 
 portfolio and for customizing their settings. For more details, see the README 
 file in the SUNNY_HOME/solvers folder and the sunny-cp usage. A part of the 
-solvers already included in MiniZinc 1.6, the other publicly available solvers 
+solvers already included in MiniZinc 2.0, the other publicly available solvers 
 used by sunny-cp are:
 
 + Choco 
   http://choco-solver.org/
   
 + CPX
-  *** TBD ***
+  http://www.minizinc.org/g12distrib.html (see MiniZinc version 1.6)
 
 + Gecode
   http://www.gecode.org/
@@ -135,7 +132,9 @@ used by sunny-cp are:
   https://code.google.com/p/or-tools/
 
 Chuffed and G12/Gurobi are instead not publicly available, and have been kindly 
-granted by NICTA Optimization Research Group of Melbourne (Australia).
+granted by NICTA Optimization Research Group of Melbourne (Australia). Note that 
+CPX solver has been included in the MiniZinc suite until version 1.6, and no 
+longer included from version 2.0.
 
 
 FEATURES

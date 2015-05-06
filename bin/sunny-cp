@@ -12,7 +12,6 @@ import signal
 import traceback
 import multiprocessing
 from string import replace
-from socket import gethostname
 from subprocess import PIPE
 
 SUNNY_HOME = os.environ['SUNNY_HOME']
@@ -252,18 +251,19 @@ def run_solver(solver, problem):
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
-    cmd = solver.flatzinc_cmd(problem)
-    solver.status = 'flatzinc'
-  elif solver.status == 'flatzinc':
     if problem.isCOP() and not solver.obj_var:
       # Extract and set the objective variable from the FlatZinc model.
       solver.set_obj_var()
+    cmd = solver.flatzinc_cmd(problem)
+    solver.status = 'flatzinc'
+  elif solver.status == 'flatzinc':
     if solver.name() == problem.best_solver or \
     problem.bound_better_than(solver.obj_value):
       # Starts the solver with a better bound.
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
+      
     # FIXME: Temporary.
     if SWITCH:
       opts = solver.fzn_options.split()
@@ -309,7 +309,7 @@ def process_output(solver, problem, lines, all_opt):
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
 	for (var, val) in solver.solution.items():
-	  print var,'=',val
+	  print var + ' = ' + val + ';'
 	print line
 	if not all_opt:
 	  print '% Search completed by',solver.name()
@@ -321,14 +321,14 @@ def process_output(solver, problem, lines, all_opt):
 	print '%',solver.name(),'found a new, better solution'
 	if all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
+	    if var == solver.aux_var:
 	      print '%',var,'=',val
 	    else:
-	      print var,'=',val
+	      print var + ' = ' + val + ';'
 	  print line
 	  solver.solution = {}
 	else:
-	  print '%',problem.aux_var,'=',solver.obj_value
+	  print '%',solver.aux_var,'=',solver.obj_value
 	problem.best_solver = solver.name()
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
@@ -337,10 +337,10 @@ def process_output(solver, problem, lines, all_opt):
       else:
 	if not all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
+	    if var == solver.aux_var:
 	      print '%',var,'=',val
 	    else:
-	      print var,'=',val
+	      print var + ' = ' + val + ';'
 	  print '----------'
 	print '=========='
       print '% Search completed by',solver.name()
@@ -350,7 +350,7 @@ def process_output(solver, problem, lines, all_opt):
       idx = line.index(' = ')
       val = line[idx + 3:].split(';')[0]
       var = line[:idx]
-      if var == problem.aux_var:
+      if var == solver.aux_var or var == solver.obj_var:
 	solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()
@@ -468,23 +468,7 @@ def resume_solver(solver, timeout):
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
 
-def init_problem(problem, tmp_id):
-  """
-  Initializes a problem, making it ready to be solved.
-  """
-  global TMP_FILES
-  ozn_path = tmp_id + '.ozn'
-  problem.ozn_path = ozn_path
-  TMP_FILES = [ozn_path]
-  if problem.isCOP():
-    # Make a copy of the original MiniZinc model.
-    mzn_path = tmp_id + '.mzn'
-    out_path = tmp_id + '.out'
-    problem = problem.make_cpy(mzn_path, out_path, aux = True)
-    TMP_FILES += [mzn_path, out_path]
-  return problem
-
-def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
+def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt, aux_var):
   """
   Initializes a schedule, making it ready to be executed.
   """
@@ -493,22 +477,21 @@ def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
   for (s, t) in schedule:
     so = eval(s)
     fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = solver_options[s]['options']
+    opts = options[s]['options']
     if all_opt or solve != 'sat':
       opts += ' ' + so.all_opt
     if free_opt:
       opts += ' ' + so.free_opt
-    wt = float(solver_options[s]['wait_time'])
-    rt = solver_options[s]['restart_time']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
+    wt = float(options[s]['wait_time'])
+    rt = options[s]['restart_time']
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, aux_var)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
 
 def main(args):
-  global KEEP, SWITCH
+  global KEEP, SWITCH, TMP_FILES
   try:
-
     #FIXME: Temporary trick.
     if args[0] == '--switch-search':
       print '% Search switching activated'
@@ -517,12 +500,13 @@ def main(args):
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_dir, mem_limit, KEEP, all_opt, free_opt            = \
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, aux_var   = \
       parse_arguments(args)
-    tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-    problem = init_problem(problem, tmp_id)
+    TMP_FILES = [problem.ozn_path]
+    
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      static, solver_options, problem.solve, 
+      tmp_id, all_opt, free_opt, aux_var
     )
     
     print '%%%%% Pre-solving %%%%%'
@@ -568,7 +552,8 @@ def main(args):
     par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
     print '% SUNNY parallel schedule:',par_sched    
     schedule = init_schedule(
-      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      par_sched, solver_options, problem.solve, 
+      tmp_id, all_opt, free_opt, aux_var
     )
     solve(schedule, problem, cores, mem_limit, all_opt)
     
