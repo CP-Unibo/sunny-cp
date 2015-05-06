@@ -49,4 +49,3 @@ predicate int_mod(var int: a, var int: b, var int: c) =
   ( b >= 0 -> c >= 0 /\ c < b) /\
   ( b <= 0 ->  c <= 0 /\ c > b) /\
     b * z + c = a;
-

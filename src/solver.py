@@ -21,10 +21,8 @@ class Solver:
   mznlib = ''
   # Absolute path of the command used for executing a FlatZinc model.
   fzn_exec = ''
-  # Solver-specific FlatZinc translation of the MiniZinc constraint "llt < rlt".
-  lt_constraint = ''
-  # Solver-specific FlatZinc translation of the MiniZinc constraint "lgt < rgt".
-  gt_constraint = ''
+  # Solver-specific FlatZinc translation of the MiniZinc constraint "LHS < RHS".
+  constraint = ''
   # Solver-specific option for printing all the solutions (for CSPs only) or all
   # the sub-optimal solutions (for COPs only).
   all_opt = ''
@@ -33,7 +31,8 @@ class Solver:
   
 class RunningSolver:
   """
-  RunningSolver is a solver running on a given FlatZinc model.
+  RunningSolver is the abstraction of a constituent solver running on a given 
+  FlatZinc model.
   """
   
   # Object of class Solver, identifying the running solver.
@@ -84,8 +83,13 @@ class RunningSolver:
   # Object of class psutil.Popen referring to the solving process.
   process = None
   
+  # Auxiliary variable possibly introduced for tracking the objective function 
+  # value (that will be printed on std output as a comment).
+  aux_var = ''
+  
   def __init__(
-    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
+    self, solver, solve, fzn_path, options, 
+    wait_time, restart_time, timeout, aux_var
   ):
     self.status       = 'ready'
     self.solver       = solver
@@ -99,6 +103,7 @@ class RunningSolver:
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
+    self.aux_var      = aux_var
   
   def name(self):
     """
@@ -123,9 +128,9 @@ class RunningSolver:
     Returns the command for converting a given MiniZinc model to FlatZinc by 
     using solver-specific redefinitions.
     """
-    cmd = 'mzn2fzn -I ' + self.solver.mznlib + ' ' + pb.mzn_path + ' '     + \
-           pb.dzn_path + ' -o ' + self.fzn_path + ' --output-ozn-to-file ' + \
-           pb.ozn_path
+    cmd = 'mzn2fzn --output-ozn-to-file ' + pb.ozn_path + ' -I '     \
+        + self.solver.mznlib + ' ' + pb.mzn_path + ' ' + pb.dzn_path \
+        + ' -o ' + self.fzn_path
     return cmd.split()
     
   def flatzinc_cmd(self, pb):
@@ -137,25 +142,46 @@ class RunningSolver:
   
   def set_obj_var(self):
     """
-    Retrieve and set the name of the objective variable in the FlatZinc model.
+    Retrieve and set the name of the objective variable in the FlatZinc model, 
+    which is modified for properly printing the value of such variable.
     """
-    with open(self.fzn_path, 'r') as infile:
+    lines = []
+    # Extract objective variable.
+    with open(self.fzn_path, 'r') as infile:  
       for line in reversed(infile.readlines()):
         tokens = line.split()
         if 'solve' in tokens:
           self.obj_var = tokens[-1].replace(';', '')
-          break
+        lines.append(line)
+      infile.close()
+    # Adding auxiliary variable in the model.
+    with open(self.fzn_path, 'w') as outfile:
+      for line in reversed(lines):
+        tokens = line.split()
+        if tokens[0] == 'var' and (
+	  self.obj_var in tokens       or \
+	  self.obj_var + ';' in tokens or \
+	  self.obj_var + '::' in tokens
+	):
+	  dom = tokens[1]
+	  var = 'var ' + dom + ' ' + self.aux_var + ':: output_var;\n';
+	  outfile.write(var)
+	if tokens[0] == 'solve':
+	  cons = 'constraint int_lin_eq([1, -1], [' \
+	       + self.obj_var + ', ' + self.aux_var + '], 0);\n'
+	  outfile.write(cons)
+	outfile.write(line)
   
   def inject_bound(self, bound):
     """
     Injects a new bound to the FlatZinc model.
     """
     if self.solve == 'min':
-      lt = self.solver.lt_constraint
-      constraint = lt.replace('llt', self.obj_var).replace('rlt', str(bound))
+      cons = self.solver.constraint.replace(
+	'LHS', self.obj_var).replace('RHS', str(bound))
     elif self.solve == 'max':
-      gt = self.solver.gt_constraint
-      constraint = gt.replace('lgt', self.obj_var).replace('rgt', str(bound))
+      cons = self.solver.constraint.replace(
+	'RHS', self.obj_var).replace('LHS', str(bound))
     else:
       return
     tmp_path = str(uuid.uuid4())
@@ -164,7 +190,7 @@ class RunningSolver:
         add = True
         for line in infile:
           if add and 'constraint' in line.split():
-            outfile.write(constraint + ';\n')
+            outfile.write(cons + ';\n')
             add = False
           outfile.write(line)
     move(tmp_path, self.fzn_path)

@@ -1,8 +1,6 @@
-* MiniZinc 2.0 (anche mzn2feat) e nuovi solvers per mznc15
+* MiniZinc 2.0 e nuovi solvers per mznc15
 
 * velocizzare calcolo scedule
-
-* rimuovere solver.solver...
 
 * Aggiungere nuovi parametri: --switch-search, -z per bound iniziale, 
   -X/-A for excluding/adding solver(s) from/to the default pfolio
@@ -15,4 +13,7 @@
 
 * pytdoc + unit test (con code coverage)
 
+* Opturion?
+
 * Release sunny-cp 2.x prima di mznc15 (con CHANGELOG)
+

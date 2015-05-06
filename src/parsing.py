@@ -52,7 +52,7 @@ Portfolio Options
     Set the backup solver of the portfolio. The default backup solver is chuffed
   --g12
     Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
-    This is equivalent to set -P g12cpx,g12cbc,g12lazyfd,g12fd and -b g12cpx
+    This is equivalent to set -P g12cbc,g12lazyfd,g12fd and -b g12lazyfd
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
     knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
@@ -135,7 +135,8 @@ Helper Options
 
 import sys
 import getopt
-from string   import replace
+from string import replace
+from socket import gethostname
 from defaults       import *
 from features       import *
 from problem        import *
@@ -147,11 +148,39 @@ def parse_arguments(args):
   arguments properly set.
   """
   
-  # Get the arguments and parse the input model to get auxiliary information. 
+  # Get the arguments and parse the input model to get solve information. 
   mzn, dzn, opts = get_args(args)
-  k, timeout, pfolio, backup, kb, lims, \
-  static, solve, obj_expr, mzn_out = parse_model(mzn)
+  solve = get_solve(mzn)
+  
   # Initialize variables with the default values.
+  if solve == 'sat':
+    k = DEF_K_CSP
+    timeout= DEF_TOUT_CSP
+    pfolio = DEF_PFOLIO_CSP
+    backup = DEF_BACKUP_CSP
+    kb = DEF_KB_CSP
+    lims = DEF_LIMS_CSP
+    static = DEF_STATIC_CSP
+    solver_options = dict((s, {
+      'options': DEF_OPT_CSP, 
+      'wait_time': DEF_WAIT_TIME, 
+      'restart_time': DEF_RESTART_TIME,
+      }) for s in pfolio
+    )
+  else:
+    k = DEF_K_COP
+    timeout= DEF_TOUT_COP
+    pfolio = DEF_PFOLIO_COP
+    backup = DEF_BACKUP_COP
+    kb = DEF_KB_COP
+    lims = DEF_LIMS_COP
+    static = DEF_STATIC_COP
+    solver_options = dict((s, {
+      'options': DEF_OPT_COP, 
+      'wait_time': DEF_WAIT_TIME, 
+      'restart_time': DEF_RESTART_TIME,
+      }) for s in pfolio
+    )
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
@@ -162,36 +191,7 @@ def parse_arguments(args):
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
-  opt = dict(opts)
-  if '-P' in opt.keys():
-    p = opt['-P'].split(',')
-    if not p:
-      print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
-    pfolio = p
-  else:
-    if solve == 'sat':
-      pfolio = DEF_PFOLIO_CSP
-    else:
-      pfolio = DEF_PFOLIO_COP
-  if solve == 'sat':
-    solver_options = dict((s, {
-      'options': DEF_OPT_CSP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      }) for s in pfolio
-    )
-  else:
-    solver_options = dict((s, {
-      'options': DEF_OPT_COP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      }) for s in pfolio
-    )
-  
+      
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
@@ -206,6 +206,12 @@ def parse_arguments(args):
         print >> sys.stderr, 'Warning: -p parameter set to',cores
       else:
         cores = n
+    elif o == '-P':
+      pfolio = a.split(',')
+      if not pfolio:
+	print >> sys.stderr, 'Error! Empty portfolio '
+	print >> sys.stderr, 'For help use --help'
+	sys.exit(2)
     elif o == '-e':
       extractor = eval(a)
     elif o == '-k':
@@ -308,36 +314,20 @@ def parse_arguments(args):
     elif o == '--keep':
       keep = True
     elif o == '--g12':
-      pfolio = ['g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc']
-      backup = 'g12cpx'
+      pfolio = ['g12lazyfd', 'g12fd', 'g12cbc']
+      backup = 'g12lazyfd'
     elif o.startswith('--csp-') and solve == 'sat' or \
          o.startswith('--cop-') and solve != 'sat':
            if len(o) == 7:
              opts.append(['-' + o[6], a])
            else:
              opts.append(['--' + o[6:], a])
-           
-  # Additional checks.
-  #if backup not in pfolio:
-    #print >> sys.stderr, \
-    #'Error! Backup solver ' + backup + ' is not in ' + str(pfolio)
-    #print >> sys.stderr, 'For help use --help'
-    #sys.exit(2)
-  #if not (set(s for (s, t) in static) <= set(pfolio)):
-    #print >> sys.stderr, \
-    #'Error! Static schedule is not a subset of ' + str(pfolio)
-    #print >> sys.stderr, 'For help use --help'
-    #sys.exit(2)
-  #st = 0
-  #for (s, _) in static:
-    #if s not in pfolio:
-      #print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
-      #print >> sys.stderr, 'For help use --help'
-      #sys.exit(2)
-    
-  problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
+ 
+  tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
+  ozn = tmp_id + '.ozn'
+  problem = Problem(mzn, dzn, ozn, solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_dir, mem_limit, keep, all_opt, free_opt
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, aux_var
 
 def get_args(args):
   """
@@ -384,30 +374,17 @@ def get_args(args):
       sys.exit(2)
   return mzn, dzn, opts
 
-def parse_model(mzn):
+def get_solve(mzn):
   """
-  Parse the input model to get auxiliary information (i.e., solve and output 
-  items).
+  Return 'sat', 'min', or 'max' for satisfaction, minimization, or maximization 
+  problems respectively.
   """
-  # Set default arguments.
-  k = DEF_K_CSP
-  timeout= DEF_TOUT_CSP
-  pfolio = DEF_PFOLIO_CSP
-  backup = DEF_BACKUP_CSP
-  kb = DEF_KB_CSP
-  lims = DEF_LIMS_CSP
-  static = DEF_STATIC_CSP
   solve = 'sat'
-  solve_item = False
-  output_item = False
   include_list = [mzn]
-  mzn_out = None
-  static = []
-  obj_expr = ''
   mzn_dir = os.path.dirname(mzn)
   
-  # Possibly extract solve and output items (for COPs).
-  while include_list and not (solve_item and output_item):
+  # Loop for extracting the solve item.
+  while include_list:
     model = include_list.pop()
     if os.path.exists(model):
       lines = open(model, 'r').read().split(';')
@@ -429,7 +406,6 @@ def parse_model(mzn):
         else:
           new_line += l
       tokens = new_line.split()
-      i = 0
       for token in tokens:
         if token == 'include' or token == 'include"':
           include = True
@@ -443,29 +419,10 @@ def parse_model(mzn):
           include_list = []
           break
         elif token in ['minimize', 'maximize']:
-          solve_item = True
-          k = DEF_K_COP
-          timeout= DEF_TOUT_COP
-          pfolio = DEF_PFOLIO_COP
-          backup = DEF_BACKUP_COP
-          kb = DEF_KB_COP
-          lims = DEF_LIMS_COP
-          static = DEF_STATIC_COP
           if token == 'minimize':
             solve = 'min'
           else:
             solve = 'max'
-          obj_expr = ''
-          for j in range(i + 1, len(tokens)):
-            obj_expr += tokens[j] + ' '
-          if output_item:
-            include_list = []
-            break
-        elif token in ['output', 'output[']:
-          mzn_out = model
-          output_item = True
-          if solve_item:
-            include_list = []
-            break
-        i += 1
-  return k, timeout, pfolio, backup, kb, lims, static, solve, obj_expr, mzn_out
+          include_list = []
+          break
+  return solve

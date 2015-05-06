@@ -20,11 +20,11 @@ do
   then
     for d in domino.1.dzn domino.2.dzn
     do
-      mzn2fzn $m $d --output-ozn-to-file $OZN
+      mzn2fzn $m $d --output-ozn-to-file $OZN -o /dev/null/foo
       cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
-      cat $OUT | solns2out $OZN | solns2dzn -l
+      cat $OUT | solns2out $OZN | grep -v %
       echo '********** Instance: '$cmd >> $OUTPUT
       echo '********** Instance: '$cmd >> $ERRORS
       cat $OUT >> $OUTPUT
@@ -39,17 +39,16 @@ do
         else
 	  echo "Error while solving $m!!! Test aborted."
 	  echo "Have a look at the log files $OUTPUT and $ERRORS"
-	  rm *.fzn
 	  exit $ret
         fi
       fi
     done
   else
-    mzn2fzn $m --output-ozn-to-file $OZN
+    mzn2fzn $m --output-ozn-to-file $OZN -o /dev/null/foo
     cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
-    cat $OUT | solns2out $OZN | solns2dzn -l
+    cat $OUT | solns2out $OZN | grep -v %
     echo '********** Instance: '$cmd >> $OUTPUT
     echo '********** Instance: '$cmd >> $ERRORS
     cat $OUT >> $OUTPUT
@@ -64,15 +63,13 @@ do
       else
 	echo "Error while solving $m!!! Test aborted."
 	echo "Have a look at the log files $OUTPUT and $ERRORS"
-	rm *.fzn
 	exit $ret
       fi
     fi
   fi
-  echo "$m processed!"
-  echo -e "==========\n"
+  echo -e "$m processed!\n"
 done
-rm *.fzn
+rm *.fzn *.ozn
 rm $OZN $OUT $ERR
 echo "All the examples processed without errors."
 echo "Have a look at the log files $OUTPUT and $ERRORS"

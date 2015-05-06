@@ -8,4 +8,7 @@ Major bugs and changes:
 - 
 
 Minor bugs and changes:
-- 
+
+- Modified bounds injection according to the new conventions of mzn2feat 2.0.
+  Avoid to create a copy of MiniZinc model.
+  
