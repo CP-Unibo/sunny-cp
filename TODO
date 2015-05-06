@@ -1,6 +1,6 @@
-* MiniZinc 2.0 e nuovi solvers per mznc15
+* mzn2feat 1.1.1 (aggiungere nuovi global constraints)
 
-* velocizzare calcolo scedule
+* MiniZinc 2.0 e nuovi solvers per mznc15
 
 * Aggiungere nuovi parametri: --switch-search, -z per bound iniziale, 
   -X/-A for excluding/adding solver(s) from/to the default pfolio
@@ -9,11 +9,15 @@
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
   con mzn2feat
   
+* Opturion?
+
+* Test sunny-cp 2.X su cluster
+
 * Docker
 
 * pytdoc + unit test (con code coverage)
 
-* Opturion?
+* Release sunny-cp 2.X prima di mznc15
+  
 
-* Release sunny-cp 2.x prima di mznc15 (con CHANGELOG)
 
