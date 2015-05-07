@@ -36,8 +36,6 @@ DEF_EXTRACTOR = 'mzn2feat'
 
 DEF_CORES = cpu_count()
 
-DEF_AUX_VAR = 'o__b__j__v__a__r'
-
 DEF_TMP_DIR = SUNNY_HOME + '/tmp'
 
 DEF_KEEP = False

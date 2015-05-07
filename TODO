@@ -1,4 +1,6 @@
-* mzn2feat 1.1.1 (aggiungere nuovi global constraints)
+* Rimuovere obj_var, aggiungere campo output_var: print % Current Best Bound: val, if output_var: print line
+
+* aggiungere nuovi global constraints a mzn2feat
 
 * MiniZinc 2.0 e nuovi solvers per mznc15
 
@@ -7,7 +9,7 @@
   --max-restart X: max. no. of restarts allowed
 
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
-  con mzn2feat
+  con mzn2feat -> nuova release mzn2feat 1.1.x
   
 * Opturion?
 
@@ -18,6 +20,5 @@
 * pytdoc + unit test (con code coverage)
 
 * Release sunny-cp 2.X prima di mznc15
-  
 
 

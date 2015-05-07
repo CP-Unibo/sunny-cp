@@ -11,7 +11,6 @@ import psutil
 import signal
 import traceback
 import multiprocessing
-from string import replace
 from subprocess import PIPE
 
 SUNNY_HOME = os.environ['SUNNY_HOME']
@@ -319,16 +318,13 @@ def process_output(solver, problem, lines, all_opt):
 	# The objective value found is the best so far.
 	problem.best_bound = solver.obj_value
 	print '%',solver.name(),'found a new, better solution'
+	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == solver.aux_var:
-	      print '%',var,'=',val
-	    else:
+	    if var != solver.obj_var or solver.output_var:
 	      print var + ' = ' + val + ';'
 	  print line
 	  solver.solution = {}
-	else:
-	  print '%',solver.aux_var,'=',solver.obj_value
 	problem.best_solver = solver.name()
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
@@ -337,9 +333,7 @@ def process_output(solver, problem, lines, all_opt):
       else:
 	if not all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == solver.aux_var:
-	      print '%',var,'=',val
-	    else:
+	    if var != solver.obj_var or solver.output_var:
 	      print var + ' = ' + val + ';'
 	  print '----------'
 	print '=========='
@@ -350,7 +344,7 @@ def process_output(solver, problem, lines, all_opt):
       idx = line.index(' = ')
       val = line[idx + 3:].split(';')[0]
       var = line[:idx]
-      if var == solver.aux_var or var == solver.obj_var:
+      if var == solver.obj_var:
 	solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()
@@ -468,7 +462,7 @@ def resume_solver(solver, timeout):
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
 
-def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt, aux_var):
+def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   """
   Initializes a schedule, making it ready to be executed.
   """
@@ -484,7 +478,7 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt, aux_var):
       opts += ' ' + so.free_opt
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, aux_var)
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
@@ -500,13 +494,12 @@ def main(args):
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, aux_var   = \
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt  = \
       parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     
     static  = init_schedule(
-      static, solver_options, problem.solve, 
-      tmp_id, all_opt, free_opt, aux_var
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
     
     print '%%%%% Pre-solving %%%%%'
@@ -552,8 +545,7 @@ def main(args):
     par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
     print '% SUNNY parallel schedule:',par_sched    
     schedule = init_schedule(
-      par_sched, solver_options, problem.solve, 
-      tmp_id, all_opt, free_opt, aux_var
+      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
     solve(schedule, problem, cores, mem_limit, all_opt)
     
