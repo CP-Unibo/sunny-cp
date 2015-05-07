@@ -2,11 +2,6 @@
 Problem is the abstraction of a MiniZinc model to be solved by sunny-cp.
 '''
 
-import uuid
-import shutil
-from copy import copy
-from string import replace
-
 class Problem:
   """
   Abstraction of a MiniZinc Model.

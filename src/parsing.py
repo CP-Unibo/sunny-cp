@@ -110,10 +110,6 @@ Helper Options
 ==============
   -h, --help
     Print this message
-  -x <AUX_VAR>
-    Specifies the name of the auxiliary variable used for tracking the objective 
-    function value (for COPs). Note that such variable must not appear in the 
-    MiniZinc model to be solved. The default variable name is o__b__j__v__a__r    
   -d <PATH> 
     Absolute path of the folder in which the temporary files created by the 
     solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
@@ -135,7 +131,6 @@ Helper Options
 
 import sys
 import getopt
-from string import replace
 from socket import gethostname
 from defaults       import *
 from features       import *
@@ -187,7 +182,6 @@ def parse_arguments(args):
   keep = DEF_KEEP
   wait_time = DEF_WAIT_TIME
   restart_time = DEF_RESTART_TIME
-  aux_var = DEF_AUX_VAR
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
@@ -309,8 +303,6 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():  
           item['restart_time'] = rest_time
-    elif o == '-x':
-      aux_var = a
     elif o == '--keep':
       keep = True
     elif o == '--g12':
@@ -327,7 +319,7 @@ def parse_arguments(args):
   ozn = tmp_id + '.ozn'
   problem = Problem(mzn, dzn, ozn, solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, aux_var
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt
 
 def get_args(args):
   """
@@ -335,7 +327,7 @@ def get_args(args):
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'm']
+    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'm']
     long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
     long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
@@ -412,7 +404,7 @@ def get_solve(mzn):
         # Looking for included models.
         if include and token[-1] == '"' or token[-1] == '";':
           include = \
-            replace(replace(replace(token, 'include"', ''),'"', ''), "'", '')
+	    token.replace('include"', '').replace('"', '').replace("'", '')
           include_list.append(include)
           include = False
         elif token.endswith('satisfy'):

@@ -7,7 +7,6 @@ according to the conventions specified in the README file of this folder.
 import os
 import sys
 import psutil
-from string import replace
 from subprocess import PIPE
 
 pfolio_path = os.environ['SUNNY_HOME'] + '/src/pfolio_solvers.py'

@@ -5,10 +5,7 @@ must be an object of class Solver.
 RunningSolver is instead a solver running on a given FlatZinc model.
 '''
 
-import uuid
 import psutil
-from shutil import move
-from string import replace
 
 class Solver:
   """
@@ -83,13 +80,11 @@ class RunningSolver:
   # Object of class psutil.Popen referring to the solving process.
   process = None
   
-  # Auxiliary variable possibly introduced for tracking the objective function 
-  # value (that will be printed on std output as a comment).
-  aux_var = ''
+  # output_var is True iff the value of obj_var is annotated with "output_var".
+  output_var = True
   
   def __init__(
-    self, solver, solve, fzn_path, options, 
-    wait_time, restart_time, timeout, aux_var
+    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
   ):
     self.status       = 'ready'
     self.solver       = solver
@@ -103,7 +98,6 @@ class RunningSolver:
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
-    self.aux_var      = aux_var
   
   def name(self):
     """
@@ -143,34 +137,22 @@ class RunningSolver:
   def set_obj_var(self):
     """
     Retrieve and set the name of the objective variable in the FlatZinc model, 
-    which is modified for properly printing the value of such variable.
+    possibly adding the "output_var" annotation to obj_var declaration.
     """
     lines = []
-    # Extract objective variable.
     with open(self.fzn_path, 'r') as infile:  
       for line in reversed(infile.readlines()):
-        tokens = line.split()
+        tokens = line.replace('::', ' ').replace(';', '').split()
         if 'solve' in tokens:
           self.obj_var = tokens[-1].replace(';', '')
+        if tokens[0] == 'var' and self.obj_var in tokens \
+	and 'output_var' not in tokens:
+	  self.output_var = False
+	  line = line.replace(';', '') + ' :: output_var;\n'
         lines.append(line)
       infile.close()
-    # Adding auxiliary variable in the model.
     with open(self.fzn_path, 'w') as outfile:
-      for line in reversed(lines):
-        tokens = line.split()
-        if tokens[0] == 'var' and (
-	  self.obj_var in tokens       or \
-	  self.obj_var + ';' in tokens or \
-	  self.obj_var + '::' in tokens
-	):
-	  dom = tokens[1]
-	  var = 'var ' + dom + ' ' + self.aux_var + ':: output_var;\n';
-	  outfile.write(var)
-	if tokens[0] == 'solve':
-	  cons = 'constraint int_lin_eq([1, -1], [' \
-	       + self.obj_var + ', ' + self.aux_var + '], 0);\n'
-	  outfile.write(cons)
-	outfile.write(line)
+      outfile.writelines(reversed(lines))
   
   def inject_bound(self, bound):
     """
@@ -184,14 +166,14 @@ class RunningSolver:
 	'RHS', self.obj_var).replace('LHS', str(bound))
     else:
       return
-    tmp_path = str(uuid.uuid4())
+    lines = []
     with open(self.fzn_path, 'r') as infile:
-      with open(tmp_path, 'w') as outfile:
-        add = True
-        for line in infile:
-          if add and 'constraint' in line.split():
-            outfile.write(cons + ';\n')
-            add = False
-          outfile.write(line)
-    move(tmp_path, self.fzn_path)
+      add = True
+      for line in infile.readlines():
+	if add and 'constraint' in line.split():
+	  lines.append(cons + ';\n')
+	  add = False
+	lines.append(line)
+    with open(self.fzn_path, 'w') as outfile:
+      outfile.writelines(lines)
     self.obj_value = bound
