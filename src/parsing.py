@@ -85,6 +85,13 @@ Portfolio Options
 
 Solvers Options
 ===============
+  --switch-search
+    Allows to switch the search from fixed search to free search (and viceversa) 
+    when solvers are restarted. Of course, this holds just for the solvers that 
+    allow both free and fixed search. This option in unset by default.
+  --switch-search-<SOLVER_NAME>
+    As above, with the difference that search is switched only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio.
   --fzn-options "<OPTIONS>"
     Allows to run each solver of the portfolio on its specific FlatZinc model by
     using the options specified in <OPTIONS> string. No checks are performed on 
@@ -144,14 +151,25 @@ def parse_arguments(args):
   """
   
   # Get the arguments and parse the input model to get solve information. 
-  mzn, dzn, opts = get_args(args)
+  pfolio = list(set(DEF_PFOLIO_COP + DEF_PFOLIO_CSP))
+  if '-P' in args:
+    idx = args.index('-P')
+    a = args[idx + 1]
+    pfolio = a.split(',')
+    if not pfolio:
+      print >> sys.stderr, 'Error! Empty portfolio '
+      print >> sys.stderr, 'For help use --help'
+      sys.exit(2)
+    args.pop(idx)
+    args.pop(idx)
+  # TODO: if '-A', '-R' for adding/removing new solver.
+  mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
   
   # Initialize variables with the default values.
   if solve == 'sat':
     k = DEF_K_CSP
     timeout= DEF_TOUT_CSP
-    pfolio = DEF_PFOLIO_CSP
     backup = DEF_BACKUP_CSP
     kb = DEF_KB_CSP
     lims = DEF_LIMS_CSP
@@ -160,12 +178,12 @@ def parse_arguments(args):
       'options': DEF_OPT_CSP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
+      'switch_search': DEF_SWITCH
       }) for s in pfolio
     )
   else:
     k = DEF_K_COP
     timeout= DEF_TOUT_COP
-    pfolio = DEF_PFOLIO_COP
     backup = DEF_BACKUP_COP
     kb = DEF_KB_COP
     lims = DEF_LIMS_COP
@@ -174,14 +192,13 @@ def parse_arguments(args):
       'options': DEF_OPT_COP, 
       'wait_time': DEF_WAIT_TIME, 
       'restart_time': DEF_RESTART_TIME,
+      'switch_search': DEF_SWITCH
       }) for s in pfolio
     )
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
   keep = DEF_KEEP
-  wait_time = DEF_WAIT_TIME
-  restart_time = DEF_RESTART_TIME
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
@@ -196,16 +213,8 @@ def parse_arguments(args):
       if n < 1:
         print >> sys.stderr, 'Warning: -p parameter set to 1.'
         cores = 1
-      elif n > DEF_CORES:
-        print >> sys.stderr, 'Warning: -p parameter set to',cores
       else:
         cores = n
-    elif o == '-P':
-      pfolio = a.split(',')
-      if not pfolio:
-	print >> sys.stderr, 'Error! Empty portfolio '
-	print >> sys.stderr, 'For help use --help'
-	sys.exit(2)
     elif o == '-e':
       extractor = eval(a)
     elif o == '-k':
@@ -303,6 +312,13 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():  
           item['restart_time'] = rest_time
+    elif o.startswith('--switch-search'):
+      if len(o) > 15:
+	solver = o[16:]
+	solver_options[solver]['switch_search'] = True
+      else:
+        for item in solver_options.values():
+	  item['switch_search'] = True
     elif o == '--keep':
       keep = True
     elif o == '--g12':
@@ -321,23 +337,29 @@ def parse_arguments(args):
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
     cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt
 
-def get_args(args):
+def get_args(args, pfolio):
   """
   Get the input arguments.
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'm']
-    long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
-    long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
+    options = ['T', 'k', 'b', 'K', 's', 'd', 'p', 'e', 'm']
+    long_options = ['fzn-options', 'wait-time', 'restart-time']
+    long_options += [
+      o + '-' + s for o in long_options for s in pfolio
+    ]
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]
     csp_opts += ['csp-a', 'csp-f']
     cop_opts += ['cop-a', 'cop-f']
     long_options = [o + '=' for o in long_options]
-    long_options += ['help', 'keep', 'g12'] + csp_opts + cop_opts
+    long_noval  = ['switch-search', 'help', 'keep', 'g12']
+    long_noval += ['switch-search-' + s for s in pfolio]
+    long_noval += ['csp-' + o + '=' for o in long_noval]
+    long_noval += ['cop-' + o + '=' for o in long_noval]    
+    long_options += long_noval + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'hafT:k:P:b:K:s:d:p:e:x:m:', long_options
+      args, 'hafT:k:b:K:s:d:p:e:x:m:', long_options
     )
   except getopt.error, msg:
     print msg

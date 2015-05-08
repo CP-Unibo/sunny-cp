@@ -32,8 +32,6 @@ KEEP = False
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
-# FIXME: Temporary.
-SWITCH = False
 
 def handler(signum = None, frame = None):
   """
@@ -262,18 +260,18 @@ def run_solver(solver, problem):
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
-      
-    # FIXME: Temporary.
-    if SWITCH:
+    
+    if solver.switch_search:
       opts = solver.fzn_options.split()
       if solver.solver.free_opt in opts:
-        print '% Switching from free to fixed!'
+        print '% Switching',solver.name(),'search strategy from free to fixed!'
         opts.remove(solver.solver.free_opt)
         solver.fzn_options = ' '.join(opts) + ' '
       elif solver.solver.free_opt:
-        print '% Switching from fixed to free!'
+        print '% Switching',solver.name(),'search strategy from fixed to free!'
         solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
+    
   else:
     print '% Unknown status',solver.status
     assert False
@@ -478,28 +476,24 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
       opts += ' ' + so.free_opt
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
+    sw = options[s]['switch_search']
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
 
 def main(args):
-  global KEEP, SWITCH, TMP_FILES
+  global KEEP, TMP_FILES
   try:
-    #FIXME: Temporary trick.
-    if args[0] == '--switch-search':
-      print '% Search switching activated'
-      SWITCH = True
-      args.pop(0)
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt  = \
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt = \
       parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt 
     )
     
     print '%%%%% Pre-solving %%%%%'

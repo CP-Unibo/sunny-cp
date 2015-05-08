@@ -48,5 +48,9 @@ DEF_MEM_LIMIT = 100
 
 DEF_OPT_CSP = ''
 DEF_OPT_COP = ''
+
 DEF_ALL = False
+
 DEF_FREE = False
+
+DEF_SWITCH = False

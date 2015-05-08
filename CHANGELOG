@@ -4,8 +4,9 @@
 
 Version 2.X
 =============
-Major bugs and changes:
-- 
+Major bugs and changes: (FIXME: to check!!!)
+- Compatibility with MiniZinc 2.0
+- Added new user options (--switch-search, -A, -R, -z, -r)
 
 Minor bugs and changes:
 
