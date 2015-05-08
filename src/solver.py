@@ -83,8 +83,14 @@ class RunningSolver:
   # output_var is True iff the value of obj_var is annotated with "output_var".
   output_var = True
   
+  # Is switch is set, the search is switched from fixed search to free search 
+  # (and viceversa) when solver is restarted. Of course, this holds just if the 
+  # solver allows both free and fixed search.
+  switch_search = False
+  
   def __init__(
-    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout
+    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout, 
+    switch
   ):
     self.status       = 'ready'
     self.solver       = solver
@@ -98,6 +104,8 @@ class RunningSolver:
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
+    if self.solver.free_opt:
+      self.switch_search = switch
   
   def name(self):
     """

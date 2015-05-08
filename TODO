@@ -1,6 +1,8 @@
-* Aggiungere nuovi parametri: --switch-search, -z per bound iniziale, 
-  -X/-A for excluding/adding solver(s) from/to the default pfolio
-  --max-restart X: max. no. of restarts allowed
+* git add constraint.mzn
+
+* Aggiungere nuovi parametri: --switch-search,  
+  -R/-A for removing/adding solver(s) from/to the default pfolio
+  -z per bound iniziale, -r MAX: max. no. of restarts allowed
 
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
   con mzn2feat -> nuova release mzn2feat 1.1.x
