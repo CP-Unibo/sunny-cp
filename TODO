@@ -1,15 +1,16 @@
-* git add constraint.mzn
+* git add constraint.mzn (da lab)
 
-* Aggiungere nuovi parametri: --switch-search,  
-  -R/-A for removing/adding solver(s) from/to the default pfolio
-  -z per bound iniziale, -r MAX: max. no. of restarts allowed
+* Aggiungere opzioni:
+  -R/-A: for removing/adding solver(s) from/to the default pfolio
+  -z: per bound iniziale
+  -r <MAX>: max. no. of restarts allowed
 
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
   con mzn2feat -> nuova release mzn2feat 1.1.x
   
 * Nuovi solvers per mznc15. Opturion?
 
-* Test su cluster con MiniZinc 2.0
+* Test su cluster con MiniZinc 2.0 (dopo CP)
 
 * Docker
 
