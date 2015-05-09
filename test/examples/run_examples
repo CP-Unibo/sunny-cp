@@ -69,7 +69,7 @@ do
   fi
   echo -e "$m processed!\n"
 done
-rm *.fzn *.ozn
 rm $OZN $OUT $ERR
+rm *.fzn *.ozn 2>/dev/null
 echo "All the examples processed without errors."
 echo "Have a look at the log files $OUTPUT and $ERRORS"

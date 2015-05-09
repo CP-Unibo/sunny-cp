@@ -70,7 +70,7 @@ Portfolio Options
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
     changed by defining a corresponding class in SUNNY_HOME/src/features.py
   -a
-    Prints to standard output all the solutions of the problem (for CSPs only) 
+    Prints to standard output all the solutions of the problem  (for CSPs only) 
     or all the sub-optimal solutions until the optimum is found (for COPs only)
   -f
     Free search: ignore any search annotations on the solve item.
@@ -151,7 +151,7 @@ def parse_arguments(args):
   """
   
   # Get the arguments and parse the input model to get solve information. 
-  pfolio = list(set(DEF_PFOLIO_COP + DEF_PFOLIO_CSP))
+  pfolio = DEF_PFOLIO
   if '-P' in args:
     idx = args.index('-P')
     a = args[idx + 1]
@@ -166,35 +166,10 @@ def parse_arguments(args):
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
   
-  # Initialize variables with the default values.
-  if solve == 'sat':
-    k = DEF_K_CSP
-    timeout= DEF_TOUT_CSP
-    backup = DEF_BACKUP_CSP
-    kb = DEF_KB_CSP
-    lims = DEF_LIMS_CSP
-    static = DEF_STATIC_CSP
-    solver_options = dict((s, {
-      'options': DEF_OPT_CSP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      'switch_search': DEF_SWITCH
-      }) for s in pfolio
-    )
-  else:
-    k = DEF_K_COP
-    timeout= DEF_TOUT_COP
-    backup = DEF_BACKUP_COP
-    kb = DEF_KB_COP
-    lims = DEF_LIMS_COP
-    static = DEF_STATIC_COP
-    solver_options = dict((s, {
-      'options': DEF_OPT_COP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      'switch_search': DEF_SWITCH
-      }) for s in pfolio
-    )
+  k = DEF_K
+  timeout= DEF_TOUT
+  backup = DEF_BACKUP
+  static = DEF_STATIC
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
@@ -202,6 +177,20 @@ def parse_arguments(args):
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
+  solver_options = dict((s, {
+    'options': DEF_OPTS, 
+    'wait_time': DEF_WAIT_TIME, 
+    'restart_time': DEF_RESTART_TIME,
+    'switch_search': DEF_SWITCH
+  }) for s in pfolio)
+  
+  # Initialize variables with the default values.
+  if solve == 'sat':
+    kb = DEF_KB_CSP
+    lims = DEF_LIMS_CSP
+  else:
+    kb = DEF_KB_COP
+    lims = DEF_LIMS_COP
       
   # Arguments parsing.
   for o, a in opts:
