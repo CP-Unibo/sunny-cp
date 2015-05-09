@@ -1,8 +1,7 @@
 * git add constraint.mzn (da lab)
 
 * Aggiungere opzioni:
-  -R/-A: for removing/adding solver(s) from/to the default pfolio
-  -z: per bound iniziale
+  -l, -u: per bound iniziale
   -r <MAX>: max. no. of restarts allowed
 
 * python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
