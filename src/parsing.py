@@ -48,6 +48,12 @@ Portfolio Options
     solvers, which is by default: 
       chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
       g12fd,choco,gecode,ortools,g12gurobi,g12cbc
+  -A <SOLVERS>
+    Adds to the default portfolio (or to the portfolio specified with -P option)
+    the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
+  -R <SOLVERS>
+    Removes from the default portfolio (or from the portfolio specified with -P 
+    option) the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
   -b <SOLVER>
     Set the backup solver of the portfolio. The default backup solver is chuffed
   --g12
@@ -162,7 +168,20 @@ def parse_arguments(args):
       sys.exit(2)
     args.pop(idx)
     args.pop(idx)
-  # TODO: if '-A', '-R' for adding/removing new solver.
+  if '-A' in args:
+    idx = args.index('-A')
+    a = args[idx + 1]
+    solvers = a.split(',')
+    pfolio += [s for s in solvers if s not in pfolio]
+    args.pop(idx)
+    args.pop(idx)
+  if '-R' in args:
+    idx = args.index('-R')
+    a = args[idx + 1]
+    solvers = a.split(',')
+    pfolio = [s for s in pfolio if s not in solvers]
+    args.pop(idx)
+    args.pop(idx)
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
   
