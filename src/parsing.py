@@ -126,11 +126,12 @@ Solvers Options
   --switch-search-<SOLVER_NAME>
     As above, with the difference that search is switched only for <SOLVER_NAME> 
     and not for all the solvers of the portfolio.
-  # FIXME: TBD
-  --max-restart <MAX>
-    Sets the maximum number of times a solver can be restarted. 
+  --max-restarts <MAX>
+    Sets the maximum number of times a solver can be restarted. After <MAX> 
+    restarts, the solver is killed rather than being restarted for the 
+    (<MAX> + 1)-th time.
     By default, <MAX> = +inf
-  --max-restart-<SOLVER>
+  --max-restarts-<SOLVER>
     As above, with the difference that the option is set only for <SOLVER_NAME> 
     and not for all the solvers of the portfolio.
     
@@ -194,7 +195,8 @@ def parse_arguments(args):
     'options': DEF_OPTS, 
     'wait_time': DEF_WAIT_TIME, 
     'restart_time': DEF_RESTART_TIME,
-    'switch_search': DEF_SWITCH
+    'switch_search': DEF_SWITCH,
+    'max_restarts': DEF_RESTARTS
   }) for s in pfolio)
   if solve == 'sat':
     kb = DEF_KB_CSP
@@ -335,6 +337,13 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():
 	  item['switch_search'] = True
+    elif o.startswith('--max-restarts'):
+      if len(o) > 14:
+	solver = o[15:]
+	solver_options[solver]['max_restarts'] = int(a)
+      else:
+        for item in solver_options.values():
+	  item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
     elif o == '--g12':
@@ -350,7 +359,7 @@ def parse_arguments(args):
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
   ozn = tmp_id + '.ozn'
   problem = Problem(mzn, dzn, ozn, solve)
-  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
+  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
     cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub
 
 def get_args(args, pfolio):
@@ -362,7 +371,7 @@ def get_args(args, pfolio):
     options = [
       'P', 'R', 'A', 'T', 'k', 'b', 'K', 's', 'd', 'p', 'e', 'm', 'l', 'u'
     ]
-    long_options = ['fzn-options', 'wait-time', 'restart-time']
+    long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-restarts']
     long_options += [
       o + '-' + s for o in long_options for s in pfolio
     ]

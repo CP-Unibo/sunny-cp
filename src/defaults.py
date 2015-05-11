@@ -50,3 +50,5 @@ DEF_SWITCH = False
 DEF_LB = float('-inf')
 
 DEF_UB = float('+inf')
+
+DEF_RESTARTS = float('+inf')

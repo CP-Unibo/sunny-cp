@@ -5,11 +5,12 @@
 Version 2.X
 =============
 Major bugs and changes: (FIXME: to check!!!)
+
 - Compatibility with MiniZinc 2.0
-- Added new user options (--switch-search, -A, -R, -z, -r)
+- Added new user options (-A, -R, -l, -u, --max-restarts, --switch-search)
 
 Minor bugs and changes:
 
 - Modified bounds injection according to the new conventions of mzn2feat 2.0.
-  Avoid to create a copy of MiniZinc model.
+- Avoid to create a copy of MiniZinc model.
   

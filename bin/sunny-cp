@@ -132,14 +132,22 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
+	if solver.num_restarts < solver.max_restarts:
+	  solver.num_restarts += 1
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  print '% Restarting',solver.name()
+	  solver.timeout = max(
+	    solver.timeout - (time.time() - solver.start_time), 0
+	  )
+	  run_solver(solver, problem)
+	  continue
+	else:
+	  print '%',solver.name(),'reached the maximum number of restarts!'
+	  print '% Killing solver',solver.name()
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  continue
 
 def presolve(
   schedule, problem, cores, mem_limit, all_opt,
@@ -225,14 +233,22 @@ def presolve(
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
+	if solver.num_restarts < solver.max_restarts:
+	  solver.num_restarts += 1
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  print '% Restarting',solver.name()
+	  solver.timeout = max(
+	    solver.timeout - (time.time() - solver.start_time), 0
+	  )
+	  run_solver(solver, problem)
+	  continue
+	else:
+	  print '%',solver.name(),'reached the maximum number of restarts!'
+	  print '% Killing solver',solver.name()
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  continue
 
   return neighbours, time.time() - start_time, black_list
 
@@ -481,7 +497,8 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     sw = options[s]['switch_search']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw)
+    mr = options[s]['max_restarts']
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw, mr)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
