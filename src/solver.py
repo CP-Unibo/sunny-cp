@@ -88,24 +88,33 @@ class RunningSolver:
   # solver allows both free and fixed search.
   switch_search = False
   
+  # Number of times solver has been restarted.
+  num_restarts = -1  
+  
+  # Maximum number of solver restarts allowed.
+  max_restarts = -1
+  
   def __init__(
     self, solver, solve, fzn_path, options, wait_time, restart_time, timeout, 
-    switch
+    switch, max_restarts
   ):
     self.status       = 'ready'
     self.solver       = solver
     self.solve        = solve
-    if solve == 'min':
-      self.obj_value = float('+inf')
-    elif solve == 'max':
-      self.obj_value = float('-inf')
     self.fzn_path     = fzn_path
     self.fzn_options  = options
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
+    self.num_restarts  = 0
+    self.max_restarts = max_restarts
+    if solve == 'min':
+      self.obj_value = float('+inf')
+    elif solve == 'max':
+      self.obj_value = float('-inf')
     if self.solver.free_opt:
       self.switch_search = switch
+    
   
   def name(self):
     """
