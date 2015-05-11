@@ -75,7 +75,5 @@ do
 done
 
 echo "--- Everything went well!"
-echo "To complete sunny-cp installation you just have to add/modify the" 
-echo "environment variables SUNNY_HOME and PATH:"
-echo "1. SUNNY_HOME must point to: "$PWD
-echo "2. PATH must be extended to include: "$PWD"/bin"
+echo "To complete sunny-cp installation just append $PWD/bin"
+echo "to the PATH environment variable."

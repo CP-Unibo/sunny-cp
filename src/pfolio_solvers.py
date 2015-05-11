@@ -2,7 +2,7 @@
 This module contains an object of class Solver for each installed solver of the 
 portfolio. Each object of class Solver might be defined manually, but it is 
 however strongly suggested to first generate it automatically by using the
-make_pfolio.py script in SUNNY_HOME/solvers. Then, once the file is created, it 
+make_pfolio.py script in solvers folder. Then, once the file is created, it 
 is possible to customize each object. Note that running make_pfolio.py script 
 will replace the current file.
 '''

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs the instances of the test/examples folder.
 
-IN_PATH=$SUNNY_HOME/test/examples
+IN_PATH=`dirname "$(readlink -f ${BASH_SOURCE[0]})"`
 OZN=$IN_PATH/tmp.ozn
 OUT=$IN_PATH/out
 ERR=$IN_PATH/err

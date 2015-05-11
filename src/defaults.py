@@ -4,7 +4,8 @@ Default settings for sunny-cp parameters.
 
 from multiprocessing import cpu_count
 import os
-SUNNY_HOME = os.environ['SUNNY_HOME']
+SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
+SUNNY_HOME = '/'.join(SUNNY_HOME)
 
 DEF_K = 70
 
