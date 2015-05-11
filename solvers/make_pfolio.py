@@ -1,6 +1,6 @@
 '''
 Module for creating a Solver object for each constituent solver of the 
-portfolio by automatically generating the SUNNY_HOME/src/pfolio_solvers.py file,
+portfolio by automatically generating the src/pfolio_solvers.py file,
 according to the conventions specified in the README file of this folder.
 '''
 
@@ -9,19 +9,21 @@ import sys
 import psutil
 from subprocess import PIPE
 
-pfolio_path = os.environ['SUNNY_HOME'] + '/src/pfolio_solvers.py'
+SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
+SUNNY_HOME = '/'.join(SUNNY_HOME)
+pfolio_path = SUNNY_HOME + '/src/pfolio_solvers.py'
 pfolio_file = open(pfolio_path, 'w')
 
 preamble = "'''\nThis module contains an object of class Solver for each " \
   "installed solver of the \nportfolio. Each object of class Solver might be" \
   " defined manually, but it is \nhowever strongly suggested to first generate"\
-  " it automatically by using the\nmake_pfolio.py script in SUNNY_HOME/solvers"\
+  " it automatically by using the\nmake_pfolio.py script in solvers folder"\
   ". Then, once the file is created, it \nis possible to customize each object"\
   ". Note that running make_pfolio.py script \nwill replace the current file." \
   "\n'''\n\nfrom solver import Solver\n\n"
 pfolio_file.write(preamble)
 
-solvers_path = os.environ['SUNNY_HOME'] + '/solvers/'
+solvers_path = SUNNY_HOME + '/solvers/'
 solvers = os.walk(solvers_path).next()[1]
 for solver in solvers:
   print 'Adding solver',solver

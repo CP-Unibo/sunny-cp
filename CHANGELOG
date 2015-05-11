@@ -12,5 +12,6 @@ Major bugs and changes: (FIXME: to check!!!)
 Minor bugs and changes:
 
 - Modified bounds injection according to the new conventions of mzn2feat 2.0.
-- Avoid to create a copy of MiniZinc model.
+- Avoid to create a copy of MiniZinc model
+- Avoid to set SUNNY_HOME environment variable
   

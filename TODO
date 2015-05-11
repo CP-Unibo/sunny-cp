@@ -1,9 +1,6 @@
-* git add constraint.mzn (da lab)
+* in lab: git pull, ./install.sh, git add constraint.mzn, commit and push
 
-* rimuovere var d'ambiente nel codice
-
-* python setup.py install 
-  (integrazione con mzn2feat -> nuova release mzn2feat 1.1.x)
+* python setup.py install (integrazione con mzn2feat -> mzn2feat 1.1.x)
   
 * Nuovi solvers per mznc15. Opturion?
 

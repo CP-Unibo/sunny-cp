@@ -61,8 +61,8 @@ Portfolio Options
     This is equivalent to set -P g12cbc,g12lazyfd,g12fd and -b g12lazyfd
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
-    knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
-    README file in SUNNY_HOME/kb folder
+    knowledge base is in kb/all_T1800. For more details, see the README file in 
+    kb folder
   -s <SCHEDULE>
     Specifies a static schedule to be run before executing the SUNNY algorithm. 
     The schedule must be passed in the form: 
@@ -74,7 +74,7 @@ Portfolio Options
     Also the constant +inf is allowed for the times t_i
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
-    changed by defining a corresponding class in SUNNY_HOME/src/features.py
+    changed by defining a corresponding class in src/features.py
   -a
     Prints to standard output all the solutions of the problem  (for CSPs only) 
     or all the sub-optimal solutions until the optimum is found (for COPs only)
@@ -141,8 +141,8 @@ Helper Options
     Print this message
   -d <PATH> 
     Absolute path of the folder in which the temporary files created by the 
-    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
-    such files are deleted after sunny-cp execution      
+    solver will be put. The default directory is tmp, and by default such files 
+    are deleted after sunny-cp execution      
   --keep
     Do not erase the temporary files created by the solver and stored in the 
     specified directory (useful for debugging). This option is unset by default    

@@ -14,7 +14,7 @@ Options:
   
   -p <path>
     Creates the folder <KB_NAME> containing the knowledge base at the specified 
-    path. The default path is SUNNY_HOME/kb
+    path. The default path is in kb folder
   
   -f <lb>,<ub>
     Scales all the features of <FEAT_FILE> in the range [lb, ub], with lb < ub.
@@ -69,7 +69,8 @@ def main(args):
   feat_file = args[1]
   info_file = args[2]
   timeout = 1800
-  path = os.environ['SUNNY_HOME'] + '/kb'
+  SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
+  path = '/'.join(SUNNY_HOME) + '/kb'
   lb_feat = -1
   ub_feat = 1
   lb_score = 0.25

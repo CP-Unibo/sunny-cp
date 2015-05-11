@@ -84,10 +84,9 @@ python sources of sunny-cp. If the installation is successful, the following
 message will be printed on standard output:
 
   --- Everything went well!
-  To complete sunny-cp installation you just have to add/modify the
-  environment variables SUNNY_HOME and PATH:
-  1. SUNNY_HOME must point to: "$PWD"/sunny-cp
-  2. PATH must be extended to include: "$PWD"/bin
+  To complete sunny-cp installation just append /home/roberto/sunny-cp/bin
+  to the PATH environment variable.
+
 
 It is important to set such variables in order to use sunny-cp. Once the 
 variables are set, check the installation by typing the command: 
@@ -95,7 +94,7 @@ variables are set, check the installation by typing the command:
   sunny-cp --help
 
 for printing the help page. Note that the installation process will also create 
-the file SUNNY_HOME/src/pfolio_solvers.py containing an object for each 
+the file src/pfolio_solvers.py containing an object for each 
 installed solver (see below for more details about the constituent solvers).
 
 
@@ -106,9 +105,9 @@ This package does not contain neither the sources and the binaries of the
 constituent solvers, that should be installed separately.
 However, sunny-cp provides utilites for adding the installed solvers to the 
 portfolio and for customizing their settings. For more details, see the README 
-file in the SUNNY_HOME/solvers folder and the sunny-cp usage. A part of the 
-solvers already included in MiniZinc 2.0, the other publicly available solvers 
-used by sunny-cp are:
+file in the solvers folder and the sunny-cp usage. A part from the solvers 
+already included in MiniZinc 2.0, the other publicly available solvers used by 
+sunny-cp are:
 
 + Choco 
   http://choco-solver.org/
@@ -163,7 +162,7 @@ consists of a folder containing the information relevant for the schedule
 computation. The default sunny-cp knowledge base is in kb/all_T1800. It consists
 of 5527 CSP instances and 4988 COP instances. However, the user has the 
 possibility of defining its own knowledge bases. For more details about the 
-knowledge base management see the README file in SUNNY_HOME/kb folder.
+knowledge base management see the README file in kb folder.
 
 
 TESTING
@@ -174,15 +173,15 @@ TESTING
 In test/examples there is a number of simple MiniZinc models. You can run them 
 individually, e.g.:
 
-  SUNNY_HOME/test/examples:~$ sunny-cp zebra.mzn
+  test/examples:~$ sunny-cp zebra.mzn
 
 or alternatively you can test all the models of the folder by typing:
 
-  SUNNY_HOME/test/examples:~$ ./run_examples
+  test/examples:~$ ./run_examples
 
 The run_examples script also produces output.log and errors.log files in the 
-SUNNY_HOME/test/examples folder, where the standard output/error of the tested 
-models are respectively redirected.
+test/examples folder, where the standard output/error of the tested models are 
+respectively redirected.
 
 
 ACKNOWLEDGMENTS

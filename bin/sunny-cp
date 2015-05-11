@@ -13,7 +13,8 @@ import traceback
 import multiprocessing
 from subprocess import PIPE
 
-SUNNY_HOME = os.environ['SUNNY_HOME']
+SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
+SUNNY_HOME = '/'.join(SUNNY_HOME)
 sys.path.append(SUNNY_HOME + '/src')
 from problem        import *
 from parsing        import *
