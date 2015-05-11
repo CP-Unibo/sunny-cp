@@ -32,6 +32,10 @@ KEEP = False
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
+# Initial lower bound of the problem to be solved.
+LOWER_BOUND = float('-inf')
+# Initial lower bound of the problem to be solved.
+UPPER_BOUND = float('+inf')
 
 def handler(signum = None, frame = None):
   """
@@ -250,7 +254,7 @@ def run_solver(solver, problem):
   elif solver.status == 'mzn2fzn':
     if problem.isCOP() and not solver.obj_var:
       # Extract and set the objective variable from the FlatZinc model.
-      solver.set_obj_var()
+      solver.set_obj_var(problem, LOWER_BOUND, UPPER_BOUND)
     cmd = solver.flatzinc_cmd(problem)
     solver.status = 'flatzinc'
   elif solver.status == 'flatzinc':
@@ -483,15 +487,14 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   return running_schedule
 
 def main(args):
-  global KEEP, TMP_FILES
+  global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND
   try:
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt = \
-      parse_arguments(args)
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
+    UPPER_BOUND = parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
-    
     static  = init_schedule(
       static, solver_options, problem.solve, tmp_id, all_opt, free_opt 
     )

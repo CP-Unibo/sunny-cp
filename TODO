@@ -1,15 +1,15 @@
 * git add constraint.mzn (da lab)
 
 * Aggiungere opzioni:
-  -l, -u: per bound iniziale
+  -l, -u: per bound iniziale (nel FlatZinc!)
   -r <MAX>: max. no. of restarts allowed
 
-* python setup.py install (rimuovere var d'ambiente nel codice) e integrazione 
-  con mzn2feat -> nuova release mzn2feat 1.1.x
+* rimuovere var d'ambiente nel codice e python setup.py install 
+  (integrazione con mzn2feat -> nuova release mzn2feat 1.1.x)
   
 * Nuovi solvers per mznc15. Opturion?
 
-* Test su cluster con MiniZinc 2.0 (dopo CP)
+* Test su cluster con MiniZinc 2.0 (dopo notifica CP - 10 giugno)
 
 * Docker
 

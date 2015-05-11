@@ -46,3 +46,7 @@ DEF_ALL = False
 DEF_FREE = False
 
 DEF_SWITCH = False
+
+DEF_LB = float('-inf')
+
+DEF_UB = float('+inf')

@@ -88,16 +88,17 @@ Portfolio Options
     By default, this value is set to 100%, since the memory check can be pretty 
     resource consuming: it is suggested to set a value lower than 100 only if 
     you are sure that the solving process can be very memory consuming.
+  -l <BOUND>
+    Sets a lower bound for the problem to be solved (for COPs only). This is 
+    equivalent to add the constraint f(x) >= <BOUND> where f(x) is the objective 
+    function of the problem
+  -u <BOUND>
+    Sets an upper bound for the problem to be solved (for COPs only). This is 
+    equivalent to add the constraint f(x) <= <BOUND> where f(x) is the objective 
+    function of the problem
 
 Solvers Options
 ===============
-  --switch-search
-    Allows to switch the search from fixed search to free search (and viceversa) 
-    when solvers are restarted. Of course, this holds just for the solvers that 
-    allow both free and fixed search. This option in unset by default.
-  --switch-search-<SOLVER_NAME>
-    As above, with the difference that search is switched only for <SOLVER_NAME> 
-    and not for all the solvers of the portfolio.
   --fzn-options "<OPTIONS>"
     Allows to run each solver of the portfolio on its specific FlatZinc model by
     using the options specified in <OPTIONS> string. No checks are performed on 
@@ -118,6 +119,20 @@ Solvers Options
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
+  --switch-search
+    Allows to switch the search from fixed search to free search (and viceversa) 
+    when solvers are restarted. Of course, this holds just for the solvers that 
+    allow both free and fixed search. This option in unset by default.
+  --switch-search-<SOLVER_NAME>
+    As above, with the difference that search is switched only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio.
+  # FIXME: TBD
+  --max-restart <MAX>
+    Sets the maximum number of times a solver can be restarted. 
+    By default, <MAX> = +inf
+  --max-restart-<SOLVER>
+    As above, with the difference that the option is set only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio.
     
 Helper Options
 ==============
@@ -158,33 +173,10 @@ def parse_arguments(args):
   
   # Get the arguments and parse the input model to get solve information. 
   pfolio = DEF_PFOLIO
-  if '-P' in args:
-    idx = args.index('-P')
-    a = args[idx + 1]
-    pfolio = a.split(',')
-    if not pfolio:
-      print >> sys.stderr, 'Error! Empty portfolio '
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
-    args.pop(idx)
-    args.pop(idx)
-  if '-A' in args:
-    idx = args.index('-A')
-    a = args[idx + 1]
-    solvers = a.split(',')
-    pfolio += [s for s in solvers if s not in pfolio]
-    args.pop(idx)
-    args.pop(idx)
-  if '-R' in args:
-    idx = args.index('-R')
-    a = args[idx + 1]
-    solvers = a.split(',')
-    pfolio = [s for s in pfolio if s not in solvers]
-    args.pop(idx)
-    args.pop(idx)
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
   
+  # Initialize variables with the default values.
   k = DEF_K
   timeout= DEF_TOUT
   backup = DEF_BACKUP
@@ -196,14 +188,14 @@ def parse_arguments(args):
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
+  lb = DEF_LB
+  ub = DEF_UB
   solver_options = dict((s, {
     'options': DEF_OPTS, 
     'wait_time': DEF_WAIT_TIME, 
     'restart_time': DEF_RESTART_TIME,
     'switch_search': DEF_SWITCH
   }) for s in pfolio)
-  
-  # Initialize variables with the default values.
   if solve == 'sat':
     kb = DEF_KB_CSP
     lims = DEF_LIMS_CSP
@@ -216,6 +208,18 @@ def parse_arguments(args):
     if o in ('-h', '--help'):
       print __doc__
       sys.exit(0)
+    elif o == '-P':
+      pfolio = a.split(',')
+      if not pfolio:
+        print >> sys.stderr, 'Error! Empty portfolio '
+        print >> sys.stderr, 'For help use --help'
+        sys.exit(2)
+    elif o == '-A':
+      solvers = a.split(',')
+      pfolio += [s for s in solvers if s not in pfolio]
+    elif o == '-R':
+      solvers = a.split(',')
+      pfolio = [s for s in pfolio if s not in solvers]
     elif o == '-p':
       n = int(a)
       if n < 1:
@@ -289,6 +293,10 @@ def parse_arguments(args):
       all_opt = True
     elif o == '-f':
       free_opt = True
+    elif o == '-l' and solve != 'sat':
+      lb = int(a)
+    elif o == '-u' and solve != 'sat':
+      ub = int(a)
     elif o.startswith('--fzn-options'):
       if len(o) > 13:
         solver = o[14:]
@@ -343,7 +351,7 @@ def parse_arguments(args):
   ozn = tmp_id + '.ozn'
   problem = Problem(mzn, dzn, ozn, solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub
 
 def get_args(args, pfolio):
   """
@@ -351,7 +359,9 @@ def get_args(args, pfolio):
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'b', 'K', 's', 'd', 'p', 'e', 'm']
+    options = [
+      'P', 'R', 'A', 'T', 'k', 'b', 'K', 's', 'd', 'p', 'e', 'm', 'l', 'u'
+    ]
     long_options = ['fzn-options', 'wait-time', 'restart-time']
     long_options += [
       o + '-' + s for o in long_options for s in pfolio
@@ -363,11 +373,11 @@ def get_args(args, pfolio):
     long_options = [o + '=' for o in long_options]
     long_noval  = ['switch-search', 'help', 'keep', 'g12']
     long_noval += ['switch-search-' + s for s in pfolio]
-    long_noval += ['csp-' + o + '=' for o in long_noval]
-    long_noval += ['cop-' + o + '=' for o in long_noval]    
+    long_noval += ['csp-' + o for o in long_noval]
+    long_noval += ['cop-' + o for o in long_noval]    
     long_options += long_noval + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'hafT:k:b:K:s:d:p:e:x:m:', long_options
+      args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
     )
   except getopt.error, msg:
     print msg
