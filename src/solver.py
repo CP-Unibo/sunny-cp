@@ -142,7 +142,7 @@ class RunningSolver:
     cmd = self.solver.fzn_exec + ' ' + self.fzn_options + ' ' + self.fzn_path
     return cmd.split()
   
-  def set_obj_var(self):
+  def set_obj_var(self, problem, lb, ub):
     """
     Retrieve and set the name of the objective variable in the FlatZinc model, 
     possibly adding the "output_var" annotation to obj_var declaration.
@@ -153,6 +153,14 @@ class RunningSolver:
         tokens = line.replace('::', ' ').replace(';', '').split()
         if 'solve' in tokens:
           self.obj_var = tokens[-1].replace(';', '')
+          cons = ''
+          if lb > float('-inf'):
+	    cons += self.solver.constraint.replace(
+	      'RHS', self.obj_var).replace('LHS', str(lb - 1)) + ';\n'
+	  if ub < float('+inf'):
+	    cons += self.solver.constraint.replace(
+	      'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
+	  line = cons + line
         if tokens[0] == 'var' and self.obj_var in tokens \
 	and 'output_var' not in tokens:
 	  self.output_var = False
