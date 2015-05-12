@@ -47,7 +47,7 @@ if
   [ $ret -ne 0 ]
 then
   echo 'Error! mzn2feat not properly installed'
-  echo 'Please decompress mzn2feat-1.0.tar.bz2 and install the mzn2feat tool.'
+  echo 'Please decompress mzn2feat-1.1.1.tar.bz2 and install the mzn2feat tool.'
   echo 'Aborted.'
   exit $ret
 fi

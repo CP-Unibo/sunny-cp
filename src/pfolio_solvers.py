@@ -9,13 +9,13 @@ will replace the current file.
 
 from solver import Solver
 
-g12lazyfd = Solver()
-g12lazyfd.name = 'g12lazyfd'
-g12lazyfd.mznlib = '/home/roberto/sunny-cp/solvers/g12lazyfd/mzn-lib'
-g12lazyfd.fzn_exec = '/home/roberto/sunny-cp/solvers/g12lazyfd/fzn-exec'
-g12lazyfd.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
-g12lazyfd.all_opt = '-a'
-g12lazyfd.free_opt  = '--ignore-user-search'
+chuffed = Solver()
+chuffed.name = 'chuffed'
+chuffed.mznlib = '/home/roberto/sunny-cp/solvers/chuffed/mzn-lib'
+chuffed.fzn_exec = '/home/roberto/sunny-cp/solvers/chuffed/fzn-exec'
+chuffed.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
+chuffed.all_opt = '-a'
+chuffed.free_opt = '-f'
 
 g12fd = Solver()
 g12fd.name = 'g12fd'
@@ -25,22 +25,21 @@ g12fd.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
 g12fd.all_opt = '-a'
 g12fd.free_opt  = '--ignore-user-search'
 
-chuffed = Solver()
-chuffed.name = 'chuffed'
-chuffed.mznlib = '/home/roberto/sunny-cp/solvers/chuffed/mzn-lib'
-chuffed.fzn_exec = '/home/roberto/sunny-cp/solvers/chuffed/fzn-exec'
-chuffed.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
-chuffed.all_opt = '-a'
-chuffed.free_opt  = '-f'
+minisatid = Solver()
+minisatid.name = 'minisatid'
+minisatid.mznlib = '/home/roberto/sunny-cp/solvers/minisatid/mzn-lib'
+minisatid.fzn_exec = '/home/roberto/sunny-cp/solvers/minisatid/fzn-exec'
+minisatid.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
+minisatid.all_opt = '-a'
+minisatid.free_opt = ''
 
-
-g12cbc = Solver()
-g12cbc.name = 'g12cbc'
-g12cbc.mznlib = '/home/roberto/sunny-cp/solvers/g12cbc/mzn-lib'
-g12cbc.fzn_exec = '/home/roberto/sunny-cp/solvers/g12cbc/fzn-exec'
-g12cbc.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
-g12cbc.all_opt = '-a'
-g12cbc.free_opt  = '--ignore-user-search'
+g12lazyfd = Solver()
+g12lazyfd.name = 'g12lazyfd'
+g12lazyfd.mznlib = '/home/roberto/sunny-cp/solvers/g12lazyfd/mzn-lib'
+g12lazyfd.fzn_exec = '/home/roberto/sunny-cp/solvers/g12lazyfd/fzn-exec'
+g12lazyfd.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
+g12lazyfd.all_opt = '-a'
+g12lazyfd.free_opt  = '--ignore-user-search'
 
 g12cpx = Solver()
 g12cpx.name = 'g12cpx'
@@ -50,12 +49,11 @@ g12cpx.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
 g12cpx.all_opt = '-a'
 g12cpx.free_opt = '-f'
 
-minisatid = Solver()
-minisatid.name = 'minisatid'
-minisatid.mznlib = '/home/roberto/sunny-cp/solvers/minisatid/mzn-lib'
-minisatid.fzn_exec = '/home/roberto/sunny-cp/solvers/minisatid/fzn-exec'
-minisatid.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
-minisatid.all_opt = '-a'
-minisatid.free_opt  = ''
-
+g12cbc = Solver()
+g12cbc.name = 'g12cbc'
+g12cbc.mznlib = '/home/roberto/sunny-cp/solvers/g12cbc/mzn-lib'
+g12cbc.fzn_exec = '/home/roberto/sunny-cp/solvers/g12cbc/fzn-exec'
+g12cbc.constraint = 'constraint int_lin_le([1,-1],[LHS,RHS],-1)'
+g12cbc.all_opt = '-a'
+g12cbc.free_opt  = '--ignore-user-search'
 

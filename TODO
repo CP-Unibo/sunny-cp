@@ -1,14 +1,12 @@
-* in lab: git pull, ./install.sh, git add constraint.mzn, commit and push
-
-* python setup.py install (integrazione con mzn2feat -> mzn2feat 1.1.x)
+* integrazione con mzn2feat -> mzn2feat 1.1.x
   
-* Nuovi solvers per mznc15. Opturion?
+* Nuovi solvers per mznc15 (+ Opturion)
 
 * Test su cluster con MiniZinc 2.0 (dopo notifica CP - 10 giugno)
 
 * Docker
 
-* pytdoc + unit test (con code coverage)
+* python package, pydoc, unit test (con code coverage)
 
 * Release sunny-cp 2.X prima di mznc15
 
