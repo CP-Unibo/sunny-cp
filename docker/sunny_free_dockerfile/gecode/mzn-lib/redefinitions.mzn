@@ -6,8 +6,8 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2012-04-06 08:43:44 +0200 (Fri, 06 Apr 2012) $ by $Author: tack $
-%     $Revision: 12706 $
+%     $Date: 2015-03-17 11:20:12 +0100 (Tue, 17 Mar 2015) $ by $Author: tack $
+%     $Revision: 14444 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -73,3 +73,11 @@ predicate float_tanh(var float: a, var float: b) =
 
 predicate float_ne_reif(var float: a, var float: b, var bool: c) =
     not c <-> a==b;
+
+predicate array_float_element(var int: b, array[int] of float: as, var float: c) =
+    b in index_set(as) /\
+    forall(d in index_set(as))( b = d -> as[d] = c );
+
+predicate array_var_float_element(var int: b, array[int] of var float: as, var float: c) =
+    b in index_set(as) /\
+    forall(d in index_set(as))( b = d -> as[d] = c );
