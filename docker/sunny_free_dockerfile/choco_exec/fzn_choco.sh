@@ -119,8 +119,7 @@ then
     ARGS=$ARGS" -lf"
 fi
 
-CMD="java ${JAVA_ARGS} -cp .:${CHOCO_JAR} parser.flatzinc.ChocoFZN ${ARGS}"
+CMD="java ${JAVA_ARGS} -cp .:${CHOCO_JAR} org.chocosolver.parser.flatzinc.ChocoFZN ${ARGS}"
 
-echo $CMD
+echo "% $CMD"
 exec $CMD
-
