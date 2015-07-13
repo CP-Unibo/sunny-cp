@@ -2,6 +2,6 @@
 
 * Test su cluster con MiniZinc 2.0
 
-* Release sunny-cp 2.X (versione usata nella mznc15)
+* Release sunny-cp 2.X.Y (versione usata nella mznc15) poi quella con nuova KB
 
 * python package (integrare con mzn2feat), pydoc, unit test (con code coverage), Docker

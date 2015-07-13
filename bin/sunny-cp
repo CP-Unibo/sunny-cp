@@ -9,9 +9,10 @@ import time
 import fcntl
 import psutil
 import signal
+import tempfile
 import traceback
 import multiprocessing
-from subprocess import PIPE
+from subprocess import PIPE, Popen
 
 SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
 SUNNY_HOME = '/'.join(SUNNY_HOME)
@@ -322,7 +323,35 @@ def check_solution(solver, problem, solution):
   """
   Uses solver for checking the problem solution
   """
-  #TBD
+  tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
+  pb = Problem(tmp_mzn, problem.dzn_path, problem.ozn_path, problem.solve)
+  with open(problem.mzn_path, 'r') as infile:
+    with open(tmp_mzn, 'w') as outfile:
+      for (var, val) in solution:
+	outfile.write('constraint ' + var + ' = ' + val + ';\n')
+      #outfile.write('constraint 0 = 1;')
+      for row in infile:
+	if row:
+	  outfile.write(row)
+  infile.close()
+  outfile.close()
+  
+  tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
+  print solver
+  cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '     \
+      + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
+      + ' -o ' + tmp_fzn
+  proc = Popen(cmd.split(), stderr = PIPE)
+  (_, err) = proc.communicate()
+  if 'model inconsistency detected' in err:
+    return False
+  
+  cmd = eval(solver).fzn_exec + ' ' + tmp_fzn
+  proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
+  (out, _) = proc.communicate()
+  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
+    return False
+  
   return True
   
 
@@ -330,24 +359,22 @@ def process_output(solver, problem, lines, all_opt, check):
   """
   Processes the output of a solver.
   """
-  global RUNNING_SOLVERS
   if solver.name() in check.keys():
     trusted_solver = check[solver.name()]
   else:
     trusted_solver = None
   for line in lines.split('\n'):
     if line == '----------':
-      if trusted_solver:
-	print '% Checking',solver.name(),'solution with',trusted_solver,'...',
-        if check_solution(trusted_solver, problem, solver.solution.items()):
-	  print 'Success!'
-	else:
-	  print 'Failed! Killing solver',solver.name()
-	  send_signal_solver(signal.SIGKILL, solver)
-          RUNNING_SOLVERS.remove(solver)
-          continue
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
+	if trusted_solver:
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print '% Success!'
+	  else:
+	    print '% Failed! Killing solver',solver.name()
+	    send_signal_solver(signal.SIGKILL, solver)
+	    return
 	for (var, val) in solver.solution.items():
 	  print var + ' = ' + val + ';'
 	print line
@@ -359,6 +386,14 @@ def process_output(solver, problem, lines, all_opt, check):
 	# The objective value found is the best so far.
 	problem.best_bound = solver.obj_value
 	print '%',solver.name(),'found a new, better solution'
+	if trusted_solver:
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print '% Success!'
+	  else:
+	    print '% Failed! Killing solver',solver.name()
+	    send_signal_solver(signal.SIGKILL, solver)
+	    return
 	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
 	  for (var, val) in solver.solution.items():
@@ -370,23 +405,23 @@ def process_output(solver, problem, lines, all_opt, check):
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
       if trusted_solver:
-	if not all_opt:
+	if not all_opt and problem.bound_worse_than(solver.obj_value):
 	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
 	  if check_solution(trusted_solver, problem, solver.solution.items()):
-	    print 'Success!'
+	    print '% Success!'
 	    for (var, val) in solver.solution.items():
 	      if var != solver.obj_var or solver.output_var:
 		print var + ' = ' + val + ';'
 	    print '----------'
 	    if problem.isCSP():
 	      print '% Search completed by',solver.name()
-              clean()
-              sys.exit(0)
+	      clean()
+	      sys.exit(0)
 	  else:
 	    print 'Failed! Killing solver',solver
 	    send_signal_solver(signal.SIGKILL, solver)
 	    RUNNING_SOLVERS.remove(solver)
-        continue
+        return
       if not problem.has_bound():
 	print line
       else:
