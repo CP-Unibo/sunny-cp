@@ -21,7 +21,7 @@ do
     for d in domino.1.dzn domino.2.dzn
     do
       mzn2fzn $m $d --output-ozn-to-file $OZN -o /dev/null/foo
-      cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m $d"
+      cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
       cat $OUT | solns2out $OZN | grep -v %
@@ -45,7 +45,7 @@ do
     done
   else
     mzn2fzn $m --output-ozn-to-file $OZN -o /dev/null/foo
-    cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m"
+    cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
     cat $OUT | solns2out $OZN | grep -v %

@@ -53,3 +53,5 @@ DEF_LB = float('-inf')
 DEF_UB = float('+inf')
 
 DEF_RESTARTS = float('+inf')
+
+DEF_CHECK = {}
