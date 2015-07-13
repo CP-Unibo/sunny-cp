@@ -94,6 +94,9 @@ class RunningSolver:
   # Maximum number of solver restarts allowed.
   max_restarts = -1
   
+  def __init__(self):
+    pass
+  
   def __init__(
     self, solver, solve, fzn_path, options, wait_time, restart_time, timeout, 
     switch, max_restarts

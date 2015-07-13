@@ -102,20 +102,22 @@ Solvers Options
   --check-solvers <UNT_1>,<TRU_1>,...,<UNT_k>,<TRU_k>
     Checks the outcome of k "untrusted" solvers UNT_i by means of k "trusted" 
     solvers TRU_i for i = 1, ..., k. In particular:
-    - if the outcome of UNT_i is =====UNKNOWN=====, =====UNBOUNDED=====, or 
-      ====UNSATISFIABLE=====, then the outcome is ignored and nothing is printed
+    - if the outcome of UNT_i is =====UNBOUNDED===== or ====UNSATISFIABLE===== 
+      then the outcome is ignored and nothing is printed
     - if UNT_i produces a solution, sunny-cp exploits its FlatZinc output for 
       checking such solution by using TRU_i. If an inconsistency is detected,
       UNT_i is killed. Otherwise, the solution is printed.
     - If UNT_i proves the optimality, then the optimal solution is checked as 
       described above. However, line ========== is never printed (even when the 
       solution is sound).
+    - In all the other cases (including failures of TRU_i) we assume that UNT_i 
+      gives a correct answer, and thus the corresponding solution is printed.
     Note that checked solutions can be partial, since the variable assignments 
     considered in the solution check are all and only those printed by UNT_i 
     on standard output. So, the solution check also depends on the output 
     annotations defined by the user in the MiniZinc model. This option clearly 
     introduces an overhead in the solving process, especially for problems where 
-    UNT_i produces a lot of sub-optimal solutions. 
+    UNT_i produces a lot of sub-optimal solutions or TRU_i is not performant. 
     NOTE: This option, unset by default, only works with MiniZinc >= 2.0. 
     While UNT_i must be different from TRU_i, it is however possible to have 
     UNT_i = UNT_j or TRU_i = TRU_j for some distinct indexes i, j in {1, ..., k}
