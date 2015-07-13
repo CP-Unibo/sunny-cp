@@ -99,6 +99,27 @@ Portfolio Options
 
 Solvers Options
 ===============
+  --check-solvers <UNT_1>,<TRU_1>,...,<UNT_k>,<TRU_k>
+    Checks the outcome of k "untrusted" solvers UNT_i by means of k "trusted" 
+    solvers TRU_i for i = 1, ..., k. In particular:
+    - if the outcome of UNT_i is =====UNKNOWN=====, =====UNBOUNDED=====, or 
+      ====UNSATISFIABLE=====, then the outcome is ignored and nothing is printed
+    - if UNT_i produces a solution, sunny-cp exploits its FlatZinc output for 
+      checking such solution by using TRU_i. If an inconsistency is detected,
+      UNT_i is killed. Otherwise, the solution is printed.
+    - If UNT_i proves the optimality, then the optimal solution is checked as 
+      described above. However, line ========== is never printed (even when the 
+      solution is sound).
+    Note that checked solutions can be partial, since the variable assignments 
+    considered in the solution check are all and only those printed by UNT_i 
+    on standard output. So, the solution check also depends on the output 
+    annotations defined by the user in the MiniZinc model. This option clearly 
+    introduces an overhead in the solving process, especially for problems where 
+    UNT_i produces a lot of sub-optimal solutions. 
+    NOTE: This option, unset by default, only works with MiniZinc >= 2.0. 
+    While UNT_i must be different from TRU_i, it is however possible to have 
+    UNT_i = UNT_j or TRU_i = TRU_j for some distinct indexes i, j in {1, ..., k}
+  
   --fzn-options "<OPTIONS>"
     Allows to run each solver of the portfolio on its specific FlatZinc model by
     using the options specified in <OPTIONS> string. No checks are performed on 
@@ -179,6 +200,7 @@ def parse_arguments(args):
   
   # Initialize variables with the default values.
   k = DEF_K
+  check = DEF_CHECK
   timeout= DEF_TOUT
   backup = DEF_BACKUP
   static = DEF_STATIC
@@ -349,6 +371,16 @@ def parse_arguments(args):
     elif o == '--g12':
       pfolio = ['g12lazyfd', 'g12fd', 'g12cbc']
       backup = 'g12lazyfd'
+    elif o == '--check-solvers':
+      s = a.split(',')
+      for i in range(0, len(s) / 2):
+        unt = s[2 * i]
+        tru = s[2 * i + 1]
+        if unt == tru:
+	  print >> sys.stderr, 'Error! A solver is either trusted or untrusted!'
+          print >> sys.stderr, 'For help use --help'
+          sys.exit(2)
+        check[unt] = tru
     elif o.startswith('--csp-') and solve == 'sat' or \
          o.startswith('--cop-') and solve != 'sat':
            if len(o) == 7:
@@ -360,7 +392,8 @@ def parse_arguments(args):
   ozn = tmp_id + '.ozn'
   problem = Problem(mzn, dzn, ozn, solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
-    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
+      check
 
 def get_args(args, pfolio):
   """
@@ -375,6 +408,7 @@ def get_args(args, pfolio):
     long_options += [
       o + '-' + s for o in long_options for s in pfolio
     ]
+    long_options += ['check-solvers']
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]
     csp_opts += ['csp-a', 'csp-f']

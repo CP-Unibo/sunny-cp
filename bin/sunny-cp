@@ -80,7 +80,7 @@ def clean():
       if os.path.exists(f):
         os.remove(f)
 
-def solve(schedule, problem, cores, mem_limit, all_opt):
+def solve(schedule, problem, cores, mem_limit, all_opt, check):
   """
   Runs (possibly in parallel on different cores) the solving phase.
   """
@@ -110,7 +110,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt)
+	process_output(solver, problem, lines, all_opt, check)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -118,7 +118,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt)
+	    process_output(solver, problem, lines, all_opt, check)
         solver_terminated(solver, problem, schedule)
         continue
       
@@ -151,7 +151,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
 	  continue
 
 def presolve(
-  schedule, problem, cores, mem_limit, all_opt,
+  schedule, problem, cores, mem_limit, all_opt, check, 
   extractor = None, k = 0, kb = None, lims = None
 ):
   """
@@ -209,7 +209,7 @@ def presolve(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt)
+	process_output(solver, problem, lines, all_opt, check)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -217,7 +217,7 @@ def presolve(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt)
+	    process_output(solver, problem, lines, all_opt, check)
         solver_terminated(solver, problem, schedule)
         if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
@@ -318,12 +318,34 @@ def read_lines(proc):
   except:
     return ''
 
-def process_output(solver, problem, lines, all_opt):
+def check_solution(solver, problem, solution):
+  """
+  Uses solver for checking the problem solution
+  """
+  #TBD
+  return True
+  
+
+def process_output(solver, problem, lines, all_opt, check):
   """
   Processes the output of a solver.
   """
+  global RUNNING_SOLVERS
+  if solver.name() in check.keys():
+    trusted_solver = check[solver.name()]
+  else:
+    trusted_solver = None
   for line in lines.split('\n'):
     if line == '----------':
+      if trusted_solver:
+	print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+        if check_solution(trusted_solver, problem, solver.solution.items()):
+	  print 'Success!'
+	else:
+	  print 'Failed! Killing solver',solver.name()
+	  send_signal_solver(signal.SIGKILL, solver)
+          RUNNING_SOLVERS.remove(solver)
+          continue
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
 	for (var, val) in solver.solution.items():
@@ -347,6 +369,24 @@ def process_output(solver, problem, lines, all_opt):
 	problem.best_solver = solver.name()
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
+      if trusted_solver:
+	if not all_opt:
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print 'Success!'
+	    for (var, val) in solver.solution.items():
+	      if var != solver.obj_var or solver.output_var:
+		print var + ' = ' + val + ';'
+	    print '----------'
+	    if problem.isCSP():
+	      print '% Search completed by',solver.name()
+              clean()
+              sys.exit(0)
+	  else:
+	    print 'Failed! Killing solver',solver
+	    send_signal_solver(signal.SIGKILL, solver)
+	    RUNNING_SOLVERS.remove(solver)
+        continue
       if not problem.has_bound():
 	print line
       else:
@@ -511,7 +551,7 @@ def main(args):
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
     solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
-    UPPER_BOUND = parse_arguments(args)
+    UPPER_BOUND, check = parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
       static, solver_options, problem.solve, tmp_id, all_opt, free_opt 
@@ -525,7 +565,7 @@ def main(args):
       extractor = None
       lims = None
     neighbours, static_time, black_list = presolve(
-      static, problem, cores, mem_limit, all_opt, extractor, k, kb, lims
+      static, problem, cores, mem_limit, all_opt, check, extractor, k, kb, lims
     )
     
     print '%%%%% Solving %%%%%'
@@ -562,7 +602,7 @@ def main(args):
     schedule = init_schedule(
       par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
-    solve(schedule, problem, cores, mem_limit, all_opt)
+    solve(schedule, problem, cores, mem_limit, all_opt, check)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
