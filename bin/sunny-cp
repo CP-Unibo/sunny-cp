@@ -111,7 +111,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt, check)
+	process_output(solver, problem, lines, all_opt, check, schedule)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -119,7 +119,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt, check)
+	    process_output(solver, problem, lines, all_opt, check, schedule)
         solver_terminated(solver, problem, schedule)
         continue
       
@@ -210,7 +210,7 @@ def presolve(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt, check)
+	process_output(solver, problem, lines, all_opt, check, schedule)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -218,7 +218,7 @@ def presolve(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt, check)
+	    process_output(solver, problem, lines, all_opt, check, schedule)
         solver_terminated(solver, problem, schedule)
         if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
@@ -329,6 +329,7 @@ def check_solution(solver, problem, solution):
     with open(tmp_mzn, 'w') as outfile:
       for (var, val) in solution:
 	outfile.write('constraint ' + var + ' = ' + val + ';\n')
+      # FIXME: This forces an inconsistency (for debug purposes only).
       #outfile.write('constraint 0 = 1;')
       for row in infile:
 	if row:
@@ -337,7 +338,6 @@ def check_solution(solver, problem, solution):
   outfile.close()
   
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
-  print solver
   cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '     \
       + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
       + ' -o ' + tmp_fzn
@@ -355,7 +355,7 @@ def check_solution(solver, problem, solution):
   return True
   
 
-def process_output(solver, problem, lines, all_opt, check):
+def process_output(solver, problem, lines, all_opt, check, schedule):
   """
   Processes the output of a solver.
   """
@@ -368,12 +368,13 @@ def process_output(solver, problem, lines, all_opt, check):
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
 	if trusted_solver:
-	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
 	  if check_solution(trusted_solver, problem, solver.solution.items()):
 	    print '% Success!'
 	  else:
 	    print '% Failed! Killing solver',solver.name()
 	    send_signal_solver(signal.SIGKILL, solver)
+	    solver_terminated(solver, problem, schedule)
 	    return
 	for (var, val) in solver.solution.items():
 	  print var + ' = ' + val + ';'
@@ -384,16 +385,17 @@ def process_output(solver, problem, lines, all_opt, check):
 	  sys.exit(0)
       elif problem.bound_worse_than(solver.obj_value):
 	# The objective value found is the best so far.
-	problem.best_bound = solver.obj_value
 	print '%',solver.name(),'found a new, better solution'
 	if trusted_solver:
-	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
 	  if check_solution(trusted_solver, problem, solver.solution.items()):
 	    print '% Success!'
 	  else:
 	    print '% Failed! Killing solver',solver.name()
 	    send_signal_solver(signal.SIGKILL, solver)
+	    solver_terminated(solver, problem, schedule)
 	    return
+	problem.best_bound = solver.obj_value
 	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
 	  for (var, val) in solver.solution.items():
@@ -406,7 +408,7 @@ def process_output(solver, problem, lines, all_opt, check):
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
       if trusted_solver:
 	if not all_opt and problem.bound_worse_than(solver.obj_value):
-	  print '% Checking',solver.name(),'solution with',trusted_solver,'...',
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
 	  if check_solution(trusted_solver, problem, solver.solution.items()):
 	    print '% Success!'
 	    for (var, val) in solver.solution.items():
@@ -420,7 +422,7 @@ def process_output(solver, problem, lines, all_opt, check):
 	  else:
 	    print 'Failed! Killing solver',solver
 	    send_signal_solver(signal.SIGKILL, solver)
-	    RUNNING_SOLVERS.remove(solver)
+	    solver_terminated(solver, problem, schedule)
         return
       if not problem.has_bound():
 	print line
