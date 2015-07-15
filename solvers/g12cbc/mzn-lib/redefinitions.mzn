@@ -4,6 +4,17 @@
 % Sebastian Brand
 %-----------------------------------------------------------------------------%
 
+function var bool: reverse_map(var int: x) = (x==1);
+function bool: reverse_map(int: x) = (x==1);
+
+function var int: bool2int(var bool: x) :: promise_total =
+ let { var 0..1: b2i;
+       constraint (x = reverse_map(b2i)) ::is_reverse_map ;
+      } in b2i;
+
+predicate bool_eq(var bool: x, var bool: y) =
+  bool2int(x)==bool2int(y);
+
 %-----------------------------------------------------------------------------%
 % Strict inequality
 %
@@ -94,11 +105,11 @@ predicate bool_le_reif(var bool: p, var bool: q, var bool: r) =
 
 
 predicate bool_lt(var bool: p, var bool: q) =
-    p /\ not q;
+    not p /\ q;
 
 
 predicate bool_lt_reif(var bool: p, var bool: q, var bool: r) =
-    (p /\ not q) <-> r;
+    (not p /\ q) <-> r;
 
 %-----------------------------------------------------------------------------%
 
@@ -162,6 +173,8 @@ predicate int_ne(var int: x, var int: y) =
     aux_int_lt_if_1(x, y, p) /\
     aux_int_gt_if_0(x, y, p);
 
+predicate int_lin_ne(array[int] of int: c, array[int] of var int: x, int: d) =
+    int_ne(sum(i in index_set(x))( c[i]*x[i] ),d);
 
 predicate int_eq_reif(var int: x, var int: y, var bool: b) =
     aux_int_eq_iff_1(x, y, bool2int(b));
@@ -324,7 +337,12 @@ predicate int_div(var int: x, var int: y, var int: q) =
 
 
 predicate int_mod(var int: x, var int: y, var int: r) =
-    let { int: b = max(abs(lb(x)), abs(ub(x))), var -b..b: q }
+    let { 
+      int: bx = max(abs(lb(x)), abs(ub(x)));
+      var -bx..bx: q;
+      int: by = max(abs(lb(y)), abs(ub(y)));
+      constraint r in -by..by;
+    }
     in
     aux_int_division_modulo(x,y,q,r);
 
@@ -348,11 +366,14 @@ predicate aux_int_division_modulo(var int: x, var int: y, var int: q,
 
 
 predicate int_times(var int: x, var int: y, var int: z) =
-    let { set of int: s = dom(x),
+    if card(dom(x)) > card(dom(y)) then int_times(y,x,z)
+    else
+    let { set of int: s = lb(x)..ub(x),
           set of int: r = {lb(x)*lb(y), lb(x)*ub(y), ub(x)*lb(y), ub(x)*ub(y)},
           array[s] of var min(r)..max(r): ady = array1d(s, [ d*y | d in s ]) }
     in
-    ady[x] = z;
+    ady[x] = z
+    endif;
 
 %-----------------------------------------------------------------------------%
 % Array 'element' constraints
@@ -444,12 +465,12 @@ predicate alt_set_in_reif(var int: x, set of int: s, var bool: b) =
 % Auxiliary: equality reified onto a 0/1 variable
 
 predicate aux_int_eq_iff_1(var int: x, var int: y, var int: p) =
-    let { array[1..2] of var 0..1: q }
+    let { array[1..2] of var 0..1: q_458 }
     in
-    aux_int_lt_if_0(x - p, y, q[1]) /\
-    aux_int_gt_if_0(x + p, y, q[2]) /\
-    sum(q) <= 2 - 2*p /\
-    sum(q) <= 1 + p;
+    aux_int_lt_if_0(x - p, y, q_458[1]) /\
+    aux_int_gt_if_0(x + p, y, q_458[2]) /\
+    sum(q_458) <= 2 - 2*p /\
+    sum(q_458) <= 1 + p;
 
     % Alternative 1
 predicate alt_1_aux_int_eq_iff_1(var int: x, var int: y, var int: p) =
@@ -546,3 +567,46 @@ predicate aux_float_lt_if_1(var float: x, var float: y, var float: p) =
 
 %-----------------------------------------------------------------------------%
 %-----------------------------------------------------------------------------%
+
+annotation bool_search(array[int] of var bool: x, ann:a1, ann:a2, ann:a3) =
+  int_search([bool2int(x[i]) | i in index_set(x)],a1,a2,a3);
+
+predicate array_int_maximum(var int: m, array[int] of var int: x) =
+    let { int: l = min(index_set(x)),
+          int: u = max(index_set(x)),
+          int: ly = lb_array(x),
+          int: uy = ub_array(x),
+          array[l..u] of var ly..uy: y } in
+    y[l] = x[l] /\
+    m = y[u] /\
+    forall (i in l+1 .. u) ( y[i] == max(x[i],y[i-1]) );
+
+predicate array_float_maximum(var float: m, array[int] of var float: x) =
+    let { int: l = min(index_set(x)),
+          int: u = max(index_set(x)),
+          float: ly = lb_array(x),
+          float: uy = ub_array(x),
+          array[l..u] of var ly..uy: y } in
+    y[l] = x[l] /\
+    m = y[u] /\
+    forall (i in l+1 .. u) ( y[i] == max(x[i],y[i-1]) );
+
+predicate array_int_minimum(var int: m, array[int] of var int: x) =
+    let { int: l = min(index_set(x)),
+          int: u = max(index_set(x)),
+          int: ly = lb_array(x),
+          int: uy = ub_array(x),
+          array[l..u] of var ly..uy: y } in
+    y[l] = x[l] /\
+    m = y[u] /\
+    forall (i in l+1 .. u) ( y[i] == min(x[i],y[i-1]) );
+
+predicate array_float_minimum(var float: m, array[int] of var float: x) =
+    let { int: l = min(index_set(x)),
+          int: u = max(index_set(x)),
+          float: ly = lb_array(x),
+          float: uy = ub_array(x),
+          array[l..u] of var ly..uy: y } in
+    y[l] = x[l] /\
+    m = y[u] /\
+    forall (i in l+1 .. u) ( y[i] == min(x[i],y[i-1]) );

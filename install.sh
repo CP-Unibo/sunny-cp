@@ -47,7 +47,7 @@ if
   [ $ret -ne 0 ]
 then
   echo 'Error! mzn2feat not properly installed'
-  echo 'Please decompress mzn2feat-1.0.tar.bz2 and install the mzn2feat tool.'
+  echo 'Please decompress mzn2feat-1.1.1.tar.bz2 and install the mzn2feat tool.'
   echo 'Aborted.'
   exit $ret
 fi
@@ -75,7 +75,5 @@ do
 done
 
 echo "--- Everything went well!"
-echo "To complete sunny-cp installation you just have to add/modify the" 
-echo "environment variables SUNNY_HOME and PATH:"
-echo "1. SUNNY_HOME must point to: "$PWD
-echo "2. PATH must be extended to include: "$PWD"/bin"
+echo "To complete sunny-cp installation just append $PWD/bin"
+echo "to the PATH environment variable."
