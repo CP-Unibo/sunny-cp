@@ -2,6 +2,7 @@
 # Runs the instances of the test/examples folder.
 
 IN_PATH=`dirname "$(readlink -f ${BASH_SOURCE[0]})"`
+FZN=$IN_PATH/tmp.fzn
 OZN=$IN_PATH/tmp.ozn
 OUT=$IN_PATH/out
 ERR=$IN_PATH/err
@@ -10,7 +11,8 @@ TIMEOUT=10
 OUTPUT=$IN_PATH/output.log
 ERRORS=$IN_PATH/errors.log
 cd $IN_PATH
-rm $OUTPUT $ERRORS 2>/dev/null
+echo '' > $OUTPUT 
+echo '' > $ERRORS
 
 for m in `ls *.mzn`
 do
@@ -20,7 +22,7 @@ do
   then
     for d in domino.1.dzn domino.2.dzn
     do
-      mzn2fzn $m $d --output-ozn-to-file $OZN -o /dev/null/foo
+      mzn2fzn $m $d --output-ozn-to-file $OZN -o $FZN
       cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
@@ -44,7 +46,7 @@ do
       fi
     done
   else
-    mzn2fzn $m --output-ozn-to-file $OZN -o /dev/null/foo
+    mzn2fzn $m --output-ozn-to-file $OZN -o $FZN
     cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
@@ -69,7 +71,7 @@ do
   fi
   echo -e "$m processed!\n"
 done
-rm $OZN $OUT $ERR
+rm $OZN $OUT $ERR $FZN
 rm *.fzn *.ozn 2>/dev/null
 echo "All the examples processed without errors."
 echo "Have a look at the log files $OUTPUT and $ERRORS"
