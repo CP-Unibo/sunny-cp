@@ -9,13 +9,13 @@ import time
 import fcntl
 import psutil
 import signal
+import tempfile
 import traceback
 import multiprocessing
-from string import replace
-from socket import gethostname
-from subprocess import PIPE
+from subprocess import PIPE, Popen
 
-SUNNY_HOME = os.environ['SUNNY_HOME']
+SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
+SUNNY_HOME = '/'.join(SUNNY_HOME)
 sys.path.append(SUNNY_HOME + '/src')
 from problem        import *
 from parsing        import *
@@ -34,8 +34,10 @@ KEEP = False
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
-# FIXME: Temporary.
-SWITCH = False
+# Initial lower bound of the problem to be solved.
+LOWER_BOUND = float('-inf')
+# Initial lower bound of the problem to be solved.
+UPPER_BOUND = float('+inf')
 
 def handler(signum = None, frame = None):
   """
@@ -79,7 +81,7 @@ def clean():
       if os.path.exists(f):
         os.remove(f)
 
-def solve(schedule, problem, cores, mem_limit, all_opt):
+def solve(schedule, problem, cores, mem_limit, all_opt, check):
   """
   Runs (possibly in parallel on different cores) the solving phase.
   """
@@ -109,7 +111,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt)
+	process_output(solver, problem, lines, all_opt, check, schedule)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -117,7 +119,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt)
+	    process_output(solver, problem, lines, all_opt, check, schedule)
         solver_terminated(solver, problem, schedule)
         continue
       
@@ -132,17 +134,25 @@ def solve(schedule, problem, cores, mem_limit, all_opt):
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
+	if solver.num_restarts < solver.max_restarts:
+	  solver.num_restarts += 1
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  print '% Restarting',solver.name()
+	  solver.timeout = max(
+	    solver.timeout - (time.time() - solver.start_time), 0
+	  )
+	  run_solver(solver, problem)
+	  continue
+	else:
+	  print '%',solver.name(),'reached the maximum number of restarts!'
+	  print '% Killing solver',solver.name()
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  continue
 
 def presolve(
-  schedule, problem, cores, mem_limit, all_opt,
+  schedule, problem, cores, mem_limit, all_opt, check, 
   extractor = None, k = 0, kb = None, lims = None
 ):
   """
@@ -200,7 +210,7 @@ def presolve(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt)
+	process_output(solver, problem, lines, all_opt, check, schedule)
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -208,7 +218,7 @@ def presolve(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt)
+	    process_output(solver, problem, lines, all_opt, check, schedule)
         solver_terminated(solver, problem, schedule)
         if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
@@ -225,14 +235,22 @@ def presolve(
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
       and time.time() - solver.solution_time > solver.restart_time:
-	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-	print '% Restarting',solver.name()
-	solver.timeout = max(
-	  solver.timeout - (time.time() - solver.start_time), 0
-	)
-	run_solver(solver, problem)
-	continue
+	if solver.num_restarts < solver.max_restarts:
+	  solver.num_restarts += 1
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  print '% Restarting',solver.name()
+	  solver.timeout = max(
+	    solver.timeout - (time.time() - solver.start_time), 0
+	  )
+	  run_solver(solver, problem)
+	  continue
+	else:
+	  print '%',solver.name(),'reached the maximum number of restarts!'
+	  print '% Killing solver',solver.name()
+	  send_signal_solver(signal.SIGKILL, solver)
+	  RUNNING_SOLVERS.remove(solver)
+	  continue
 
   return neighbours, time.time() - start_time, black_list
 
@@ -252,29 +270,30 @@ def run_solver(solver, problem):
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
+    if problem.isCOP() and not solver.obj_var:
+      # Extract and set the objective variable from the FlatZinc model.
+      solver.set_obj_var(problem, LOWER_BOUND, UPPER_BOUND)
     cmd = solver.flatzinc_cmd(problem)
     solver.status = 'flatzinc'
   elif solver.status == 'flatzinc':
-    if problem.isCOP() and not solver.obj_var:
-      # Extract and set the objective variable from the FlatZinc model.
-      solver.set_obj_var()
     if solver.name() == problem.best_solver or \
     problem.bound_better_than(solver.obj_value):
       # Starts the solver with a better bound.
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
-    # FIXME: Temporary.
-    if SWITCH:
+    
+    if solver.switch_search:
       opts = solver.fzn_options.split()
       if solver.solver.free_opt in opts:
-        print '% Switching from free to fixed!'
+        print '% Switching',solver.name(),'search strategy from free to fixed!'
         opts.remove(solver.solver.free_opt)
         solver.fzn_options = ' '.join(opts) + ' '
       elif solver.solver.free_opt:
-        print '% Switching from fixed to free!'
+        print '% Switching',solver.name(),'search strategy from fixed to free!'
         solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
+    
   else:
     print '% Unknown status',solver.status
     assert False
@@ -300,16 +319,65 @@ def read_lines(proc):
   except:
     return ''
 
-def process_output(solver, problem, lines, all_opt):
+def check_solution(solver, problem, solution):
+  """
+  Uses solver for checking the problem solution
+  """
+  tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
+  pb = Problem(tmp_mzn, problem.dzn_path, problem.ozn_path, problem.solve)
+  with open(problem.mzn_path, 'r') as infile:
+    with open(tmp_mzn, 'w') as outfile:
+      for (var, val) in solution:
+	outfile.write('constraint ' + var + ' = ' + val + ';\n')
+      # FIXME: This forces an inconsistency (for debug purposes only).
+      #outfile.write('constraint 0 = 1;')
+      for row in infile:
+	if row:
+	  outfile.write(row)
+  infile.close()
+  outfile.close()
+  
+  tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
+  cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '     \
+      + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
+      + ' -o ' + tmp_fzn
+  proc = Popen(cmd.split(), stderr = PIPE)
+  (_, err) = proc.communicate()
+  if 'model inconsistency detected' in err:
+    return False
+  
+  cmd = eval(solver).fzn_exec + ' ' + tmp_fzn
+  proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
+  (out, _) = proc.communicate()
+  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
+    return False
+  
+  return True
+  
+
+def process_output(solver, problem, lines, all_opt, check, schedule):
   """
   Processes the output of a solver.
   """
+  if solver.name() in check.keys():
+    trusted_solver = check[solver.name()]
+  else:
+    trusted_solver = None
   for line in lines.split('\n'):
     if line == '----------':
       if problem.isCSP():
 	print '%',solver.name(),'found a solution'
+	if trusted_solver:
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print '% Success!'
+	  else:
+	    print '% Failed! Killing solver',solver.name()
+	    send_signal_solver(signal.SIGKILL, solver)
+	    solver_terminated(solver, problem, schedule)
+	    return
 	for (var, val) in solver.solution.items():
-	  print var,'=',val
+	  print var + ' = ' + val + ';'
 	print line
 	if not all_opt:
 	  print '% Search completed by',solver.name()
@@ -317,30 +385,52 @@ def process_output(solver, problem, lines, all_opt):
 	  sys.exit(0)
       elif problem.bound_worse_than(solver.obj_value):
 	# The objective value found is the best so far.
-	problem.best_bound = solver.obj_value
 	print '%',solver.name(),'found a new, better solution'
+	if trusted_solver:
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print '% Success!'
+	  else:
+	    print '% Failed! Killing solver',solver.name()
+	    send_signal_solver(signal.SIGKILL, solver)
+	    solver_terminated(solver, problem, schedule)
+	    return
+	problem.best_bound = solver.obj_value
+	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
-	      print '%',var,'=',val
-	    else:
-	      print var,'=',val
+	    if var != solver.obj_var or solver.output_var:
+	      print var + ' = ' + val + ';'
 	  print line
 	  solver.solution = {}
-	else:
-	  print '%',problem.aux_var,'=',solver.obj_value
 	problem.best_solver = solver.name()
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
+      if trusted_solver:
+	if not all_opt and problem.bound_worse_than(solver.obj_value):
+	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	    print '% Success!'
+	    for (var, val) in solver.solution.items():
+	      if var != solver.obj_var or solver.output_var:
+		print var + ' = ' + val + ';'
+	    print '----------'
+	    if problem.isCSP():
+	      print '% Search completed by',solver.name()
+	      clean()
+	      sys.exit(0)
+	  else:
+	    print 'Failed! Killing solver',solver
+	    send_signal_solver(signal.SIGKILL, solver)
+	    solver_terminated(solver, problem, schedule)
+        return
       if not problem.has_bound():
 	print line
       else:
 	if not all_opt:
 	  for (var, val) in solver.solution.items():
-	    if var == problem.aux_var:
-	      print '%',var,'=',val
-	    else:
-	      print var,'=',val
+	    if var != solver.obj_var or solver.output_var:
+	      print var + ' = ' + val + ';'
 	  print '----------'
 	print '=========='
       print '% Search completed by',solver.name()
@@ -350,7 +440,7 @@ def process_output(solver, problem, lines, all_opt):
       idx = line.index(' = ')
       val = line[idx + 3:].split(';')[0]
       var = line[:idx]
-      if var == problem.aux_var:
+      if var == solver.obj_var:
 	solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()
@@ -360,7 +450,8 @@ def solver_terminated(solver, problem, schedule):
   Handles the termination of a solver process, possibly launching a new solver.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-  RUNNING_SOLVERS.remove(solver)
+  if solver in RUNNING_SOLVERS:
+    RUNNING_SOLVERS.remove(solver)
   if solver.status == 'mzn2fzn':
     if solver.process.returncode == 0:
       print '% MiniZinc model converted by ' + solver.name() + '.',
@@ -468,23 +559,7 @@ def resume_solver(solver, timeout):
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
 
-def init_problem(problem, tmp_id):
-  """
-  Initializes a problem, making it ready to be solved.
-  """
-  global TMP_FILES
-  ozn_path = tmp_id + '.ozn'
-  problem.ozn_path = ozn_path
-  TMP_FILES = [ozn_path]
-  if problem.isCOP():
-    # Make a copy of the original MiniZinc model.
-    mzn_path = tmp_id + '.mzn'
-    out_path = tmp_id + '.out'
-    problem = problem.make_cpy(mzn_path, out_path, aux = True)
-    TMP_FILES += [mzn_path, out_path]
-  return problem
-
-def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
+def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   """
   Initializes a schedule, making it ready to be executed.
   """
@@ -493,36 +568,31 @@ def init_schedule(schedule, solver_options, solve, tmp_id, all_opt, free_opt):
   for (s, t) in schedule:
     so = eval(s)
     fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = solver_options[s]['options']
+    opts = options[s]['options']
     if all_opt or solve != 'sat':
       opts += ' ' + so.all_opt
     if free_opt:
       opts += ' ' + so.free_opt
-    wt = float(solver_options[s]['wait_time'])
-    rt = solver_options[s]['restart_time']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t)
+    wt = float(options[s]['wait_time'])
+    rt = options[s]['restart_time']
+    sw = options[s]['switch_search']
+    mr = options[s]['max_restarts']
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw, mr)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
 
 def main(args):
-  global KEEP, SWITCH
+  global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND
   try:
-
-    #FIXME: Temporary trick.
-    if args[0] == '--switch-search':
-      print '% Search switching activated'
-      SWITCH = True
-      args.pop(0)
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_dir, mem_limit, KEEP, all_opt, free_opt            = \
-      parse_arguments(args)
-    tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-    problem = init_problem(problem, tmp_id)
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
+    UPPER_BOUND, check = parse_arguments(args)
+    TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt 
     )
     
     print '%%%%% Pre-solving %%%%%'
@@ -533,7 +603,7 @@ def main(args):
       extractor = None
       lims = None
     neighbours, static_time, black_list = presolve(
-      static, problem, cores, mem_limit, all_opt, extractor, k, kb, lims
+      static, problem, cores, mem_limit, all_opt, check, extractor, k, kb, lims
     )
     
     print '%%%%% Solving %%%%%'
@@ -570,7 +640,7 @@ def main(args):
     schedule = init_schedule(
       par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
-    solve(schedule, problem, cores, mem_limit, all_opt)
+    solve(schedule, problem, cores, mem_limit, all_opt, check)
     
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'

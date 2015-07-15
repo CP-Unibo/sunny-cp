@@ -91,7 +91,7 @@ var int: obj;
 constraint
     obj = sum( k in 1..K )( bin[k] );
 
-output 
+output
 [ "Number of used bins = ",  show( obj ), "\n"] ++ 
 [ "Items in bins = \n\t"] ++ 
 [ show(item[k, j]) ++ if j = N then "\n\t" else " " endif |

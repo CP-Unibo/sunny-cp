@@ -48,15 +48,21 @@ Portfolio Options
     solvers, which is by default: 
       chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
       g12fd,choco,gecode,ortools,g12gurobi,g12cbc
+  -A <SOLVERS>
+    Adds to the default portfolio (or to the portfolio specified with -P option)
+    the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
+  -R <SOLVERS>
+    Removes from the default portfolio (or from the portfolio specified with -P 
+    option) the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
   -b <SOLVER>
     Set the backup solver of the portfolio. The default backup solver is chuffed
   --g12
     Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
-    This is equivalent to set -P g12cpx,g12cbc,g12lazyfd,g12fd and -b g12cpx
+    This is equivalent to set -P g12cbc,g12lazyfd,g12fd and -b g12lazyfd
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
-    knowledge base is in SUNNY_HOME/kb/all_T1800. For more details, see the 
-    README file in SUNNY_HOME/kb folder
+    knowledge base is in kb/all_T1800. For more details, see the README file in 
+    kb folder
   -s <SCHEDULE>
     Specifies a static schedule to be run before executing the SUNNY algorithm. 
     The schedule must be passed in the form: 
@@ -68,9 +74,9 @@ Portfolio Options
     Also the constant +inf is allowed for the times t_i
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
-    changed by defining a corresponding class in SUNNY_HOME/src/features.py
+    changed by defining a corresponding class in src/features.py
   -a
-    Prints to standard output all the solutions of the problem (for CSPs only) 
+    Prints to standard output all the solutions of the problem  (for CSPs only) 
     or all the sub-optimal solutions until the optimum is found (for COPs only)
   -f
     Free search: ignore any search annotations on the solve item.
@@ -82,9 +88,40 @@ Portfolio Options
     By default, this value is set to 100%, since the memory check can be pretty 
     resource consuming: it is suggested to set a value lower than 100 only if 
     you are sure that the solving process can be very memory consuming.
+  -l <BOUND>
+    Sets a lower bound for the problem to be solved (for COPs only). This is 
+    equivalent to add the constraint f(x) >= <BOUND> where f(x) is the objective 
+    function of the problem
+  -u <BOUND>
+    Sets an upper bound for the problem to be solved (for COPs only). This is 
+    equivalent to add the constraint f(x) <= <BOUND> where f(x) is the objective 
+    function of the problem
 
 Solvers Options
 ===============
+  --check-solvers <UNT_1>,<TRU_1>,...,<UNT_k>,<TRU_k>
+    Checks the outcome of k "untrusted" solvers UNT_i by means of k "trusted" 
+    solvers TRU_i for i = 1, ..., k. In particular:
+    - if the outcome of UNT_i is =====UNBOUNDED===== or ====UNSATISFIABLE===== 
+      then the outcome is ignored and nothing is printed
+    - if UNT_i produces a solution, sunny-cp exploits its FlatZinc output for 
+      checking such solution by using TRU_i. If an inconsistency is detected,
+      UNT_i is killed. Otherwise, the solution is printed.
+    - If UNT_i proves the optimality, then the optimal solution is checked as 
+      described above. However, line ========== is never printed (even when the 
+      solution is sound).
+    - In all the other cases (including failures of TRU_i) we assume that UNT_i 
+      gives a correct answer, and thus the corresponding solution is printed.
+    Note that checked solutions can be partial, since the variable assignments 
+    considered in the solution check are all and only those printed by UNT_i 
+    on standard output. So, the solution check also depends on the output 
+    annotations defined by the user in the MiniZinc model. This option clearly 
+    introduces an overhead in the solving process, especially for problems where 
+    UNT_i produces a lot of sub-optimal solutions or TRU_i is not performant. 
+    NOTE: This option, unset by default, only works with MiniZinc >= 2.0. 
+    While UNT_i must be different from TRU_i, it is however possible to have 
+    UNT_i = UNT_j or TRU_i = TRU_j for some distinct indexes i, j in {1, ..., k}
+  
   --fzn-options "<OPTIONS>"
     Allows to run each solver of the portfolio on its specific FlatZinc model by
     using the options specified in <OPTIONS> string. No checks are performed on 
@@ -105,19 +142,30 @@ Solvers Options
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a 
     solution in the last <TIME> seconds
+  --switch-search
+    Allows to switch the search from fixed search to free search (and viceversa) 
+    when solvers are restarted. Of course, this holds just for the solvers that 
+    allow both free and fixed search. This option in unset by default.
+  --switch-search-<SOLVER_NAME>
+    As above, with the difference that search is switched only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio.
+  --max-restarts <MAX>
+    Sets the maximum number of times a solver can be restarted. After <MAX> 
+    restarts, the solver is killed rather than being restarted for the 
+    (<MAX> + 1)-th time.
+    By default, <MAX> = +inf
+  --max-restarts-<SOLVER>
+    As above, with the difference that the option is set only for <SOLVER_NAME> 
+    and not for all the solvers of the portfolio.
     
 Helper Options
 ==============
   -h, --help
     Print this message
-  -x <AUX_VAR>
-    Specifies the name of the auxiliary variable used for tracking the objective 
-    function value (for COPs). Note that such variable must not appear in the 
-    MiniZinc model to be solved. The default variable name is o__b__j__v__a__r    
   -d <PATH> 
     Absolute path of the folder in which the temporary files created by the 
-    solver will be put. The default directory is SUNNY_HOME/tmp, and by default 
-    such files are deleted after sunny-cp execution      
+    solver will be put. The default directory is tmp, and by default such files 
+    are deleted after sunny-cp execution      
   --keep
     Do not erase the temporary files created by the solver and stored in the 
     specified directory (useful for debugging). This option is unset by default    
@@ -135,7 +183,7 @@ Helper Options
 
 import sys
 import getopt
-from string   import replace
+from socket import gethostname
 from defaults       import *
 from features       import *
 from problem        import *
@@ -147,63 +195,62 @@ def parse_arguments(args):
   arguments properly set.
   """
   
-  # Get the arguments and parse the input model to get auxiliary information. 
-  mzn, dzn, opts = get_args(args)
-  k, timeout, pfolio, backup, kb, lims, \
-  static, solve, obj_expr, mzn_out = parse_model(mzn)
+  # Get the arguments and parse the input model to get solve information. 
+  pfolio = DEF_PFOLIO
+  mzn, dzn, opts = get_args(args, pfolio)
+  solve = get_solve(mzn)
+  
   # Initialize variables with the default values.
+  k = DEF_K
+  check = DEF_CHECK
+  timeout= DEF_TOUT
+  backup = DEF_BACKUP
+  static = DEF_STATIC
   extractor = eval(DEF_EXTRACTOR)
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
   keep = DEF_KEEP
-  wait_time = DEF_WAIT_TIME
-  restart_time = DEF_RESTART_TIME
-  aux_var = DEF_AUX_VAR
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
   free_opt = DEF_FREE
-  opt = dict(opts)
-  if '-P' in opt.keys():
-    p = opt['-P'].split(',')
-    if not p:
-      print >> sys.stderr, 'Error! The portfolio ' + a + ' is not valid.'
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
-      print >> sys.stderr, 'For help use --help'
-      sys.exit(2)
-    pfolio = p
-  else:
-    if solve == 'sat':
-      pfolio = DEF_PFOLIO_CSP
-    else:
-      pfolio = DEF_PFOLIO_COP
+  lb = DEF_LB
+  ub = DEF_UB
+  solver_options = dict((s, {
+    'options': DEF_OPTS, 
+    'wait_time': DEF_WAIT_TIME, 
+    'restart_time': DEF_RESTART_TIME,
+    'switch_search': DEF_SWITCH,
+    'max_restarts': DEF_RESTARTS
+  }) for s in pfolio)
   if solve == 'sat':
-    solver_options = dict((s, {
-      'options': DEF_OPT_CSP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      }) for s in pfolio
-    )
+    kb = DEF_KB_CSP
+    lims = DEF_LIMS_CSP
   else:
-    solver_options = dict((s, {
-      'options': DEF_OPT_COP, 
-      'wait_time': DEF_WAIT_TIME, 
-      'restart_time': DEF_RESTART_TIME,
-      }) for s in pfolio
-    )
-  
+    kb = DEF_KB_COP
+    lims = DEF_LIMS_COP
+      
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
       print __doc__
       sys.exit(0)
+    elif o == '-P':
+      pfolio = a.split(',')
+      if not pfolio:
+        print >> sys.stderr, 'Error! Empty portfolio '
+        print >> sys.stderr, 'For help use --help'
+        sys.exit(2)
+    elif o == '-A':
+      solvers = a.split(',')
+      pfolio += [s for s in solvers if s not in pfolio]
+    elif o == '-R':
+      solvers = a.split(',')
+      pfolio = [s for s in pfolio if s not in solvers]
     elif o == '-p':
       n = int(a)
       if n < 1:
         print >> sys.stderr, 'Warning: -p parameter set to 1.'
         cores = 1
-      elif n > DEF_CORES:
-        print >> sys.stderr, 'Warning: -p parameter set to',cores
       else:
         cores = n
     elif o == '-e':
@@ -272,6 +319,10 @@ def parse_arguments(args):
       all_opt = True
     elif o == '-f':
       free_opt = True
+    elif o == '-l' and solve != 'sat':
+      lb = int(a)
+    elif o == '-u' and solve != 'sat':
+      ub = int(a)
     elif o.startswith('--fzn-options'):
       if len(o) > 13:
         solver = o[14:]
@@ -303,59 +354,75 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():  
           item['restart_time'] = rest_time
-    elif o == '-x':
-      aux_var = a
+    elif o.startswith('--switch-search'):
+      if len(o) > 15:
+	solver = o[16:]
+	solver_options[solver]['switch_search'] = True
+      else:
+        for item in solver_options.values():
+	  item['switch_search'] = True
+    elif o.startswith('--max-restarts'):
+      if len(o) > 14:
+	solver = o[15:]
+	solver_options[solver]['max_restarts'] = int(a)
+      else:
+        for item in solver_options.values():
+	  item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
     elif o == '--g12':
-      pfolio = ['g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc']
-      backup = 'g12cpx'
+      pfolio = ['g12lazyfd', 'g12fd', 'g12cbc']
+      backup = 'g12lazyfd'
+    elif o == '--check-solvers':
+      s = a.split(',')
+      for i in range(0, len(s) / 2):
+        unt = s[2 * i]
+        tru = s[2 * i + 1]
+        if unt == tru:
+	  print >> sys.stderr, 'Error! A solver is either trusted or untrusted!'
+          print >> sys.stderr, 'For help use --help'
+          sys.exit(2)
+        check[unt] = tru
     elif o.startswith('--csp-') and solve == 'sat' or \
          o.startswith('--cop-') and solve != 'sat':
            if len(o) == 7:
              opts.append(['-' + o[6], a])
            else:
              opts.append(['--' + o[6:], a])
-           
-  # Additional checks.
-  #if backup not in pfolio:
-    #print >> sys.stderr, \
-    #'Error! Backup solver ' + backup + ' is not in ' + str(pfolio)
-    #print >> sys.stderr, 'For help use --help'
-    #sys.exit(2)
-  #if not (set(s for (s, t) in static) <= set(pfolio)):
-    #print >> sys.stderr, \
-    #'Error! Static schedule is not a subset of ' + str(pfolio)
-    #print >> sys.stderr, 'For help use --help'
-    #sys.exit(2)
-  #st = 0
-  #for (s, _) in static:
-    #if s not in pfolio:
-      #print >> sys.stderr, 'Error! Solver ' + s + ' is not in ' + str(pfolio)
-      #print >> sys.stderr, 'For help use --help'
-      #sys.exit(2)
-    
-  problem = Problem(mzn, dzn, mzn_out, solve, obj_expr, aux_var)
-  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-    cores, solver_options, tmp_dir, mem_limit, keep, all_opt, free_opt
+ 
+  tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
+  ozn = tmp_id + '.ozn'
+  problem = Problem(mzn, dzn, ozn, solve)
+  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
+      check
 
-def get_args(args):
+def get_args(args, pfolio):
   """
   Get the input arguments.
   """
   dzn = ''
   try:
-    options = ['T', 'k', 'P', 'b', 'K', 's', 'd', 'p', 'e', 'x', 'm']
-    long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-memory']
-    long_options += [o + '-' + s for o in long_options for s in DEF_PFOLIO_CSP]
+    options = [
+      'P', 'R', 'A', 'T', 'k', 'b', 'K', 's', 'd', 'p', 'e', 'm', 'l', 'u'
+    ]
+    long_options = ['fzn-options', 'wait-time', 'restart-time', 'max-restarts']
+    long_options += [
+      o + '-' + s for o in long_options for s in pfolio
+    ]
+    long_options += ['check-solvers']
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]
     csp_opts += ['csp-a', 'csp-f']
     cop_opts += ['cop-a', 'cop-f']
     long_options = [o + '=' for o in long_options]
-    long_options += ['help', 'keep', 'g12'] + csp_opts + cop_opts
+    long_noval  = ['switch-search', 'help', 'keep', 'g12']
+    long_noval += ['switch-search-' + s for s in pfolio]
+    long_noval += ['csp-' + o for o in long_noval]
+    long_noval += ['cop-' + o for o in long_noval]    
+    long_options += long_noval + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'hafT:k:P:b:K:s:d:p:e:x:m:', long_options
+      args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
     )
   except getopt.error, msg:
     print msg
@@ -384,30 +451,17 @@ def get_args(args):
       sys.exit(2)
   return mzn, dzn, opts
 
-def parse_model(mzn):
+def get_solve(mzn):
   """
-  Parse the input model to get auxiliary information (i.e., solve and output 
-  items).
+  Return 'sat', 'min', or 'max' for satisfaction, minimization, or maximization 
+  problems respectively.
   """
-  # Set default arguments.
-  k = DEF_K_CSP
-  timeout= DEF_TOUT_CSP
-  pfolio = DEF_PFOLIO_CSP
-  backup = DEF_BACKUP_CSP
-  kb = DEF_KB_CSP
-  lims = DEF_LIMS_CSP
-  static = DEF_STATIC_CSP
   solve = 'sat'
-  solve_item = False
-  output_item = False
   include_list = [mzn]
-  mzn_out = None
-  static = []
-  obj_expr = ''
   mzn_dir = os.path.dirname(mzn)
   
-  # Possibly extract solve and output items (for COPs).
-  while include_list and not (solve_item and output_item):
+  # Loop for extracting the solve item.
+  while include_list:
     model = include_list.pop()
     if os.path.exists(model):
       lines = open(model, 'r').read().split(';')
@@ -429,43 +483,23 @@ def parse_model(mzn):
         else:
           new_line += l
       tokens = new_line.split()
-      i = 0
       for token in tokens:
         if token == 'include' or token == 'include"':
           include = True
         # Looking for included models.
         if include and token[-1] == '"' or token[-1] == '";':
           include = \
-            replace(replace(replace(token, 'include"', ''),'"', ''), "'", '')
+	    token.replace('include"', '').replace('"', '').replace("'", '')
           include_list.append(include)
           include = False
         elif token.endswith('satisfy'):
           include_list = []
           break
         elif token in ['minimize', 'maximize']:
-          solve_item = True
-          k = DEF_K_COP
-          timeout= DEF_TOUT_COP
-          pfolio = DEF_PFOLIO_COP
-          backup = DEF_BACKUP_COP
-          kb = DEF_KB_COP
-          lims = DEF_LIMS_COP
-          static = DEF_STATIC_COP
           if token == 'minimize':
             solve = 'min'
           else:
             solve = 'max'
-          obj_expr = ''
-          for j in range(i + 1, len(tokens)):
-            obj_expr += tokens[j] + ' '
-          if output_item:
-            include_list = []
-            break
-        elif token in ['output', 'output[']:
-          mzn_out = model
-          output_item = True
-          if solve_item:
-            include_list = []
-            break
-        i += 1
-  return k, timeout, pfolio, backup, kb, lims, static, solve, obj_expr, mzn_out
+          include_list = []
+          break
+  return solve

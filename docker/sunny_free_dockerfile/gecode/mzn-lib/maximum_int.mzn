@@ -6,8 +6,8 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2009-09-08 17:42:03 +0200 (Tue, 08 Sep 2009) $ by $Author: schulte $
-%     $Revision: 9689 $
+%     $Date: 2015-01-06 00:25:56 +0100 (Tue, 06 Jan 2015) $ by $Author: tack $
+%     $Revision: 14340 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -34,4 +34,8 @@
 %
 %
 
-predicate maximum_int(var int: m, array[int] of var int: x);
+include "redefinitions-2.0.mzn";
+
+predicate maximum_int(var int: m, array[int] of var int: x) =
+  array_int_maximum(m, x);
+

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Runs the instances of the test/examples folder.
 
-IN_PATH=$SUNNY_HOME/test/examples
+IN_PATH=`dirname "$(readlink -f ${BASH_SOURCE[0]})"`
 OZN=$IN_PATH/tmp.ozn
 OUT=$IN_PATH/out
 ERR=$IN_PATH/err
@@ -20,11 +20,11 @@ do
   then
     for d in domino.1.dzn domino.2.dzn
     do
-      mzn2fzn $m $d --output-ozn-to-file $OZN
-      cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m $d"
+      mzn2fzn $m $d --output-ozn-to-file $OZN -o /dev/null/foo
+      cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m $d"
       $cmd 1>$OUT 2>$ERR
       ret=$?
-      cat $OUT | solns2out $OZN | solns2dzn -l
+      cat $OUT | solns2out $OZN | grep -v %
       echo '********** Instance: '$cmd >> $OUTPUT
       echo '********** Instance: '$cmd >> $ERRORS
       cat $OUT >> $OUTPUT
@@ -39,17 +39,16 @@ do
         else
 	  echo "Error while solving $m!!! Test aborted."
 	  echo "Have a look at the log files $OUTPUT and $ERRORS"
-	  rm *.fzn
 	  exit $ret
         fi
       fi
     done
   else
-    mzn2fzn $m --output-ozn-to-file $OZN
-    cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --g12 $m"
+    mzn2fzn $m --output-ozn-to-file $OZN -o /dev/null/foo
+    cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
     $cmd 1>$OUT 2>$ERR
     ret=$?
-    cat $OUT | solns2out $OZN | solns2dzn -l
+    cat $OUT | solns2out $OZN | grep -v %
     echo '********** Instance: '$cmd >> $OUTPUT
     echo '********** Instance: '$cmd >> $ERRORS
     cat $OUT >> $OUTPUT
@@ -64,15 +63,13 @@ do
       else
 	echo "Error while solving $m!!! Test aborted."
 	echo "Have a look at the log files $OUTPUT and $ERRORS"
-	rm *.fzn
 	exit $ret
       fi
     fi
   fi
-  echo "$m processed!"
-  echo -e "==========\n"
+  echo -e "$m processed!\n"
 done
-rm *.fzn
 rm $OZN $OUT $ERR
+rm *.fzn *.ozn 2>/dev/null
 echo "All the examples processed without errors."
 echo "Have a look at the log files $OUTPUT and $ERRORS"

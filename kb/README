@@ -100,19 +100,19 @@ CSV files, namely:
   known by setting the values dictionary to {time: val}.
 
 Once you have <FEAT_FILE> and <INFO_FILE>, just use the csv2kb.py script (in the 
-folder SUNNY_HOME/kb/util) for creating a new knowledge base <KB>:
+folder kb/util) for creating a new knowledge base <KB>:
 
   csv2kb.py [OPTIONS] <KB> <FEAT_FILE> <INFO_FILE>
 
 This allow you to create a folder named <KB> containing the corresponding 
 knowledge base, i.e., a pair of files <KB>_csp and <KB>_cop (and eventually a 
 pair <KB>_lims_csp and <KB>_lims_cop if features are scaled or removed). 
-By default a knowledge base is created in the folder SUNNY_HOME/kb/<KB> by using 
-a timeout of T = 1800 seconds, removing the constant features and scaling the 
-feature values in the range [-1, 1]. The solving score and area are computed by 
-scaling the partial solutions in the range [0.25, 0.75]. For more informations 
-about the SUNNY algorithm and the score/area metrics we refer the interested 
-reader to [1][2][3].
+By default a knowledge base is created in the folder kb/<KB> by using a timeout 
+of T = 1800 seconds, removing the constant features and scaling the feature 
+values in the range [-1, 1]. The solving score and area are computed by scaling 
+the partial solutions in the range [0.25, 0.75]. For more informations about the 
+SUNNY algorithm and the score/area metrics we refer the interested reader to 
+[1][2][3].
 
 
 CUSTOMIZING A KNOWLEDGE BASE

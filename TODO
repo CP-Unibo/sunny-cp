@@ -1,11 +1,7 @@
-- Docker
+* Nuovi solvers per mznc15 (+ Opturion)
 
-- parametro -z per bound iniziale, -X,-A exclude/add from/to the default pfolio, --switch-search, RunningSolver ISA Solver
+* Test su cluster con MiniZinc 2.0
 
-- velocizzare calcolo scedule
+* Release sunny-cp 2.X.Y (versione usata nella mznc15) poi quella con nuova KB
 
-- testing (coverage?)
-
-- integrare installazione con mzn2feat (PB Makefile: var. d'ambiente, setup.py?)
-
-- filtrare dataset, solvers, features x ridurre complessità
+* python package (integrare con mzn2feat), pydoc, unit test (con code coverage), Docker
