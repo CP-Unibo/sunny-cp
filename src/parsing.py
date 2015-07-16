@@ -196,7 +196,7 @@ def parse_arguments(args):
   """
   
   # Get the arguments and parse the input model to get solve information. 
-  pfolio = DEF_PFOLIO
+  pfolio = [k for k, v in globals().items() if isinstance(v, Solver)]
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
   
@@ -228,7 +228,8 @@ def parse_arguments(args):
   else:
     kb = DEF_KB_COP
     lims = DEF_LIMS_COP
-      
+  pfolio = DEF_PFOLIO
+  
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
