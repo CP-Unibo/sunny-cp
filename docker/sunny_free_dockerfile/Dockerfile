@@ -13,10 +13,11 @@ COPY ./gecode /sunny-cp/solvers/gecode
 # wget http://www.gecode.org/download/gecode-4.4.0.tar.gz
 # tar -zxvf gecode-4.4.0.tar.gz
 # cd gecode-4.4.0
-# ./configure ./configure --disable-examples --disable-set-vars
-# make depend
-# make flatzinc
-# ENV PATH /solvers_exec/gecode-4.4.0/tools/flatzinc:$PATH
+#  ./configure --disable-examples --disable-set-vars --prefix=/solvers_exec/gecode-4.4.0
+# make
+# make install 
+# ENV PATH /solvers_exec/gecode-4.4.0/bin:$PATH
+# ENV LD_LIBRARY_PATH=/solvers_exec/gecode-4.4.0/lib:$LD_LIBRARY_PATH
 # COPY ./gecode /sunny-cp/solvers/gecode
 
 
@@ -34,6 +35,10 @@ ENV PATH /solvers_exec/choco_exec:$PATH
 # updated 2014
 COPY ./haifacsp_exec /solvers_exec/haifacsp_exec
 COPY ./haifacsp /sunny-cp/solvers/haifacsp
+#
+# updated 20150716
+# COPY ./haifacsp /sunny-cp/solvers/haifacsp
+
 
 # install izplus
 # updated 20150619
