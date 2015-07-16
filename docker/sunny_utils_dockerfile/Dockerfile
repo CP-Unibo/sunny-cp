@@ -5,6 +5,6 @@ MAINTAINER Jacopo Mauro
 RUN mkdir /solvers_exec
 # install utilities
 RUN apt-get update && \
-  apt-get install -y unzip openjdk-7-jre  && \
+  apt-get install -y unzip openjdk-8-jre  && \
   rm -rf /var/lib/apt/lists/*
 

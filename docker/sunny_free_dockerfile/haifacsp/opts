@@ -1,2 +1,2 @@
-all_opt = ''
-free_opt = ''
+all_opt = '-a'
+free_opt  = '-f'
