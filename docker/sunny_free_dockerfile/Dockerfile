@@ -70,10 +70,20 @@ ENV PATH /solvers_exec/minisatid_exec:$PATH
 # ENV PATH /solvers_exec/minisatid_exec/bin:$PATH
 
 # install ortools
-# updated 20150706
-COPY ./ortools_exec /solvers_exec/ortools_exec
+# updated 20150717
+#COPY ./ortools_exec /solvers_exec/ortools_exec
 COPY ./ortools /sunny-cp/solvers/ortools
-ENV PATH /solvers_exec/ortools_exec:$PATH
+#ENV PATH /solvers_exec/ortools_exec:$PATH
+
+
+# from command line
+# git clone https://github.com/google/or-tools.git
+# make third_party
+# note that probably 
+# http://sourceforge.net/projects/flex/files/flex-2.5.37.tar.bz2/download
+# should be downloaded manually and put in or-tools/dependencies/archives
+# make install_python_modules
+# make fz
 
 
 RUN cd /sunny-cp && \
