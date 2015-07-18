@@ -49,7 +49,7 @@ def main(args):
   # Getting arguments.
   try:
     opts, args = getopt.getopt(
-      args, 'ht:p:s:a:f:', ['help', 'no-scale', 'no-const']
+      args, 'ht:p:s:a:f:', ['help', 'no-scale', 'no-const', 'no-check']
     )
   except getopt.error, msg:
     print msg

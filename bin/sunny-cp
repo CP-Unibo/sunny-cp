@@ -648,9 +648,6 @@ def main(args):
     traceback.print_exc()
     sys.exit(1)
     
-  print '% Search not completed by any constituent solver. Bye!!!'
-  if not problem.has_bound():
-    print '=====UNKNOWN====='
   clean()
   
 if __name__ == '__main__':
