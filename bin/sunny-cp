@@ -327,16 +327,16 @@ def read_lines(proc):
   except:
     return ''
 
-def check_solution(solver, problem, solution):
+def check_solution(solver, problem, solution, bound):
   """
   Uses solver for checking the problem solution
   """
   tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
-  pb = Problem(tmp_mzn, problem.dzn_path, problem.ozn_path, problem.solve)
   with open(problem.mzn_path, 'r') as infile:
     with open(tmp_mzn, 'w') as outfile:
       for (var, val) in solution:
-	outfile.write('constraint ' + var + ' = ' + val + ';\n')
+        if not 'X_INTRODUCED_' in var and not '%' in var:
+          outfile.write('constraint ' + var + ' = ' + val + ';\n')
       # FIXME: This forces an inconsistency (for debug purposes only).
       #outfile.write('constraint 0 = 1;')
       for row in infile:
@@ -349,14 +349,19 @@ def check_solution(solver, problem, solution):
   cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '     \
       + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
       + ' -o ' + tmp_fzn
-  proc = Popen(cmd.split(), stderr = PIPE)
-  (_, err) = proc.communicate()
+  proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
+  (out, err) = proc.communicate()
   if 'model inconsistency detected' in err:
     return False
   
-  cmd = eval(solver).fzn_exec + ' ' + tmp_fzn
+  solv = eval(solver)
+  inf = float('inf')
+  rs = RunningSolver(solv, problem.solve, tmp_fzn, '', inf, inf, inf, False, inf)
+  if problem.isCOP():
+    rs.set_obj_var(problem, bound, bound)
+  cmd = solv.fzn_exec + ' ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
-  (out, _) = proc.communicate()
+  (out, err) = proc.communicate()
   if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
     return False
   
@@ -377,7 +382,9 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	print '%',solver.name(),'found a solution'
 	if trusted_solver:
 	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
-	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	  if check_solution(
+            trusted_solver, problem, solver.solution.items(), solver.obj_value
+          ):
 	    print '% Success!'
 	  else:
 	    print '% Failed! Killing solver',solver.name()
@@ -396,7 +403,9 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	print '%',solver.name(),'found a new, better solution'
 	if trusted_solver:
 	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
-	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	  if check_solution(
+            trusted_solver, problem, solver.solution.items(), solver.obj_value
+          ):
 	    print '% Success!'
 	  else:
 	    print '% Failed! Killing solver',solver.name()
@@ -417,7 +426,9 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
       if trusted_solver:
 	if not all_opt and problem.bound_worse_than(solver.obj_value):
 	  print '% Checking',solver.name(),'solution with',trusted_solver,'...'
-	  if check_solution(trusted_solver, problem, solver.solution.items()):
+	  if check_solution(
+            trusted_solver, problem, solver.solution.items(), solver.obj_value
+          ):
 	    print '% Success!'
 	    for (var, val) in solver.solution.items():
 	      if var != solver.obj_var or solver.output_var:
