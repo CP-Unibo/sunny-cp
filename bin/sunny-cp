@@ -43,162 +43,166 @@ def handler(signum = None, frame = None):
   """
   Handles termination signals.
   """
-  print >> sys.stderr, '% Signal handler called with signal',signum
-  clean()
-  sys.stdout.close()
-  sys.exit(signum)
-for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
-  signal.signal(sig, handler)
+	print >> sys.stderr, '% Signal handler called with signal',signum
+	clean()
+	sys.stdout.close()
+	 sys.exit(signum)
+	 for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+	 signal.signal(sig, handler)
 
-def send_signal_solver(signal, solver):
-  """
-  Sends the specified signal to the solver process, and to all its children.
-  """
-  proc = solver.process
-  if proc.poll() is None:
-    for p in proc.children(recursive = True):
-      try:
-        p.send_signal(signal)
-      except psutil.NoSuchProcess:
-	pass
-    try:
-      proc.send_signal(signal)
-    except psutil.NoSuchProcess:
-      pass
+	 def send_signal_solver(signal, solver):
+		 """
+			 Sends the specified signal to the solver process, and to all its children.
+			 """
+			 proc = solver.process
+			 if proc.poll() is None:
+				 for p in proc.children(recursive = True):
+					 try:
+					 p.send_signal(signal)
+					 except psutil.NoSuchProcess:
+					 pass
+					 try:
+					 proc.send_signal(signal)
+					 except psutil.NoSuchProcess:
+					 pass
 
-def clean():
-  """
-  Utility for (possibly) cleaning temporary files and killing the solvers 
-  processes at the end of the solving process (even when the termination is 
-  forced externally).
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  for solver in RUNNING_SOLVERS + SUSP_SOLVERS:
-    send_signal_solver(signal.SIGKILL, solver)
-  # Possibly remove temporary files.
-  if not KEEP:
-    for f in TMP_FILES:
-      if os.path.exists(f):
-        os.remove(f)
+					 def clean():
+						 """
+							 Utility for (possibly) cleaning temporary files and killing the solvers 
+							 processes at the end of the solving process (even when the termination is 
+									 forced externally).
+								"""
+								global RUNNING_SOLVERS, SUSP_SOLVERS
+								for solver in RUNNING_SOLVERS + SUSP_SOLVERS:
+								send_signal_solver(signal.SIGKILL, solver)
+								# Possibly remove temporary files.
+								if not KEEP:
+								for f in TMP_FILES:
+								if os.path.exists(f):
+									os.remove(f)
 
-def solve(schedule, problem, cores, mem_limit, all_opt, check):
-  """
-  Runs (possibly in parallel on different cores) the solving phase.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-    
-  # Launch the solvers (if any).
-  for _ in range(cores):
-    if schedule:
-      solver = schedule.pop(0)
-      run_solver(solver, problem)
-      
-  # Loop for dealing with solvers execution.
-  while RUNNING_SOLVERS:
-    time.sleep(SLEEP_TIME)
+									def solve(schedule, problem, cores, mem_limit, all_opt, check):
+										"""
+											Runs (possibly in parallel on different cores) the solving phase.
+											"""
+											global RUNNING_SOLVERS, SUSP_SOLVERS
 
-    if mem_limit < 100:
-      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
-      if sum(mems.values()) > mem_limit:
+											# Launch the solvers (if any).
+											for _ in range(cores):
+												if schedule:
+	solver = schedule.pop(0)
+		   run_solver(solver, problem)
+
+			  # Loop for dealing with solvers execution.
+			  while RUNNING_SOLVERS:
+time.sleep(SLEEP_TIME)
+
+	if mem_limit < 100:
+mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
+	if sum(mems.values()) > mem_limit:
 	solver = max(mems.items(), key = lambda x: x[1])[0]
 	print '% Warning! sunny-cp exceeded the maximum allowed memory'
 	print '% Killing solver',solver.name()
 	send_signal_solver(signal.SIGKILL, solver)
-	RUNNING_SOLVERS.remove(solver)
-        continue
-    
-    for solver in RUNNING_SOLVERS:
-      # Read and process lines from the output stream of each process.
-      lines = read_lines(solver.process)
-      if lines:
-	process_output(solver, problem, lines, all_opt, check, schedule)
-      
-      # Solver process terminated.
-      if solver.process.poll() is not None:
+RUNNING_SOLVERS.remove(solver)
+	continue
+
+	for solver in RUNNING_SOLVERS:
+	# Read and process lines from the output stream of each process.
+lines = read_lines(solver.process)
+	if lines:
+p = process_output(solver, problem, lines, all_opt, check, schedule)
+	if not p:
+	continue
+
+	# Solver process terminated.
+	if solver.process.poll() is not None:
 	if solver.status == 'flatzinc':
-	  # Sometimes not all the lines are read from solver output.
-	  lines = read_lines(solver.process)  
-          if lines:
-	    process_output(solver, problem, lines, all_opt, check, schedule)
-        solver_terminated(solver, problem, schedule)
-        continue
-      
-      # Expired timeout: the solver has to be suspended.
-      if time.time() - solver.start_time > solver.timeout and \
-	 time.time() - solver.solution_time > solver.wait_time:
-	   solver_timeout(solver, problem, schedule)
-	   continue
-	 
-      # Restart a solver if its solution is obsolete and its restart time is 
-      # actually expired.
-      if solver.status == 'flatzinc' \
-      and problem.bound_better_than(solver.obj_value) \
-      and time.time() - solver.solution_time > solver.restart_time:
-	if solver.num_restarts < solver.max_restarts:
-	  solver.num_restarts += 1
-	  send_signal_solver(signal.SIGKILL, solver)
-	  RUNNING_SOLVERS.remove(solver)
-	  print '% Restarting',solver.name()
-	  solver.timeout = max(
-	    solver.timeout - (time.time() - solver.start_time), 0
-	  )
-	  run_solver(solver, problem)
-	  continue
+	# Sometimes not all the lines are read from solver output.
+lines = read_lines(solver.process)  
+	if lines:
+p = process_output(solver, problem, lines, all_opt, check, schedule)
+	if not p:
+	continue
+solver_terminated(solver, problem, schedule)
+	continue
+
+	# Expired timeout: the solver has to be suspended.
+	if time.time() - solver.start_time > solver.timeout and \
+		time.time() - solver.solution_time > solver.wait_time:
+solver_timeout(solver, problem, schedule)
+	continue
+
+	# Restart a solver if its solution is obsolete and its restart time is 
+	# actually expired.
+	if solver.status == 'flatzinc' \
+			  and problem.bound_better_than(solver.obj_value) \
+			  and time.time() - solver.solution_time > solver.restart_time:
+			  if solver.num_restarts < solver.max_restarts:
+	solver.num_restarts += 1
+	send_signal_solver(signal.SIGKILL, solver)
+RUNNING_SOLVERS.remove(solver)
+	print '% Restarting',solver.name()
+	solver.timeout = max(
+			solver.timeout - (time.time() - solver.start_time), 0
+			)
+run_solver(solver, problem)
+	continue
 	else:
-	  print '%',solver.name(),'reached the maximum number of restarts!'
-	  print '% Killing solver',solver.name()
-	  send_signal_solver(signal.SIGKILL, solver)
-	  RUNNING_SOLVERS.remove(solver)
-	  continue
+	print '%',solver.name(),'reached the maximum number of restarts!'
+	print '% Killing solver',solver.name()
+	send_signal_solver(signal.SIGKILL, solver)
+RUNNING_SOLVERS.remove(solver)
+	continue
 
-def presolve(
-  schedule, problem, cores, mem_limit, all_opt, check, 
-  extractor = None, k = 0, kb = None, lims = None
-):
-  """
-  Runs (possibly in parallel on different cores) the pre-solving phase.
-  A part from the (possibly empty) static schedule execution, by properly 
-  setting the "extractor", "k", "kb", and "lims" this function also allows to 
-  extract the feature vector and then to compute the k-nearest neighbours of 
-  the problem (as soon as a free core is available). 
-  This function returns a triplet (t, n, b) where:
-    t  is the time taken by the whole pre-solving phase;
-    n  is the (possibly empty) neighborhood of the problem;
-    b  is the (possibly empty) black list the solvers that failed during the 
-       pre-solving phase.
-  """
-  global RUNNING_SOLVERS, SUSP_SOLVERS
-  start_time = time.time()
-  black_list = []
-  neighbours = []
-  if extractor:
-    neigh_computed = False
-  else:
-    neigh_computed = True
-    
-  # Launch the solvers (if any).
-  for _ in range(cores):
-    if schedule:
-      solver = schedule.pop(0)
-      run_solver(solver, problem)
-      
-  # Loop for dealing with solvers execution.
-  while RUNNING_SOLVERS or not neigh_computed:
-    time.sleep(SLEEP_TIME)
-    
-    if not neigh_computed and len(RUNNING_SOLVERS) < cores:
-      print '% Extracting features...'
-      feat_vector = extractor.extract_features([problem, lims])
-      if feat_vector:
+	def presolve(
+			schedule, problem, cores, mem_limit, all_opt, check, 
+			extractor = None, k = 0, kb = None, lims = None
+		    ):
+		"""
+			Runs (possibly in parallel on different cores) the pre-solving phase.
+			A part from the (possibly empty) static schedule execution, by properly 
+			setting the "extractor", "k", "kb", and "lims" this function also allows to 
+			extract the feature vector and then to compute the k-nearest neighbours of 
+			the problem (as soon as a free core is available). 
+			This function returns a triplet (t, n, b) where:
+				t  is the time taken by the whole pre-solving phase;
+				n  is the (possibly empty) neighborhood of the problem;
+				b  is the (possibly empty) black list the solvers that failed during the 
+				pre-solving phase.
+				"""
+	global RUNNING_SOLVERS, SUSP_SOLVERS
+start_time = time.time()
+	black_list = []
+	neighbours = []
+	if extractor:
+	neigh_computed = False
+	else:
+	neigh_computed = True
+
+	# Launch the solvers (if any).
+	for _ in range(cores):
+		if schedule:
+	solver = schedule.pop(0)
+	 run_solver(solver, problem)
+
+	 # Loop for dealing with solvers execution.
+	 while RUNNING_SOLVERS or not neigh_computed:
+time.sleep(SLEEP_TIME)
+
+	if not neigh_computed and len(RUNNING_SOLVERS) < cores:
+	print '% Extracting features...'
+feat_vector = extractor.extract_features([problem, lims])
+	if feat_vector:
 	print '% Computing the',k,'nearest neighbors of the problem'
-        neighbours = get_neighbours(feat_vector, k, kb)
-      else:
+neighbours = get_neighbours(feat_vector, k, kb)
+	else:
 	print '% Features extraction failed!'
-      neigh_computed = True
+	neigh_computed = True
 
-    if mem_limit < 100:
-      mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
-      if sum(mems.values()) > mem_limit:
+	if mem_limit < 100:
+mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
+	if sum(mems.values()) > mem_limit:
 	solver = max(mems.items(), key = lambda x: x[1])[0]
 	print '% Warning! sunny-cp exceeded the maximum allowed memory'
 	print '% Killing solver',solver.name()
@@ -210,7 +214,9 @@ def presolve(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt, check, schedule)
+	p = process_output(solver, problem, lines, all_opt, check, schedule)
+	if not p:
+	  continue
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -218,7 +224,9 @@ def presolve(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt, check, schedule)
+	    p = process_output(solver, problem, lines, all_opt, check, schedule)
+	    if not p:
+	      continue
         solver_terminated(solver, problem, schedule)
         if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
@@ -394,7 +402,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	    print '% Failed! Killing solver',solver.name()
 	    send_signal_solver(signal.SIGKILL, solver)
 	    solver_terminated(solver, problem, schedule)
-	    return
+	    return False
 	problem.best_bound = solver.obj_value
 	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
@@ -423,7 +431,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	    print 'Failed! Killing solver',solver
 	    send_signal_solver(signal.SIGKILL, solver)
 	    solver_terminated(solver, problem, schedule)
-        return
+	    return False
+        return True
       if not problem.has_bound():
 	print line
       else:
@@ -444,6 +453,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()
+  return True
 
 def solver_terminated(solver, problem, schedule):
   """
