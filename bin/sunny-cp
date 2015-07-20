@@ -111,7 +111,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt, check, schedule)
+	p = process_output(solver, problem, lines, all_opt, check, schedule)
+	if not p:
+	  continue
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -119,7 +121,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt, check, schedule)
+	    p = process_output(solver, problem, lines, all_opt, check, schedule)
+	    if not p:
+	      continue
         solver_terminated(solver, problem, schedule)
         continue
       
@@ -210,7 +214,9 @@ def presolve(
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
       if lines:
-	process_output(solver, problem, lines, all_opt, check, schedule)
+	p = process_output(solver, problem, lines, all_opt, check, schedule)
+	if not p:
+	  continue
       
       # Solver process terminated.
       if solver.process.poll() is not None:
@@ -218,7 +224,9 @@ def presolve(
 	  # Sometimes not all the lines are read from solver output.
 	  lines = read_lines(solver.process)  
           if lines:
-	    process_output(solver, problem, lines, all_opt, check, schedule)
+	    p = process_output(solver, problem, lines, all_opt, check, schedule)
+	    if not p:
+	      continue
         solver_terminated(solver, problem, schedule)
         if solver.process.returncode not in [None, 0]:
 	  black_list.append(solver.name())
@@ -394,7 +402,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	    print '% Failed! Killing solver',solver.name()
 	    send_signal_solver(signal.SIGKILL, solver)
 	    solver_terminated(solver, problem, schedule)
-	    return
+	    return False
 	problem.best_bound = solver.obj_value
 	print '% Current Best Bound: ' + str(solver.obj_value)
 	if all_opt:
@@ -423,7 +431,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	    print 'Failed! Killing solver',solver
 	    send_signal_solver(signal.SIGKILL, solver)
 	    solver_terminated(solver, problem, schedule)
-        return
+	    return False
+        return True
       if not problem.has_bound():
 	print line
       else:
@@ -444,6 +453,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
 	solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()
+  return True
 
 def solver_terminated(solver, problem, schedule):
   """
@@ -647,10 +657,7 @@ def main(args):
     clean()
     traceback.print_exc()
     sys.exit(1)
-    
-  print '% Search not completed by any constituent solver. Bye!!!'
-  if not problem.has_bound():
-    print '=====UNKNOWN====='
+
   clean()
   
 if __name__ == '__main__':
