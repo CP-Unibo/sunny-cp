@@ -1,4 +1,4 @@
 #! /bin/sh
 
-fzn-gecode "$@"
+/solvers_exec/gecode-4.4.0/tools/flatzinc/fzn-gecode "$@"
 

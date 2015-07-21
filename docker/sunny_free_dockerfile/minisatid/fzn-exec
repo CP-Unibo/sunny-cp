@@ -1,3 +1,3 @@
 #! /bin/sh
 
-minisatid-3.10.0 -f=fz "$@"
+minisatid-3.11.0 -f=fz "$@"
