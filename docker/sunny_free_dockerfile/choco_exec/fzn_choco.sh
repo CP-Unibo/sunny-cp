@@ -5,7 +5,7 @@ FREE_SEARCH="no"
 NB_NODES=1
 TIME_LIMIT=3600000
 JAVA_ARGS="-server"
-CHOCO_JAR=$HOME"/solvers_exec/choco_exec/choco-parsers-3.3.0-with-dependencies.jar"
+CHOCO_JAR="/solvers_exec/choco_exec/choco-parsers-3.3.0-with-dependencies.jar"
 usage="\
 
 Usage: fzn_choco.sh [<options>] [<file>]
