@@ -42,9 +42,7 @@ COPY ./haifacsp /sunny-cp/solvers/haifacsp
 
 # install izplus
 # updated 20150619
-COPY ./izplus_exec /solvers_exec/izplus_exec
 COPY ./izplus /sunny-cp/solvers/izplus
-ENV PATH /solvers_exec/izplus_exec:$PATH
 
 
 # install minisatid
