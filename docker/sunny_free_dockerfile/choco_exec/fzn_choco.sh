@@ -116,7 +116,7 @@ fi
 
 if test "${FREE_SEARCH}" = "yes"
 then
-    ARGS=$ARGS" -lf"
+    ARGS=$ARGS" -f"
 fi
 
 CMD="java ${JAVA_ARGS} -cp .:${CHOCO_JAR} org.chocosolver.parser.flatzinc.ChocoFZN ${ARGS}"
