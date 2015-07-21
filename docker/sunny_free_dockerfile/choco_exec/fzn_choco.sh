@@ -3,7 +3,7 @@
 STOP_AT_FIRST="yes"
 FREE_SEARCH="no"
 NB_NODES=1
-TIME_LIMIT=900000
+TIME_LIMIT=3600000
 JAVA_ARGS="-server"
 CHOCO_JAR=$HOME"/solvers/MZNC15/choco-parsers-3.3.0-with-dependencies.jar"
 usage="\
