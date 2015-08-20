@@ -36,6 +36,35 @@ sunny-cp is developed by Roberto Amadini and Jacopo Mauro (University of Bologna
   jmauro  at cs.unibo.it
 
 
+INSTALLATION USING DOCKER
+=========================
+
+The simplest way to deploy sunny-cp is using docker (www.docker.com).
+The Dockerfiles to generate the container images are stored in the docker
+directory dowloaded when cloning the repository.
+
+base_dockerfile defines the container where sunny-cp is install with only the
+g12 solvers (viz., g12fd, g12cbc, g12lazyfd).
+
+sunny_free_dockerfile defines the container where sunny-cp is installed with the
+freely available solvers (viz., g12fd, g12cbc, g12lazyfd, gecode, choco,
+haifacsp, izplus, minisatid, ortools).
+
+Assuming docker is installed and <SUNNY_DIR> is the directory where sunny-cp has
+been downloaded in Linux the commands to deploy sunny are:
+
+sudo docker build -t sunny:g12 docker/base_dockerfile
+sudo docker build -t sunny:v1 docker/sunny_free_dockerfile
+
+Docker will create two images.
+If the images have been successfully built then to solve the <file.mzn> instance
+located in <dir> it is possible to invoke the following command:
+
+sudo docker run -i --rm -v <dir>:/mydir -t sunny:v1 /mydir/<file.mzn>
+
+For more information related to the use of docker we refer the interested users
+to docs.docker.com
+
 PREREQUISITES
 =============
 
