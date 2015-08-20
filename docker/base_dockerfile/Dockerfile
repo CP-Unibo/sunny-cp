@@ -2,6 +2,8 @@ FROM python:2-onbuild
 MAINTAINER Jacopo Mauro
 
 # last updated 20150820
+# build image invoking the command
+# sudo docker build -t sunny:g12 ./base_dockerfile/
 
 # install minizinc suite
 RUN cd / && \
@@ -36,6 +38,6 @@ ENV PATH /sunny-cp/bin:$PATH
 
 
 WORKDIR /sunny-cp
-ENTRYPOINT ["sunny-cp"]
+ENTRYPOINT ["sunny-cp","--g12"]
 
 
