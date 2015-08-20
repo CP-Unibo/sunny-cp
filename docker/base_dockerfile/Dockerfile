@@ -1,14 +1,14 @@
 FROM python:2-onbuild
 MAINTAINER Jacopo Mauro
 
+# last updated 20150820
+
 # install minizinc suite
 RUN cd / && \
-  wget http://www.minizinc.org/downloads/release-1.6/minizinc-1.6-x86_64-unknown-linux-gnu.tar.gz && \
-  tar -zxvf minizinc-1.6-x86_64-unknown-linux-gnu.tar.gz && \
-  rm -rf minizinc-1.6-x86_64-unknown-linux-gnu.tar.gz && \
-  cd /minizinc-1.6 && \
-  ./SETUP
-ENV PATH /minizinc-1.6/bin:$PATH
+  wget https://github.com/MiniZinc/libminizinc/releases/download/2.0.6/minizinc-2.0.6-linux64.tar.gz && \
+  tar -zxvf minizinc-2.0.6-linux64.tar.gz && \
+  rm -rf minizinc-2.0.6-linux64.tar.gz
+ENV PATH /minizinc-2.0.6/bin:$PATH
 
 
 # install packages for compiling the feature extractor
@@ -19,11 +19,11 @@ RUN apt-get update && \
     
 # install feature extractor
 RUN cd / && \
-  git clone https://github.com/jacopoMauro/sunny-cp.git && \
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp && \
   cd /sunny-cp && \
-  tar -xjvf mzn2feat-1.0.tar.bz2 && \
+  tar -xjvf mzn2feat-1.1.1.tar.bz2 && \
   cd /sunny-cp/mzn2feat && \
-  sh install.sh   
+  sh install   
 ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
 ENV PATH /sunny-cp/mzn2feat/bin:$PATH
 
