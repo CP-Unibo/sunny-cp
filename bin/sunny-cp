@@ -194,8 +194,10 @@ def presolve(
       print '% Extracting features...'
       feat_vector = extractor.extract_features([problem, lims])
       if feat_vector:
-        print '% Computing the',k,'nearest neighbors of the problem'
         neighbours = get_neighbours(feat_vector, k, kb)
+        if k <= 0:
+          k = len(neighbours)
+        print '% Computed the',k,'nearest neighbors of the problem'
       else:
         print '% Features extraction failed!'
       neigh_computed = True
@@ -639,6 +641,8 @@ def main(args):
       timeout -= round(static_time)
       if backup not in pfolio:
         backup = pfolio[0]
+      if k <= 0:
+        k = len(neighbours)
       if problem.isCSP():
         seq_sched = sunny_csp(neighbours, k, timeout, pfolio, backup, cores)
       else:

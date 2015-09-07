@@ -7,9 +7,9 @@ import os
 SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
 SUNNY_HOME = '/'.join(SUNNY_HOME)
 
-DEF_K = 70
+DEF_K = -1
 
-DEF_TOUT = 1800
+DEF_TOUT = 1200
 
 DEF_PFOLIO = [
   'chuffed','g12cpx','haifacsp','izplus','g12lazyfd','minisatid',

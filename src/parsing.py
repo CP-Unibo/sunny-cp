@@ -34,11 +34,11 @@ Portfolio Options
     and feature extraction). Note that T IS NOT the timeout of the whole solving
     process: indeed, sunny-cp is an "anytime process", which is run indefinitely 
     until a solution is reached. So, the timeout of the whole solving process 
-    has to be set externally by the user. The default value is T = 1800.
-    Also the constant +inf is allowed
+    has to be set externally by the user. The default value is T = 1200, the 
+    same timeout of MiniZinc Challenge 2015. Also the constant +inf is allowed.
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
-    k is 70, while the distance metric is the Euclidean one
+    k is the square root of the knowledge base size.
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
     form s_1,s_2,...,s_m. The specified ordering of solvers matters: indeed, 

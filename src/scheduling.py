@@ -9,18 +9,23 @@ from combinations import *
 def get_neighbours(feat_vector, k, kb):
   """
   Returns a dictionary (inst_name, inst_info) of the k instances closer to the 
-  feat_vector in the knowledge base kb.
+  feat_vector in the knowledge base kb. If k <= 0, then k is set to the square 
+  root of the knowledge base size.
   """
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
   infos = {}
   feat_vectors = {}
   distances = []
+  n = 0
   for row in reader:
+    n += 1
     inst = row[0]
     d = euclidean_distance(feat_vector, map(float, row[1][1 : -1].split(',')))
     distances.append((d, inst))
     infos[inst] = row[2]
   sorted_dist = distances.sort(key = lambda x : x[0])
+  if k <= 0:
+    k = int(round(sqrt(n)))
   return dict((inst, infos[inst]) for (d, inst) in distances[0 : k])
  
 def euclidean_distance(fv1, fv2):
