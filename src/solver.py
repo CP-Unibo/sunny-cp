@@ -174,7 +174,7 @@ class RunningSolver:
               'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
           line = cons + line
         if tokens[0] == 'var' and self.obj_var in tokens \
-        and 'output_var' not in tokens:
+        and 'output_var' not in tokens and '=' not in tokens:
           self.output_var = False
           line = line.replace(';', '') + ' :: output_var;\n'
         lines.append(line)
