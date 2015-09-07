@@ -1,21 +1,15 @@
 '''
 sunny-cp: a parallel CP portfolio solver. 
 
-sunny-cp tool allows to solve a Constraint (Satisfaction / Optimization) Problem 
-defined in MiniZinc language by using the SUNNY portfolio approach.
-sunny-cp is a parallel portfolio solver built on top of 12 constituent solvers:
+sunny-cp is a parallel portfolio solver able to solve a Constraint Satisfaction/
+Optimization Problem defined in MiniZinc language by using the SUNNY algorithm.
+In a nutshell, it relies on two sequential steps:
 
-  Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, 
-  G12/CBC, Gecode, HaifaCSP, iZplus, MinisatID, OR-Tools
-
-In a nutshell, sunny-cp relies on two sequential steps:
-
-  1. PRE-SOLVING: consists in the parallel execution of a static schedule and 
-                  the feature extraction;
+  1. PRE-SOLVING: consists in the parallel execution of a (possibly empty) 
+                  static schedule and the feature extraction;
                   
   2. SOLVING: consists in the parallel execution of a number of predicted 
-              solvers, selected by means of SUNNY algorithm.
-              (possibly) selected by means of SUNNY algorithm
+              solvers, (possibly) selected by means of SUNNY algorithm
 
 
 USAGE: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn] 
@@ -43,22 +37,21 @@ Portfolio Options
     Specifies the portfolio through a comma-separated list of solvers of the 
     form s_1,s_2,...,s_m. The specified ordering of solvers matters: indeed, 
     in case of failure of all the scheduled solvers, the other solvers will be 
-    executed according to such ordering. This option can be used to select a 
-    particular portfolio or even to change the default ordering of the 
-    solvers, which is by default: 
-      chuffed,g12cpx,haifacsp,izplus,g12lazyfd,minisatid,
-      g12fd,choco,gecode,ortools,g12gurobi,g12cbc
+    executed according to such ordering. By default, the portfolio includes all 
+    the installed solvers.
   -A <SOLVERS>
     Adds to the default portfolio (or to the portfolio specified with -P option)
-    the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
+    the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m.
   -R <SOLVERS>
     Removes from the default portfolio (or from the portfolio specified with -P 
-    option) the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m
+    option) the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m.
   -b <SOLVER>
-    Set the backup solver of the portfolio. The default backup solver is chuffed
+    Set the backup solver of the portfolio. If the backup solver is not in the 
+    specified portfolio, the first solver of the portfolio is selected. The 
+    default backup solver is chuffed.
   --g12
-    Use just the solvers of G12 platform, by using g12cpx as the backup solver. 
-    This is equivalent to set -P g12cbc,g12lazyfd,g12fd and -b g12lazyfd
+    Use just the solvers of G12 platform, by using g12lazyfed as backup solver. 
+    This is equivalent to set -P g12cbc,g12lazyfd,g12fd and -b g12lazyfd.
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default 
     knowledge base is in kb/all_T1800. For more details, see the README file in 
@@ -70,16 +63,16 @@ Portfolio Options
     where each s_i belongs to the specified portfolio, and t_i is the timeout 
     (in seconds) for s_i. Note that in general when a timeout t_i expires the 
     solver s_i is not killed, but just suspended (and then resumed if s_i has to 
-    run again later). The static schedule is empty by default.
-    Also the constant +inf is allowed for the times t_i
+    run again later). The static schedule is empty by default. Also the constant
+    +inf is allowed for the times t_i.
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
-    changed by defining a corresponding class in src/features.py
+    changed by defining a corresponding class in src/features.py.
   -a
-    Prints to standard output all the solutions of the problem  (for CSPs only) 
-    or all the sub-optimal solutions until the optimum is found (for COPs only)
+    Prints to standard output all the solutions of the problem  (for CSPs only).
+    or all the sub-optimal solutions until the optimum is found (for COPs only).
   -f
-    Free search: ignore any search annotations on the solve item.
+    Free search: ignore any search annotation on the solve item.
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number 
     of CPUs in the system
@@ -91,11 +84,11 @@ Portfolio Options
   -l <BOUND>
     Sets a lower bound for the problem to be solved (for COPs only). This is 
     equivalent to add the constraint f(x) >= <BOUND> where f(x) is the objective 
-    function of the problem
+    function of the problem.
   -u <BOUND>
     Sets an upper bound for the problem to be solved (for COPs only). This is 
     equivalent to add the constraint f(x) <= <BOUND> where f(x) is the objective 
-    function of the problem
+    function of the problem.
 
 Solvers Options
 ===============
@@ -103,13 +96,13 @@ Solvers Options
     Checks the outcome of k "untrusted" solvers UNT_i by means of k "trusted" 
     solvers TRU_i for i = 1, ..., k. In particular:
     - if the outcome of UNT_i is =====UNBOUNDED===== or ====UNSATISFIABLE===== 
-      then the outcome is ignored and nothing is printed
+      then the outcome is ignored and nothing is printed;
     - if UNT_i produces a solution, sunny-cp exploits its FlatZinc output for 
       checking such solution by using TRU_i. If an inconsistency is detected,
-      UNT_i is killed. Otherwise, the solution is printed.
+      UNT_i is killed. Otherwise, the solution is printed;
     - If UNT_i proves the optimality, then the optimal solution is checked as 
       described above. However, line ========== is never printed (even when the 
-      solution is sound).
+      solution is sound);
     - In all the other cases (including failures of TRU_i) we assume that UNT_i 
       gives a correct answer, and thus the corresponding solution is printed.
     Note that checked solutions can be partial, since the variable assignments 
@@ -118,10 +111,9 @@ Solvers Options
     annotations defined by the user in the MiniZinc model. This option clearly 
     introduces an overhead in the solving process, especially for problems where 
     UNT_i produces a lot of sub-optimal solutions or TRU_i is not performant. 
-    NOTE: This option, unset by default, only works with MiniZinc >= 2.0. 
+    *** NOTE ***: This option, unset by default, only works with MiniZinc 2.x. 
     While UNT_i must be different from TRU_i, it is however possible to have 
     UNT_i = UNT_j or TRU_i = TRU_j for some distinct indexes i, j in {1, ..., k}
-  
   --fzn-options "<OPTIONS>"
     Allows to run each solver of the portfolio on its specific FlatZinc model by
     using the options specified in <OPTIONS> string. No checks are performed on 

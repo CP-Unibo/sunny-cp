@@ -11,10 +11,11 @@ DEF_K = -1
 
 DEF_TOUT = 1200
 
-DEF_PFOLIO = [
-  'chuffed','g12cpx','haifacsp','izplus','g12lazyfd','minisatid',
-  'g12fd','choco','gecode','ortools','g12gurobi','g12cbc'
-]
+DEF_PFOLIO = []
+pfolio_solvers = open(SUNNY_HOME + '/src/pfolio_solvers.py')
+for row in pfolio_solvers:
+  if ' = Solver()' in row:
+    DEF_PFOLIO.append(row.split(' = ')[0])
 
 DEF_BACKUP = 'chuffed'
 
