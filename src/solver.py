@@ -167,16 +167,16 @@ class RunningSolver:
           self.obj_var = tokens[-1].replace(';', '')
           cons = ''
           if lb > float('-inf'):
-	    cons += self.solver.constraint.replace(
-	      'RHS', self.obj_var).replace('LHS', str(lb - 1)) + ';\n'
-	  if ub < float('+inf'):
-	    cons += self.solver.constraint.replace(
-	      'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
-	  line = cons + line
+            cons += self.solver.constraint.replace(
+              'RHS', self.obj_var).replace('LHS', str(lb - 1)) + ';\n'
+          if ub < float('+inf'):
+            cons += self.solver.constraint.replace(
+              'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
+          line = cons + line
         if tokens[0] == 'var' and self.obj_var in tokens \
-	and 'output_var' not in tokens:
-	  self.output_var = False
-	  line = line.replace(';', '') + ' :: output_var;\n'
+        and 'output_var' not in tokens:
+          self.output_var = False
+          line = line.replace(';', '') + ' :: output_var;\n'
         lines.append(line)
       infile.close()
     with open(self.fzn_path, 'w') as outfile:
@@ -188,20 +188,20 @@ class RunningSolver:
     """
     if self.solve == 'min':
       cons = self.solver.constraint.replace(
-	'LHS', self.obj_var).replace('RHS', str(bound))
+        'LHS', self.obj_var).replace('RHS', str(bound))
     elif self.solve == 'max':
       cons = self.solver.constraint.replace(
-	'RHS', self.obj_var).replace('LHS', str(bound))
+        'RHS', self.obj_var).replace('LHS', str(bound))
     else:
       return
     lines = []
     with open(self.fzn_path, 'r') as infile:
       add = True
       for line in infile.readlines():
-	if add and 'constraint' in line.split():
-	  lines.append(cons + ';\n')
-	  add = False
-	lines.append(line)
+        if add and 'constraint' in line.split():
+          lines.append(cons + ';\n')
+          add = False
+        lines.append(line)
     with open(self.fzn_path, 'w') as outfile:
       outfile.writelines(lines)
     self.obj_value = bound
