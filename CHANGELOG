@@ -6,11 +6,13 @@ Version 2.1
 ===========
 Major bugs and changes: (FIXME: to check!!!)
   - Compatibility with MiniZinc 2.0
-  - Added new user options (-A, -R, -l, -u, --max-restarts, --switch-search)
-FIXME: Docker, default setting for -P and -k = sqrt(n), New KB, 
+  - Solution checking (see option --check-solvers) and other new user options 
+    (-A, -R, -l, -u, --max-restarts, --switch-search)
+FIXME: New KB, Docker?
 
 Minor bugs and changes:
-  - Modified bounds injection according to the new conventions of mzn2feat 2.0.
+  - Modified bounds injection according to the new conventions of mzn2feat 2.0
+  - Modified the default values for -k, -P and -T options.
   - Avoid to create a copy of MiniZinc model
   - Avoid to set SUNNY_HOME environment variable
   - Bug fixing and cosmetic changes.
