@@ -357,18 +357,18 @@ def parse_arguments(args):
           item['restart_time'] = rest_time
     elif o.startswith('--switch-search'):
       if len(o) > 15:
-	solver = o[16:]
-	solver_options[solver]['switch_search'] = True
+        solver = o[16:]
+        solver_options[solver]['switch_search'] = True
       else:
         for item in solver_options.values():
-	  item['switch_search'] = True
+          item['switch_search'] = True
     elif o.startswith('--max-restarts'):
       if len(o) > 14:
-	solver = o[15:]
-	solver_options[solver]['max_restarts'] = int(a)
+        solver = o[15:]
+        solver_options[solver]['max_restarts'] = int(a)
       else:
         for item in solver_options.values():
-	  item['max_restarts'] = int(a)
+          item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
     elif o == '--g12':
@@ -380,7 +380,7 @@ def parse_arguments(args):
         unt = s[2 * i]
         tru = s[2 * i + 1]
         if unt == tru:
-	  print >> sys.stderr, 'Error! A solver is either trusted or untrusted!'
+          print >> sys.stderr, 'Error! A solver is either trusted or untrusted!'
           print >> sys.stderr, 'For help use --help'
           sys.exit(2)
         check[unt] = tru
@@ -490,7 +490,7 @@ def get_solve(mzn):
         # Looking for included models.
         if include and token[-1] == '"' or token[-1] == '";':
           include = \
-	    token.replace('include"', '').replace('"', '').replace("'", '')
+            token.replace('include"', '').replace('"', '').replace("'", '')
           include_list.append(include)
           include = False
         elif token.endswith('satisfy'):

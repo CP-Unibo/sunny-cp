@@ -1,9 +1,3 @@
-* Nuovi solvers per mznc15 (+ Opturion)
+* debug, TODO, test su cluster e release sunny-cp 2.1
 
-* Test su cluster con MiniZinc 2.0
-
-* Release sunny-cp 2.X.Y (versione usata nella mznc15, documentare e Docker g12cpx)
-
-* Nuova KB e patch
-
-* python package (integrare con mzn2feat), pydoc, unit test (con code coverage), Docker
+* python package (integrare con mzn2feat), pydoc, unit test (con code coverage)
