@@ -14,61 +14,32 @@ cd $IN_PATH
 echo '' > $OUTPUT 
 echo '' > $ERRORS
 
-for m in `ls *.mzn`
+for m in `ls *.mzn | grep -v model.mzn`
 do
   echo "Solving $m....."
-  if 
-    [[ $m == 'domino.mzn' ]]
+  mzn2fzn $m --output-ozn-to-file $OZN -o $FZN
+  cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
+  $cmd 1>$OUT 2>$ERR
+  ret=$?
+  cat $OUT | solns2out $OZN | grep -v %
+  echo '********** Instance: '$cmd >> $OUTPUT
+  echo '********** Instance: '$cmd >> $ERRORS
+  cat $OUT >> $OUTPUT
+  cat $ERR >> $ERRORS
+  if
+    [ $ret -ne 0 ]
   then
-    for d in domino.1.dzn domino.2.dzn
-    do
-      mzn2fzn $m $d --output-ozn-to-file $OZN -o $FZN
-      cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m $d"
-      $cmd 1>$OUT 2>$ERR
-      ret=$?
-      cat $OUT | solns2out $OZN | grep -v %
-      echo '********** Instance: '$cmd >> $OUTPUT
-      echo '********** Instance: '$cmd >> $ERRORS
-      cat $OUT >> $OUTPUT
-      cat $ERR >> $ERRORS
-      if
-        [ $ret -ne 0 ]
-      then
-        if
-          [ $ret -eq 124 ]
-        then
-          echo "Timeout while solving $m!!!"
-        else
-	  echo "Error while solving $m!!! Test aborted."
-	  echo "Have a look at the log files $OUTPUT and $ERRORS"
-	  exit $ret
-        fi
-      fi
-    done
-  else
-    mzn2fzn $m --output-ozn-to-file $OZN -o $FZN
-    cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
-    $cmd 1>$OUT 2>$ERR
-    ret=$?
-    cat $OUT | solns2out $OZN | grep -v %
-    echo '********** Instance: '$cmd >> $OUTPUT
-    echo '********** Instance: '$cmd >> $ERRORS
-    cat $OUT >> $OUTPUT
-    cat $ERR >> $ERRORS
     if
-      [ $ret -ne 0 ]
+      [ $ret -eq 124 ]
     then
-      if
-        [ $ret -eq 124 ]
-      then
-        echo "Timeout while solving $m!!!"
-      else
-	echo "Error while solving $m!!! Test aborted."
-	echo "Have a look at the log files $OUTPUT and $ERRORS"
-	exit $ret
-      fi
+      echo "Timeout while solving $m!!!"
+    else
+	    echo "Error while solving $m!!! Test aborted."
+	    echo "Have a look at the log files $OUTPUT and $ERRORS"
+	    exit $ret
     fi
   fi
+    
   echo -e "$m processed!\n"
 done
 rm $OZN $OUT $ERR $FZN

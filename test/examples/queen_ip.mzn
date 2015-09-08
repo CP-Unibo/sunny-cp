@@ -1,10 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lazyfd
-% RUNS ON mzn_mer_lp
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 % n-queens example in Zinc using IP techniques
 % By Ralph Becket
 
@@ -37,7 +32,7 @@ constraint forall (i in rg) (
 
 solve ::
 	int_search(
-		array1d(0..n*n - 1, q),
+		array1d(1..n*n, q),
 		first_fail,
 		indomain_min,
 		complete
