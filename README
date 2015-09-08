@@ -128,9 +128,9 @@ interested in using these solvers, please contact directly their developers.
 BASIC INSTALLATION
 ==================
 
-Once downloaded the sources, move into sunny-cp folder and run install.sh:
+Once downloaded the sources, move into sunny-cp folder and run install script:
 
-  sunny-cp$ ./install.sh
+  sunny-cp$ bash install
 
 This is a minimal installation script that checks the proper installation of
 Python (and psutil), MiniZinc, mzn2feat. In addition, it checks the installation

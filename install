@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Minimal installation file for sunny-cp.
 
 echo -n 'Testing Python installation...'
