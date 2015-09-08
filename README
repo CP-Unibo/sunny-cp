@@ -1,6 +1,5 @@
 SUNNY-CP 2.1
 ============
-FIXME: Still work in progress!!!
 
 SUNNY-CP: a Parallel CP Portfolio Solver
 
@@ -152,16 +151,15 @@ the file src/pfolio_solvers.py containing an object for each installed solver.
 
 INSTALLATION WITH DOCKER
 ========================
-FIXME: Work in progress!!!
 
-A simple way to deploy sunny-cp is by using Docker (www.docker.com).
+An alternative way to deploy sunny-cp is by using Docker (www.docker.com).
 The Dockerfiles needed to generate the container images are stored in two
-sub-folds of the sunny-cp/docker directory:
+sub-folders of the sunny-cp/docker directory:
 
 + base_dockerfile: defines the container where sunny-cp is installed with the
   basic solvers (i.e., the G12 solvers g12fd, g12cbc, g12lazyfd).
 
-+ free_dockerfile: defines the container where sunny-cp is installed with
++ free_dockerfile: defines the container where sunny-cp is installed with 
   the freely available solvers, namely: g12fd, g12cbc, g12lazyfd, gecode, choco,
   haifacsp, izplus, minisatid, ortools.
 
@@ -170,41 +168,42 @@ is possible to deploy sunny-cp with:
 
   sudo docker build -t sunny:g12 <PATH>/sunny-cp/docker/base_dockerfile
 
-and later for a more exhaustive installation including the freely available
-solvers above
+and later, if you want a more exhaustive installation, it is possible to include
+the freely available solvers with:
 
-  sudo docker build -t sunny:v1  <PATH>/sunny-cp/docker/free_dockerfile
+  sudo docker build -t sunny:free  <PATH>/sunny-cp/docker/free_dockerfile
 
-If an image have been successfully built, then
-it is possible to solve the <MZN> instance
-located in <MZNDIR> with the <DZN> data in <DNZDIR> invoking the following commands:
+Once an image have been successfully built, it is possible to run sunny-cp via 
+Docker. If <MZN.mzn> is a MiniZinc model located in <MZNDIR> and <DZN.dzn> is 
+its corresponding (optional) data file located in <DZNDIR>, then type:
 
-sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:g12 \
-  SUNNY_CP-OPTIONS /mzndir/<MZN> /dzndir/<DZN>
+  sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DZNDIR>:/dzndir -t sunny:g12 
+  [SUNNY_CP-OPTIONS] /mzndir/<MZN.mzn> /dzndir/<DZN.dzn>
 
-or 
+for solving such instance with the G12 solvers only, or alternatively type: 
 
-sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:v1 \
-  SUNNY_CP-OPTIONS /mzndir/<MZN> /dzndir/<DZN> 
+  sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:free 
+  [SUNNY_CP-OPTIONS] /mzndir/<MZN> /dzndir/<DZN> 
+  
+for using all the free solvers listed above. 
 
-By default the sunny:g12 image runs the solver with the --g12 option while the
-sunny:v1 image runs the solver using g12fd, g12cbc, g12lazyfd, gecode, choco,
-haifacsp, izplus, minisatid, ortools as constituent solvers and gecode as a 
-backup solver. These options can be overwritten by specifying new
-SUNNY_CP-OPTIONS parameters when invoking the docker run command.
+By default, the sunny:g12 image uses the --g12 option while the sunny:free image 
+uses {g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools} as 
+default portfolio and gecode as backup solver. These options can however be 
+overwritten in SUNNY_CP-OPTIONS. 
+*** NOTE: that both <MZNDIR> and <DZNDIR> must be absolute paths ***
 
-Example: to solve an instance zebra.mzn located in the /test directory the 
-command to run is:
+Example: let us suppose to solve the problem zebra.mzn located in the /home/test
+directory (without any data associated) by using just the G12 solvers. 
+The corresponding command is:
 
-sudo docker run -i --rm -v /test:/mzndir -t sunny:v1 /mzndir/zebra.mzn 
-
+  sudo docker run -i --rm -v /home/test:/mzndir -t sunny:g12 /mzndir/zebra.mzn 
 
 For more information, please see the Docker documentation at docs.docker.com
 
 
 FEATURES
 ========
-FIXME: Work in progress!!!
 
 During the presolving phase (in parallel with the static schedule execution)
 sunny-cp extracts a feature vector of the problem in order to apply the k-NN
