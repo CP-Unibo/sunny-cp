@@ -32,8 +32,8 @@ COPY ./gecode /sunny-cp/solvers/gecode
 
 
 # install choco (version 3.3.0 that attended the MiniZinc Challenge 2014)
-COPY ./choco_exec /solvers_exec/choco_exec
-RUN cd /solvers_exec/choco_exec && \
+RUN mkdir /solvers_exec/choco_exec && \
+  cd /solvers_exec/choco_exec && \
   wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-3.3.0/choco-parsers-3.3.0-with-dependencies.jar
 COPY ./choco /sunny-cp/solvers/choco
 ENV PATH /solvers_exec/choco_exec:$PATH
@@ -66,14 +66,12 @@ ENV PATH /solvers_exec/minisatid_exec/bin:$PATH
 COPY ./ortools /sunny-cp/solvers/ortools
 
 # The compilation of or-tools from the sources requires more than 1 GB
-#
+# apt-get install python-setuptools autoconf subversion \
+#  libtool zlib1g-dev texinfo help2man gawk g++ curl texlive cmake
 #RUN cd /solvers_exec && \
 #    git clone https://github.com/google/or-tools.git && \
 #    cd or-tools && \
 #    make third_party && \
-# note that probably 
-# http://sourceforge.net/projects/flex/files/flex-2.5.37.tar.bz2/download
-# should be downloaded manually and put in or-tools/dependencies/archives
 #    make install_python_modules && \
 #    make fz && \
 #    cp binary into solvers /sunny-cp/solvers/ortools/fzn-exec
@@ -83,4 +81,5 @@ RUN cd /sunny-cp && \
   sh install.sh
 
 WORKDIR /sunny-cp
-ENTRYPOINT ["sunny-cp","-P", "g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools", "-b", "gecode"]
+# ENTRYPOINT ["sunny-cp","-P", "g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools", "-b", "gecode"]
+ENTRYPOINT ["/bin/bash","-c"]

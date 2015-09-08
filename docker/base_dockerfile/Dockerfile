@@ -25,7 +25,7 @@ RUN cd / && \
   cd /sunny-cp && \
   tar -xjvf mzn2feat-1.1.1.tar.bz2 && \
   cd /sunny-cp/mzn2feat && \
-  sh install   
+  bash -c "./install --no-xcsp"
 ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
 ENV PATH /sunny-cp/mzn2feat/bin:$PATH
 
@@ -38,6 +38,6 @@ ENV PATH /sunny-cp/bin:$PATH
 
 
 WORKDIR /sunny-cp
-ENTRYPOINT ["sunny-cp","--g12"]
+ENTRYPOINT ["/bin/bash", "-c"]
 
 
