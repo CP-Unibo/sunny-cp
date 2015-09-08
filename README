@@ -208,7 +208,7 @@ sunny-cp extracts a feature vector of the problem in order to apply the k-NN
 algorithm for determining the solvers schedule to be run in the following
 solving phase. By default, the feature vector is extracted by mzn2feat tool.
 sunny-cp provides the sources of this tool: for its installation, decompress the
-mzn2feat-1.1.1.tar.bz2 archive and follow the instruction in the README file of
+mzn2feat-1.1.2.tar.bz2 archive and follow the instruction in the README file of
 that folder. The sources of mzn2feat extractor are also available at
 https://github.com/CP-Unibo/mzn2feat. Moreover, the user can define its own
 extractor by implementing a corresponding class in src/features.py
