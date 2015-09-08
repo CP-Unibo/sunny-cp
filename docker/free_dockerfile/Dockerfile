@@ -81,5 +81,4 @@ RUN cd /sunny-cp && \
   sh install.sh
 
 WORKDIR /sunny-cp
-# ENTRYPOINT ["sunny-cp","-P", "g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools", "-b", "gecode"]
-ENTRYPOINT ["/bin/bash","-c"]
+ENTRYPOINT ["sunny-cp","-P", "g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools", "-b", "gecode"]
