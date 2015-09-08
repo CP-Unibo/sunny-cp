@@ -172,7 +172,7 @@ is possible to deploy sunny-cp with:
 
 for the basic installation, or:
 
-  sudo docker build -t sunny:v1  <PATH>/sunny-cp/docker/sunny_free_dockerfile
+  sudo docker build -t sunny:v1  <PATH>/sunny-cp/docker/free_dockerfile
 
 for a more exhaustive installation including the freely available solvers above
 listed.
@@ -237,7 +237,7 @@ You can run them individually, e.g., by typing:
 
 or alternatively you can test all the models of the folder by typing:
 
-  test/examples:~$ ./run_examples
+  test/examples:~$ bash run_examples
 
 The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are

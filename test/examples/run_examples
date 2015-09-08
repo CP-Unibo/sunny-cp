@@ -14,7 +14,7 @@ cd $IN_PATH
 echo '' > $OUTPUT 
 echo '' > $ERRORS
 
-for m in `ls *.mzn | grep -v model.mzn`
+for m in `ls *.mzn | grep -v model`
 do
   echo "Solving $m....."
   mzn2fzn $m --output-ozn-to-file $OZN -o $FZN
