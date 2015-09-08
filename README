@@ -161,7 +161,7 @@ sub-folds of the sunny-cp/docker directory:
 + base_dockerfile: defines the container where sunny-cp is installed with the
   basic solvers (i.e., the G12 solvers g12fd, g12cbc, g12lazyfd).
 
-+ sunny_free_dockerfile: defines the container where sunny-cp is installed with
++ free_dockerfile: defines the container where sunny-cp is installed with
   the freely available solvers, namely: g12fd, g12cbc, g12lazyfd, gecode, choco,
   haifacsp, izplus, minisatid, ortools.
 
@@ -170,23 +170,32 @@ is possible to deploy sunny-cp with:
 
   sudo docker build -t sunny:g12 <PATH>/sunny-cp/docker/base_dockerfile
 
-  FIXME: Errore???
-
 for the basic installation, or:
 
   sudo docker build -t sunny:v1  <PATH>/sunny-cp/docker/sunny_free_dockerfile
 
 for a more exhaustive installation including the freely available solvers above
-listed. If an image have been successfully built, then
-??? is possible to solve the <file.mzn> instance
-located in <dir> it is possible to invoke the following command: ???
+listed.
 
-sudo docker run -i --rm -v <dir>:/mydir -t sunny:v1 OPTIONS? DZN? /mydir/<file.mzn>
+If an image have been successfully built, then
+it is possible to solve the <MZN> instance
+located in <MZNDIR> with the <DZN> data in <DNZDIR> invoking the following commands:
 
-  FIXME: con sunny:g12 NON FUNZIONA!!!
+sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:g12 \
+  "sunny-cp OPTIONS /mzndir/<MZN> /dzndir/<DZN>"
 
-Clearly, it is possible to modify the Dockerfiles in order to add/remove/modify
-the constituent solvers.
+or 
+
+sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:v1 \
+  "sunny-cp OPTIONS /mzndir/<MZN> /dzndir/<DZN>" 
+
+Example: to solve an instance zebra.mzn located in the /test directory using all
+the free solvers available and gecode as backup solver the command to run is:
+
+sudo docker run -i --rm -v /test:/mzndir -t sunny:v1 \
+  "sunny-cp -P g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools -b gecode /mzndir/zebra.mzn" 
+
+
 For more information, please see the Docker documentation at docs.docker.com
 
 
