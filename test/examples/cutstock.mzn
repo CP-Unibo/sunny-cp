@@ -1,9 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lp
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 %------------------------------------------------------------------------------%
 % cutstock.mzn
 % Jakob Puchinger <jakobp@cs.mu.oz.au>
@@ -27,7 +23,7 @@ array[1..K, 1..N] of var int: items;
 constraint
     forall(k in 1..K, i in 1..N)( items[k,i] >=0 );
 
-solve minimize
+solve ::int_search(array1d(1..K*N,items)++pieces,input_order,indomain_min,complete) minimize
 	sum([ pieces[k] | k in 1..K]);
 
 constraint 

@@ -1,8 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lazyfd
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 % latin_squares_fd.mzn
 % vim: ft=zinc ts=4 sw=4 et tw=0
 % Author: Peter Stuckey

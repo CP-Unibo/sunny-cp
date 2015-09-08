@@ -1,10 +1,5 @@
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON mzn_fd
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lp
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 %------------------------------------------------------------------------------%
 % 2DPacking.mzn
 % Jakob Puchinger
@@ -91,7 +86,7 @@ var int: obj;
 constraint
     obj = sum( k in 1..K )( bin[k] );
 
-output
+output 
 [ "Number of used bins = ",  show( obj ), "\n"] ++ 
 [ "Items in bins = \n\t"] ++ 
 [ show(item[k, j]) ++ if j = N then "\n\t" else " " endif |

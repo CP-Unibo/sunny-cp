@@ -1,5 +1,4 @@
 % RUNS ON mzn20_fd
-% RUNS ON mzn20_fd_linear
 %------------------------------------------------------------------------%
 % Golomb rulers
 % prob006 in csplib
@@ -36,4 +35,7 @@ constraint differences[1] < differences[(m*(m-1)) div 2];
 solve :: int_search(mark, input_order, indomain, complete)
     minimize mark[m];
 
-output ["golomb ", show(mark), "\n"];
+%output ["golomb ", show(mark), "\n"];
+mark = array1d(1..4 ,[0, 1, 4, 6]);
+
+
