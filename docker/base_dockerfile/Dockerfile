@@ -23,21 +23,20 @@ RUN apt-get update && \
 RUN cd / && \
   git clone --depth=1 https://github.com/CP-Unibo/sunny-cp && \
   cd /sunny-cp && \
-  tar -xjvf mzn2feat-1.1.1.tar.bz2 && \
+  tar -xjvf mzn2feat-1.1.2.tar.bz2 && \
   cd /sunny-cp/mzn2feat && \
-  bash -c "./install --no-xcsp"
+  bash install --no-xcsp
 ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
 ENV PATH /sunny-cp/mzn2feat/bin:$PATH
 
 
 # install sunny-cp
 RUN cd /sunny-cp && \
-  sh install.sh
+  bash install
 ENV SUNNY_HOME /sunny-cp
 ENV PATH /sunny-cp/bin:$PATH
 
 
 WORKDIR /sunny-cp
-ENTRYPOINT ["/bin/bash", "-c"]
-
+ENTRYPOINT ["sunny-cp", "--g12"]
 
