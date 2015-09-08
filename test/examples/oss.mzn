@@ -1,8 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lp
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_fd
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 % RUNS OM minizinc_cpx
 
 int: Endtime;

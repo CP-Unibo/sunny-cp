@@ -1,9 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lazyfd
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_cpx
-% RUNS ON minizinc_fd
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 %-----------------------------------------------------------------------------%
 % The wolf, goat, cabbage problem
 %
@@ -106,7 +102,7 @@ constraint
       );
 
 
-solve satisfy;
+solve ::bool_search(array1d(1..3*horizon,wolf)++array1d(1..3*horizon,goat)++array1d(1..3*horizon,cabbage)++array1d(1..3*horizon,farmer), input_order, indomain_max, complete) satisfy;
 
 %-----------------------------------------------------------------------------%
 
@@ -119,3 +115,4 @@ output [
 
 %-----------------------------------------------------------------------------%
 %-----------------------------------------------------------------------------%
+

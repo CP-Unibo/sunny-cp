@@ -32,8 +32,8 @@ COPY ./gecode /sunny-cp/solvers/gecode
 
 
 # install choco (version 3.3.0 that attended the MiniZinc Challenge 2014)
-RUN mkdir /solvers_exec/choco_exec && \
-  cd /solvers_exec/choco_exec && \
+COPY ./choco_exec /solvers_exec/choco_exec
+RUN  cd /solvers_exec/choco_exec && \
   wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-3.3.0/choco-parsers-3.3.0-with-dependencies.jar
 COPY ./choco /sunny-cp/solvers/choco
 ENV PATH /solvers_exec/choco_exec:$PATH

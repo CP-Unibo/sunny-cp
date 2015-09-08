@@ -1,13 +1,8 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lazyfd
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON mzn_mer_lp
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 % Example battleships problem for bs.mzn.
 %
-include "battleships.mzn.model";
+include "battleships.model.mzn";
 
 n = 10;
 

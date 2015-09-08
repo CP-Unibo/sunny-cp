@@ -1,10 +1,5 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON mzn_mer_lazyfd
-% RUNS ON mzn_mer_lp
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON zinc_mip_hl
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 %-----------------------------------------------------------------------------%
 % Example from the MiniZinc paper:
 % (square) job shop scheduling in MiniZinc
@@ -22,9 +17,9 @@ d = [| 2,5
 
 int: size;                                  % size of problem
 array [1..size,1..size] of int: d;          % task durations
-int: total = sum(i,j in 1..size) (d[i,j]);  % total duration
-array [1..size,1..size] of var 0..total: s; % start times
-var 0..total: end;                          % total end time
+int: Total = sum(i,j in 1..size) (d[i,j]);  % total duration
+array [1..size,1..size] of var 0..Total: s; % start times
+var 0..Total: end;                          % total end time
 
 predicate no_overlap(var int:s1, int:d1, var int:s2, int:d2) =
     s1 + d1 <= s2 \/ s2 + d2 <= s1;

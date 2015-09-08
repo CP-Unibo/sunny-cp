@@ -4,10 +4,10 @@ FIXME: Still work in progress!!!
 
 SUNNY-CP: a Parallel CP Portfolio Solver
 
-sunny-cp [6] is a parallel parallel portfolio solver that allows to solve a
+sunny-cp [5] is a parallel parallel portfolio solver that allows to solve a
 Constraint (Satisfaction/Optimization) Problem defined in the MiniZinc language.
 It essentially implements the SUNNY algorithm described in [1][2][3] and extends
-the sequential version [4] that attended the MiniZinc Challenge 2014 [5].
+the sequential version [4] that attended the MiniZinc Challenge 2014 [6].
 sunny-cp is built on top of state-of-the-art constraint solvers, including:
 Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, HaifaCSP,
 iZplus, MinisatID, Opturion, OR-Tools. These solvers are not included by default
@@ -24,7 +24,7 @@ In a nutshell, sunny-cp relies on two sequential steps:
      the predicted solvers, selected by means of SUNNY algorithm.
 
 The version 2.0 of sunny-cp solver won the gold medal in the open category of
-MiniZinc Challenge 2015 [5]. This version is a minor improvement of sunny-cp 2.0
+MiniZinc Challenge 2015 [6]. This version is a minor improvement of sunny-cp 2.0
 (see the CHANGELOG for more details). Note that now there is no more a default
 portfolio: when not better specified, the default portfolio consists of the
 solvers defined in the sunny-cp/solvers directory.
@@ -216,6 +216,7 @@ extractor by implementing a corresponding class in src/features.py
 
 KNOWLEDGE BASE
 ==============
+FIXME: Work in progress!!!
 
 The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that
 consists of a folder containing the information relevant for the schedule
@@ -230,7 +231,7 @@ TESTING
 
 Although a full support for automatic testing is not yet implemented, in the
 sunny-cp/test/examples folder there is a number of simple MiniZinc models.
-You can run them individually, e.g., by tiping:
+You can run them individually, e.g., by typing:
 
   test/examples:~$ sunny-cp zebra.mzn
 
@@ -267,7 +268,8 @@ REFERENCES
   [4]  R. Amadini, M. Gabbrielli, and J. Mauro. SUNNY-CP: a Sequential CP
        Portfolio Solver. In SAC, 2015.
 
-  [5]  MiniZinc Challenge webpage. http://www.minizinc.org/challenge.html
-
-  [6]  R. Amadini, M. Gabbrielli, and J. Mauro. A Multicore Tool for Constraint
+  [5]  R. Amadini, M. Gabbrielli, and J. Mauro. A Multicore Tool for Constraint 
        Solving. In IJCAI, 2015.
+       
+  [6]  MiniZinc Challenge webpage. http://www.minizinc.org/challenge.html
+

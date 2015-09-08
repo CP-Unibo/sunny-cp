@@ -1,12 +1,8 @@
-% RUNS ON mzn20_fd
-% RUNS ON mzn20_fd_linear
 %-----------------------------------------------------------------------------
 % Warehouse allocation
 % (Problem 034 in CSPLib)
-% vim: ft=zinc ts=2 sw=2 et tw=0
 %
-% Guido Tack, tack@gecode.org
-% 2007-02-22
+% Guido Tack, guido.tack@monash.edu
 %
 % Ported from the Gecode example
 %-----------------------------------------------------------------------------
@@ -20,6 +16,10 @@
 % supply which store such that overall cost (transportation cost plus
 % construction cost) is smallest.
 %-----------------------------------------------------------------------------
+
+% This example shows the use of the count function
+% In MiniZinc 1.6, count needed to be used as a relation, which required
+% the introduction of an auxiliary variable.
 
 include "globals.mzn";
 
@@ -60,12 +60,12 @@ int: MaxTotal =   (n_suppliers * building_cost)
 array[1..n_stores] of var 1..n_suppliers: supplier;
 array[1..n_suppliers] of var bool: open;
 array[1..n_stores] of var 1..MaxCost: cost;
-var 1..MaxTotal: Total;
+var 1..MaxTotal: total;
 
 constraint
   sum (i in 1..n_suppliers) (building_cost * bool2int(open[i])) +
   sum (i in 1..n_stores) (cost[i])
-  = Total;
+  = total;
 
 constraint
   forall (i in 1..n_stores) (
@@ -74,10 +74,7 @@ constraint
 
 constraint
   forall (i in 1..n_suppliers) (
-    let {
-      var int: use
-     } in
-    count(supplier,i,use) /\ use <= capacity[i]
+    count(supplier,i) <= capacity[i]
   );
 
 constraint
@@ -92,12 +89,12 @@ solve
     indomain_split,
     complete
   )
-  minimize Total;
+  minimize total;
 
 output
   [ "warehouses:" ]
   ++
-  [ "\nTotal = ", show(Total) ]
+  [ "\ntotal = ", show(total) ]
   ++
   [ "\nsupplier = [\n" ]
   ++

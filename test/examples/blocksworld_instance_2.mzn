@@ -1,11 +1,9 @@
-% RUNS ON mzn_mer_fd
-% RUNS ON zinc_fdic_mznlib
-% RUNS ON minizinc_fd
-% RUNS ON minizinc_cpx
+% RUNS ON mzn20_fd
+% RUNS ON mzn20_fd_linear
 % blocksworld_instance_2.mzn
 % vim: ft=zinc ts=4 sw=4 et tw=0
 
-include "blocksworld.model";
+include "blocksworld.model.mzn";
 
 n_blocks = 5;
 
