@@ -170,30 +170,33 @@ is possible to deploy sunny-cp with:
 
   sudo docker build -t sunny:g12 <PATH>/sunny-cp/docker/base_dockerfile
 
-for the basic installation, or:
+and later for a more exhaustive installation including the freely available
+solvers above
 
   sudo docker build -t sunny:v1  <PATH>/sunny-cp/docker/free_dockerfile
-
-for a more exhaustive installation including the freely available solvers above
-listed.
 
 If an image have been successfully built, then
 it is possible to solve the <MZN> instance
 located in <MZNDIR> with the <DZN> data in <DNZDIR> invoking the following commands:
 
 sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:g12 \
-  "sunny-cp OPTIONS /mzndir/<MZN> /dzndir/<DZN>"
+  SUNNY_CP-OPTIONS /mzndir/<MZN> /dzndir/<DZN>
 
 or 
 
 sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:v1 \
-  "sunny-cp OPTIONS /mzndir/<MZN> /dzndir/<DZN>" 
+  SUNNY_CP-OPTIONS /mzndir/<MZN> /dzndir/<DZN> 
 
-Example: to solve an instance zebra.mzn located in the /test directory using all
-the free solvers available and gecode as backup solver the command to run is:
+By default the sunny:g12 image runs the solver with the --g12 option while the
+sunny:v1 image runs the solver using g12fd, g12cbc, g12lazyfd, gecode, choco,
+haifacsp, izplus, minisatid, ortools as constituent solvers and gecode as a 
+backup solver. These options can be overwritten by specifying new
+SUNNY_CP-OPTIONS parameters when invoking the docker run command.
 
-sudo docker run -i --rm -v /test:/mzndir -t sunny:v1 \
-  "sunny-cp -P g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools -b gecode /mzndir/zebra.mzn" 
+Example: to solve an instance zebra.mzn located in the /test directory the 
+command to run is:
+
+sudo docker run -i --rm -v /test:/mzndir -t sunny:v1 /mzndir/zebra.mzn 
 
 
 For more information, please see the Docker documentation at docs.docker.com
