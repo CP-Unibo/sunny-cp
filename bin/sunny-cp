@@ -339,8 +339,6 @@ def check_solution(solver, problem, solution, bound):
       for (var, val) in solution:
         if not 'X_INTRODUCED_' in var and not '%' in var:
           outfile.write('constraint ' + var + ' = ' + val + ';\n')
-      # FIXME: This forces an inconsistency (for debug purposes only).
-      #outfile.write('constraint 0 = 1;')
       for row in infile:
         if row:
           outfile.write(row)
@@ -358,7 +356,9 @@ def check_solution(solver, problem, solution, bound):
   
   solv = eval(solver)
   inf = float('inf')
-  rs = RunningSolver(solv, problem.solve, tmp_fzn, '', inf, inf, inf, False, inf)
+  rs = RunningSolver(
+    solv, problem.solve, tmp_fzn, '', inf, inf, inf, False, inf
+  )
   if problem.isCOP():
     rs.set_obj_var(problem, bound, bound)
   cmd = solv.fzn_exec + ' ' + tmp_fzn
@@ -462,7 +462,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
       idx = line.index(' = ')
       val = line[idx + 3:].split(';')[0]
       var = line[:idx]
-      if var == solver.obj_var:
+      if val and var == solver.obj_var:
         solver.obj_value = int(val)
       solver.solution[var] = val
       solver.solution_time = time.time()

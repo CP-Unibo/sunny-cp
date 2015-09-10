@@ -14,10 +14,10 @@ SUNNY_HOME = '/'.join(SUNNY_HOME)
 pfolio_path = SUNNY_HOME + '/src/pfolio_solvers.py'
 pfolio_file = open(pfolio_path, 'w')
 
-preamble = "'''\nThis module contains an object of class Solver for each " \
-  "installed solver of the \nportfolio. Each object of class Solver might be" \
+preamble = "'''\nThis module contains an object of class Solver for each "     \
+  "installed solver of the \nportfolio. Each object of class Solver might be"  \
   " defined manually, but it is \nhowever strongly suggested to first generate"\
-  " it automatically by using the\nmake_pfolio.py script in solvers folder"\
+  " it automatically by using the\nmake_pfolio.py script in solvers folder"    \
   ". Then, once the file is created, it \nis possible to customize each object"\
   ". Note that running make_pfolio.py script \nwill replace the current file." \
   "\n'''\n\nfrom solver import Solver\n\n"

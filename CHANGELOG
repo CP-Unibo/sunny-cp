@@ -4,11 +4,12 @@
 
 Version 2.1
 ===========
-Major bugs and changes: (FIXME: to check!!!)
+Major bugs and changes:
   - Compatibility with MiniZinc 2.0
-  - Solution checking (see option --check-solvers) and other new user options 
+  - Solution checking (see option --check-solvers) and other user options 
     (-A, -R, -l, -u, --max-restarts, --switch-search)
-FIXME: New KB, Docker?
+  - Installing with Docker
+  - New knoledge base, including MiniZinc Challenge 2015 instances....FIXME: TBD!!!
 
 Minor bugs and changes:
   - Modified bounds injection according to the new conventions of mzn2feat 2.0
