@@ -24,21 +24,19 @@ Portfolio Options
   -T <TIMEOUT>
     Timeout (in seconds) of SUNNY algorithm, used at runtime for predicting the 
     schedule of solvers to be run. Actually, T will be subtracted by C seconds 
-    where C is the time taken by the pre-solving phase (i.e., static schedule 
-    and feature extraction). Note that T IS NOT the timeout of the whole solving
-    process: indeed, sunny-cp is an "anytime process", which is run indefinitely 
-    until a solution is reached. So, the timeout of the whole solving process 
-    has to be set externally by the user. The default value is T = 1200, the 
-    same timeout of MiniZinc Challenge 2015. Also the constant +inf is allowed.
+    where C is the time taken by the pre-solving phase. Note that T IS NOT the 
+    timeout of the whole solving process: sunny-cp is an "anytime process", run 
+    indefinitely until a solution is reached. So, the timeout of sunny-cp has to 
+    be set externally by the user. The default value is T = 1200 sec., the same 
+    timeout of MiniZinc Challenge 2015. Also the constant +inf is allowed.
   -k <SIZE>
     Neighborhood size of SUNNY underlying k-NN algorithm. The default value of 
     k is the square root of the knowledge base size.
   -P <PORTFOLIO>
     Specifies the portfolio through a comma-separated list of solvers of the 
-    form s_1,s_2,...,s_m. The specified ordering of solvers matters: indeed, 
-    in case of failure of all the scheduled solvers, the other solvers will be 
-    executed according to such ordering. By default, the portfolio includes all 
-    the installed solvers.
+    form s_1,s_2,...,s_m. The specified ordering matters: indeed, if all the 
+    scheduled solvers fails, the other solvers will be run to such ordering. 
+    By default, the portfolio includes all the installed solvers.
   -A <SOLVERS>
     Adds to the default portfolio (or to the portfolio specified with -P option)
     the solvers in <SOLVERS>, which is a list of the form s_1,...,s_m.
@@ -58,13 +56,11 @@ Portfolio Options
     kb folder
   -s <SCHEDULE>
     Specifies a static schedule to be run before executing the SUNNY algorithm. 
-    The schedule must be passed in the form: 
-      s_1,t_1,s_2,t_2,...,s_m,t_m
-    where each s_i belongs to the specified portfolio, and t_i is the timeout 
-    (in seconds) for s_i. Note that in general when a timeout t_i expires the 
-    solver s_i is not killed, but just suspended (and then resumed if s_i has to 
-    run again later). The static schedule is empty by default. Also the constant
-    +inf is allowed for the times t_i.
+    It must be passed in the form  s_1,t_1,s_2,t_2,...,s_m,t_m  where t_i is the
+    time limit (in seconds) allocated to solver s_i. Note that in general when a
+    timeout t_i expires the solver s_i is not killed, but just suspended (and 
+    then resumed if s_i has to run again later). The static schedule is empty by 
+    default. Also the constant +inf is allowed for the times t_i.
   -e <EXTRACTOR>
     Feature extractor used by sunny-cp. By default is "mzn2feat", but it can be 
     changed by defining a corresponding class in src/features.py.

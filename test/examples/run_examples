@@ -18,7 +18,8 @@ for m in `ls *.mzn | grep -v model`
 do
   echo "Solving $m....."
   mzn2fzn $m --output-ozn-to-file $OZN -o $FZN
-  cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd -p $CORES -T $TIMEOUT --g12 $m"
+  cmd="timeout $TIMEOUT sunny-cp --check-solvers g12lazyfd,g12fd,g12cbc,g12fd"
+  cmd=$cmd" -p $CORES -T $TIMEOUT --g12 $m"
   $cmd 1>$OUT 2>$ERR
   ret=$?
   cat $OUT | solns2out $OZN | grep -v %
