@@ -218,12 +218,11 @@ extractor by implementing a corresponding class in src/features.py
 
 KNOWLEDGE BASE
 ==============
-FIXME: Work in progress!!!
 
 The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that
 consists of a folder containing the information relevant for the schedule
 computation. The default sunny-cp knowledge base is in sunny-cp/kb/default.
-It consists of XX CSP instances and XXX COP instances coming from the MiniZinc
+It consists of 76 CSP instances and 318 COP instances coming from the MiniZinc
 challenges 2012--2015. However, the user has the possibility of defining its own
 knowledge bases. For more details, see the README file in sunny-cp/kb folder.
 
