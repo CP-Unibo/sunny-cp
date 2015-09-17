@@ -346,14 +346,14 @@ def check_solution(solver, problem, solution, bound):
   outfile.close()
   
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
-  cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '     \
+  cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '  \
       + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
       + ' -o ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
-  if 'model inconsistency detected' in err:
+  if 'model inconsistency detected' in err or not os.path.exists(tmp_fzn):
     return False
-  
+ 
   solv = eval(solver)
   inf = float('inf')
   rs = RunningSolver(
@@ -364,9 +364,9 @@ def check_solution(solver, problem, solution, bound):
   cmd = solv.fzn_exec + ' ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
-  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
+  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out: 
     return False
-  
+   
   return True
   
 
