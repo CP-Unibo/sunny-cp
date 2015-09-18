@@ -9,7 +9,7 @@ Major bugs and changes:
   - Solution checking (see option --check-solvers) and other user options 
     (-A, -R, -l, -u, --max-restarts, --switch-search)
   - Installing with Docker
-  - New knoledge base, including MiniZinc Challenge 2015 instances....FIXME: TBD!!!
+  - New default knoledge base, including MiniZinc Challenge 2012--2015 instances
 
 Minor bugs and changes:
   - Modified bounds injection according to the new conventions of mzn2feat 2.0

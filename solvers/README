@@ -46,8 +46,10 @@ In this way, <SOLVER> object becomes part of the sources and usable by sunny-cp
 for the <SOLVER> execution. Note that once <SOLVER> is installed, it is however 
 possible to modify its settings by manipulating the corresponding parameters in 
 <SUNNY_HOME>/src/pfolio_solvers.py
-Actually, sunny-cp already comes with the folders corresponding to the built-in 
-solvers of MiniZinc 2.0, namely: g12cbc, g12fd, and g12lazyfd.
+Note that now there is no more a default portfolio: when not better specified, 
+the default portfolio consists of the solvers defined in the sunny-cp/solvers 
+directory. Actually, sunny-cp already comes with the folders corresponding to 
+the built-in solvers of MiniZinc 2.0, namely: g12cbc, g12fd, and g12lazyfd.
 Moreover, a (new) solver can be added, modified, or removed even after the 
 sunny-cp installation: it is enough to follow the above steps 1-3 and then run 
 the python script <SUNNY_HOME>/solvers/make_pfolio.py in place of step 4 (for 
