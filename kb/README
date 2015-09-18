@@ -130,15 +130,12 @@ that builds a knowledge base named "kb_example" starting from example.feat and
 example.info files by using 3 problems, 5 solvers and 10 features that will be 
 scaled in the range [0, 1].
 
-The default sunny-cp knowledge base is in kb/all_T1800. It consists of 5527 CSP 
-instances and 4988 COP instances. It have been computed by considering the 
-default solvers of sunny-cp (12 solvers), the default timeout (1800 seconds), 
-the non-constant features extracted by mzn2feat tool (normalized in [-1, 1]), 
-and the default settings for area and score. The original <FEAT_FILE> and 
-<INFO_FILE> used for creating all_T1800 are compressed in all.feat.tar.bz2 and 
-all_T1800.info.tar.bz2. From such files, it is possible via csv2kb.py script to 
-rebuild the default knowledge bases or to create new ones (e.g., by setting a 
-new timeout or new bounds).
+The default sunny-cp knowledge base is in kb/mznc1215. It consists of 318 CSP 
+instances and 76 COP instances. It have been computed by considering 13 
+solvers (Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, 
+HaifaCSP, iZplus, MinisatID, Opturion, OR-Tools), a timeout of 1200, the 
+non-constant features extracted by mzn2feat tool (normalized in [-1, 1]), 
+and the default settings for area and score.
 
 
 REFERENCES
