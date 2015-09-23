@@ -1,0 +1,32 @@
+#!/bin/bash
+# Bash script for executing sunny-cp via Docker.
+
+last="${@: -1}"
+if
+  [ ${last: -4} == ".dzn" ]
+then
+  dzn=$last
+  dzn_dir=`readlink -e $dzn`
+  dzn_dir=`dirname $dzn_dir`
+  num_options=`expr $# - 2`
+  args=( $@ )
+  mzn=${args[$num_options]}
+else
+  dzn=''
+  mzn=$last
+  num_options=`expr $# - 1`
+fi
+
+options="${@:1:$num_options}"
+mzn_dir=`readlink -e $mzn`
+mzn_dir=`dirname $mzn_dir`
+mzn=/mzndir/`basename $mzn`
+
+if
+  [[ $dzn == '' ]]
+then
+  sudo docker run -i --rm -v $mzn_dir:/mzndir -t sunny:docker $options $mzn
+else
+  dzn=/dzndir/`basename $dzn`
+  sudo docker run -i --rm -v $mzn_dir:/mzndir -v $dzn_dir:/dzndir -t sunny:docker $options $mzn $dzn
+fi

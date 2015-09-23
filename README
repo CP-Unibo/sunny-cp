@@ -123,6 +123,9 @@ solver has been included in the MiniZinc suite until version 1.6, and no
 longer included from version 2.0. Opturion is an enhancement of CPX. If you are
 interested in using these solvers, please contact directly their developers.
 
+NOTE: sunny-cp is not responsible of buggy solvers. However, the user can check 
+the soundness of a solution with the option --check-solvers.
+
 
 BASIC INSTALLATION
 ==================
@@ -138,10 +141,10 @@ python sources of sunny-cp. If the installation is successful, the following
 message will be printed on standard output:
 
   --- Everything went well!
-  To complete sunny-cp installation just append /home/roberto/sunny-cp/bin
+  To complete sunny-cp installation just append <PATH_TO_SUNNY-CP>/sunny-cp/bin
   to the PATH environment variable.
 
-Once the PATH variables is set, check the installation by typing the command:
+Once the PATH variable is set, check the installation by typing the command:
 
   sunny-cp --help
 
@@ -153,51 +156,30 @@ INSTALLATION WITH DOCKER
 ========================
 
 An alternative way to deploy sunny-cp is by using Docker (www.docker.com).
-The Dockerfiles needed to generate the container images are stored in two
-sub-folders of the sunny-cp/docker directory:
+Assuming Docker is installed, the first step is running make_docker.py script in 
+the sunny-cp/docker folder:
 
-+ base_dockerfile: defines the container where sunny-cp is installed with the
-  basic solvers (i.e., the G12 solvers g12fd, g12cbc, g12lazyfd).
-
-+ free_dockerfile: defines the container where sunny-cp is installed with 
-  the freely available solvers, namely: g12fd, g12cbc, g12lazyfd, gecode, choco,
-  haifacsp, izplus, minisatid, ortools.
-
-Assuming Docker is installed and <PATH> is the path to the sunny-cp folder, it
-is possible to deploy sunny-cp with:
-
-  sudo docker build -t sunny:g12 <PATH>/sunny-cp/docker/base_dockerfile
-
-and later, if you want a more exhaustive installation, it is possible to include
-the freely available solvers with:
-
-  sudo docker build -t sunny:free  <PATH>/sunny-cp/docker/free_dockerfile
-
-Once an image have been successfully built, it is possible to run sunny-cp via 
-Docker. If <MZN.mzn> is a MiniZinc model located in <MZNDIR> and <DZN.dzn> is 
-its corresponding (optional) data file located in <DZNDIR>, then type:
-
-  sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DZNDIR>:/dzndir -t sunny:g12 
-  [SUNNY_CP-OPTIONS] /mzndir/<MZN.mzn> /dzndir/<DZN.dzn>
-
-for solving such instance with the G12 solvers only, or alternatively type: 
-
-  sudo docker run -i --rm -v <MZNDIR>:/mzndir -v <DNZDIR>:/dzndir -t sunny:free 
-  [SUNNY_CP-OPTIONS] /mzndir/<MZN> /dzndir/<DZN> 
+  sunny-cp/docker$ python make_docker.py [solver1,solver2,...,solverN]
   
-for using all the free solvers listed above. 
+where solver1,...,solverN is a list of the solvers to include in the portfolio.
+Actually, this list should be a sublist of the aforementioned freely available 
+solvers, i.e.:
 
-By default, the sunny:g12 image uses the --g12 option while the sunny:free image 
-uses {g12fd,g12cbc,g12lazyfd,gecode,choco,haifacsp,izplus,minisatid,ortools} as 
-default portfolio and gecode as backup solver. These options can however be 
-overwritten in SUNNY_CP-OPTIONS. 
-*** NOTE: that both <MZNDIR> and <DZNDIR> must be absolute paths ***
+  choco,g12cpx,g12lazyfd,g12fd,g12cbc,gecode,haifacsp,izplus,minisatid,ortools
+ 
+The first solver of the specified list is assumed to be the backup solver. If no
+solver is specified, the default list g12lazyfd,g12fd,g12cbc is set. 
+The make_docker script generates a corresponding Dockerfile that can be used for
+later building and executing the Docker image. In particular, if you are working
+on a Linux platform, just type:
 
-Example: let us suppose to solve the problem zebra.mzn located in the /home/test
-directory (without any data associated) by using just the G12 solvers. 
-The corresponding command is:
+  sunny-cp/docker$ bash build_docker
 
-  sudo docker run -i --rm -v /home/test:/mzndir -t sunny:g12 /mzndir/zebra.mzn 
+for building the Docker image and creating the sunny-cp-docker. Then, assuming 
+that the PATH environment variable points to sunny-cp/bin, you can run the 
+sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
+
+  sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
 
 For more information, please see the Docker documentation at docs.docker.com
 
@@ -236,11 +218,11 @@ Although a full support for automatic testing is not yet implemented, in the
 sunny-cp/test/examples folder there is a number of simple MiniZinc models.
 You can run them individually, e.g., by typing:
 
-  test/examples:~$ sunny-cp zebra.mzn
+  test/examples$ sunny-cp zebra.mzn
 
 or alternatively you can test all the models of the folder by typing:
 
-  test/examples:~$ bash run_examples
+  test/examples$ bash run_examples
 
 The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are
