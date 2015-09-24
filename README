@@ -170,8 +170,11 @@ solvers, i.e.:
 The first solver of the specified list is assumed to be the backup solver. If no
 solver is specified, the default list g12lazyfd,g12fd,g12cbc is set. 
 The make_docker script generates a corresponding Dockerfile that can be used for
-later building and executing the Docker image. In particular, if you are working
-on a Linux platform, just type:
+later building and executing the Docker image. However, if you only need the 
+basic installation there is no need to run the python script: just use the file 
+base-dockerfile as Dockerfile.
+
+If you are working on a Linux platform, just type:
 
   sunny-cp/docker$ bash build_docker
 
@@ -181,8 +184,8 @@ sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
 
   sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
 
-Note that you need to be superuser for running Docker. For more information, 
-please see the Docker documentation at docs.docker.com
+Note that you must be superuser both for building the image and running Docker. 
+For more information, please see the Docker documentation at docs.docker.com
 
 
 FEATURES
