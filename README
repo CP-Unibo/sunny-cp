@@ -181,7 +181,8 @@ sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
 
   sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
 
-For more information, please see the Docker documentation at docs.docker.com
+Note that you need to be superuser for running Docker. For more information, 
+please see the Docker documentation at docs.docker.com
 
 
 FEATURES
