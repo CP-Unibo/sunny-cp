@@ -7,7 +7,7 @@ import shutil
 from subprocess import Popen
 
 DEF_PFOLIO = set([
-  'choco', 'g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc', 
+  'choco', 'chuffed', 'g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc', 
   'gecode', 'haifacsp', 'izplus', 'minisatid', 'ortools'
 ])
 
@@ -15,7 +15,7 @@ def add(solver, dockerfile):
   dockerfile.write('\n\n# Install ' + solver + '\n')
   if solver == 'choco':
     dockerfile.write('COPY ./choco_exec /solvers_exec/choco_exec\n')
-    dockerfile.write('RUN  cd /solvers_exec/choco_exec && ')
+    dockerfile.write('RUN cd /solvers_exec/choco_exec && ')
     dockerfile.write('wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-3.3.0/choco-parsers-3.3.0-with-dependencies.jar\n')
     dockerfile.write('COPY ./choco /sunny-cp/solvers/choco\n')
     dockerfile.write('ENV PATH /solvers_exec/choco_exec:$PATH\n')
