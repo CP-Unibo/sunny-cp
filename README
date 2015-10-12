@@ -92,7 +92,8 @@ used other solvers:
 + Choco
   http://choco-solver.org/
 
-+ Chuffed (not free)
++ Chuffed
+  https://github.com/geoffchu/chuffed
 
 + CPX
   http://www.minizinc.org/g12distrib.html (see MiniZinc version 1.6)
@@ -117,7 +118,7 @@ used other solvers:
 + OR-Tools
   https://code.google.com/p/or-tools/
 
-Chuffed and G12/Gurobi are not publicly available, and have been kindly granted
+G12/Gurobi is not publicly available; access has been kindly granted
 by NICTA Optimization Research Group of Melbourne (Australia). Note that CPX
 solver has been included in the MiniZinc suite until version 1.6, and no
 longer included from version 2.0. Opturion is an enhancement of CPX. If you are
@@ -237,7 +238,7 @@ ACKNOWLEDGMENTS
 ===============
 
 We would like to thank the staff of the Optimization Research Group of NICTA
-(National ICT of Australia) for allowing us to use Chuffed and G12/Gurobi, as
+(National ICT of Australia) for allowing us to use G12/Gurobi, as
 well as for granting us the computational resources needed for building and
 testing sunny-cp.
 
