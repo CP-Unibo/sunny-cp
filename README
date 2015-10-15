@@ -189,6 +189,11 @@ sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
   sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
 
 Note that you must be superuser both for building the image and running Docker.
+If you want to rebuild a Docker image, make sure that you have removed the old 
+one with: 
+
+  sudo docker rmi sunny:docker
+
 For more information, please see the Docker documentation at docs.docker.com
 
 
