@@ -39,6 +39,17 @@ def add(solver, dockerfile):
     dockerfile.write('rm -rf /solvers_exec/krr-minisatid-869bec4a8bfb && ')
     dockerfile.write('rm -rf /solvers_exec/minisatid-3.11.0-source.zip\n')
     dockerfile.write('ENV PATH /solvers_exec/minisatid_exec/bin:$PATH\n')
+  elif solver == 'chuffed':
+    dockerfile.write('RUN cd /solvers_exec && ')
+    dockerfile.write('git clone https://github.com/geoffchu/chuffed &&')
+    dockerfile.write('cd chuffed &&')
+    dockerfile.write('mkdir build &&')
+    dockerfile.write('cd trunk &&')
+    dockerfile.write('cmake -DCMAKE_INSTALL_PREFIX:PATH=../build &&')
+    dockerfile.write('make &&')
+    dockerfile.write('make install &&')
+    dockerfile.write('cd .. &&')
+    dockerfile.write('rm -rf trunk\n')
   dockerfile.write('COPY ./' + solver + ' /sunny-cp/solvers/' + solver +'\n')
     
 def main(args):
