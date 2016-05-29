@@ -60,3 +60,11 @@ predicate bool_sum_ge(array[int] of var bool: x, var int: c); %=
 %    bool_lin_ge([1 | i in index_set(x)],x,c);
 predicate bool_sum_gt(array[int] of var bool: x, var int: c); %=
 %    bool_lin_gt([1 | i in index_set(x)],x,c);
+
+% FIXME: Temporary workaround that only works for negative numbers.
+predicate int_mod(var int: x, var int: y, var int: z) =
+assert(lb(x) >= 0 /\ lb(y) >= 0, "int_mod: only works for non negatives",
+let {
+    var 0..ub(x): q;
+} in
+   z in 0..ub(y)-1 /\ y * q + z = x);

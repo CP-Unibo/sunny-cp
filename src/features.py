@@ -25,11 +25,11 @@ class mzn2feat:
     if not not_norm_vector:
       return None
     lims_file = args[1]
-    
+
     with open(lims_file, 'r') as infile:
       lims = json.load(infile)
     return mzn2feat.normalize(not_norm_vector, lims)
-  
+
   @staticmethod
   def extract(problem):
     """
@@ -44,12 +44,15 @@ class mzn2feat:
     proc = psutil.Popen(cmd.split(), stdout = PIPE)
     (out, err) = proc.communicate()
     # Failure in features extraction.
-    if proc.returncode != 0:
-      return None
+    #if proc.returncode != 0:
+      #return None
     features = out.split(",")
-    feat_vector = [float(features[i]) for i in range(0, len(features))]
+    feat_vector = [
+      float(features[i]) for i in range(0, len(features)) 
+      if isinstance(features[i], float)
+    ]
     return feat_vector
-  
+
   @staticmethod
   def normalize(feat_vector, lims, lb = -1, ub = 1, def_value = -1):
     """
