@@ -44,12 +44,11 @@ class mzn2feat:
     proc = psutil.Popen(cmd.split(), stdout = PIPE)
     (out, err) = proc.communicate()
     # Failure in features extraction.
-    #if proc.returncode != 0:
-      #return None
+    if proc.returncode != 0:
+      return []
     features = out.split(",")
     feat_vector = [
-      float(features[i]) for i in range(0, len(features)) 
-      if isinstance(features[i], float)
+      float(features[i]) for i in range(0, len(features))
     ]
     return feat_vector
 
