@@ -55,7 +55,7 @@ def main(args):
     print msg
     print >> sys.stderr, 'For help use --help'
     sys.exit(2)
-    
+
   if len(args) != 3:
     for o, a in opts:
       if o in ('-h', '--help'):
@@ -64,7 +64,7 @@ def main(args):
     print >> sys.stderr, 'Error! Wrong number of arguments.'
     print >> sys.stderr, 'For help use --help'
     sys.exit(2)
-  
+
   kb_name = args[0]
   feat_file = args[1]
   info_file = args[2]
@@ -123,13 +123,13 @@ def main(args):
       const = False
     elif o == '--no-check':
       check = False
-  
+
   kb_path = path + '/' + kb_name
   if os.path.exists(kb_path):
     print >> sys.stderr, 'Error! Folder',kb_path,'already exists! Choose ',
     print >> sys.stderr, 'another name or location for the knowledge base!'
     sys.exit(2)
-  
+
   try:
     # Extract runtimes information.
     kb_csp, kb_cop = compute_infos(
@@ -147,7 +147,7 @@ def main(args):
       rmtree(kb_path)
     print 'Knowledge base',kb_name,'not created'
     sys.exit(1)
-  
+
   print 'Knowledge base',kb_name,'created in',path
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ def compute_infos(
     time = float(row[4])
     val = float(row[5])
     values = dict((float(t), v) for (t, v) in eval(row[6]).items())
-    
+
     if check:
       check_invariant(
         'info = unk \/ (goal != sat /\ info = sat) <==> time = T',
@@ -56,7 +56,7 @@ def compute_infos(
         inst,
         solv
       )
-    
+
     if goal != 'sat':
       if inst not in kb_cop.keys():
         kb_cop[inst] = {}
@@ -82,7 +82,7 @@ def compute_infos(
       if inst not in kb_csp.keys():
         kb_csp[inst] = {}
       kb_csp[inst][solv] = {'info': info, 'time': time}
-  
+
   if kb_cop:
     print 'Computing solving score and area...'
     for inst, item in kb_cop.items():
@@ -158,6 +158,7 @@ def get_area(
     t = timeout
   a += scaled_vals[n][1] * (t - scaled_vals[n][0])
   if check:
+    #print info, lb, ub, min_val, max_val, goal, time, timeout, values, check
     assert t >= scaled_vals[n][0]
     assert 0 <= round(a, 5) <= timeout
   return a
@@ -214,9 +215,9 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
           lims[i][0] = feat_vector[i]
         elif feat_vector[i] > lims[i][1]:
           lims[i][1] = feat_vector[i]
-    
+
     features[inst] = feat_vector
-  
+
   if scale or const:
     for (inst, feat_vector) in features.items():
       new_feat_vector = []
@@ -252,7 +253,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
   else:
     print 'Features processed!'
     return
-  
+
   for i in ['csp', 'cop']:
     lim_file = kb_path + '/' + kb_name + '_lims_' + i
     with open(lim_file, 'w') as outfile:

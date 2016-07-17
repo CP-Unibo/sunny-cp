@@ -86,13 +86,13 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
   Runs (possibly in parallel on different cores) the solving phase.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-    
+
   # Launch the solvers (if any).
   for _ in range(cores):
     if schedule:
       solver = schedule.pop(0)
       run_solver(solver, problem)
-      
+
   # Loop for dealing with solvers execution.
   while RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
@@ -106,7 +106,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
         send_signal_solver(signal.SIGKILL, solver)
         RUNNING_SOLVERS.remove(solver)
         continue
-    
+
     for solver in RUNNING_SOLVERS:
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
@@ -114,7 +114,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
         p = process_output(solver, problem, lines, all_opt, check, schedule)
         if not p:
           continue
-      
+
       # Solver process terminated.
       if solver.process.poll() is not None:
         if solver.status == 'flatzinc':
@@ -126,13 +126,13 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
               continue
         solver_terminated(solver, problem, schedule)
         continue
-      
+
       # Expired timeout: the solver has to be suspended.
       if time.time() - solver.start_time > solver.timeout and \
          time.time() - solver.solution_time > solver.wait_time:
            solver_timeout(solver, problem, schedule)
            continue
-         
+
       # Restart a solver if its solution is obsolete and its restart time is 
       # actually expired.
       if solver.status == 'flatzinc' \
@@ -211,7 +211,7 @@ def presolve(
         send_signal_solver(signal.SIGKILL, solver)
         RUNNING_SOLVERS.remove(solver)
         continue
-    
+
     for solver in RUNNING_SOLVERS:
       # Read and process lines from the output stream of each process.
       lines = read_lines(solver.process)
@@ -219,7 +219,7 @@ def presolve(
         p = process_output(solver, problem, lines, all_opt, check, schedule)
         if not p:
           continue
-      
+
       # Solver process terminated.
       if solver.process.poll() is not None:
         if solver.status == 'flatzinc':
@@ -233,13 +233,13 @@ def presolve(
         if solver.process.returncode not in [None, 0]:
           black_list.append(solver.name())
         continue
-      
+
       # Expired timeout: the solver has to be suspended.
       if time.time() - solver.start_time > solver.timeout and \
          time.time() - solver.solution_time > solver.wait_time:
            solver_timeout(solver, problem, schedule)
            continue
-         
+
       # Restart a solver if its solution is obsolete and its restart time is 
       # actually expired.
       if solver.status == 'flatzinc' \
@@ -292,7 +292,7 @@ def run_solver(solver, problem):
       bound = problem.best_bound
       print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
       solver.inject_bound(bound)
-    
+
     if solver.switch_search:
       opts = solver.fzn_options.split()
       if solver.solver.free_opt in opts:
@@ -303,11 +303,11 @@ def run_solver(solver, problem):
         print '% Switching',solver.name(),'search strategy from fixed to free!'
         solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
-    
+
   else:
     print '% Unknown status',solver.status
     assert False
-  
+
   if solver.status == 'flatzinc':
     solver.process = psutil.Popen(cmd, stdout = PIPE)
     # For non-blocking read.
@@ -344,7 +344,7 @@ def check_solution(solver, problem, solution, bound):
           outfile.write(row)
   infile.close()
   outfile.close()
-  
+
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
   cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '  \
       + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
@@ -353,7 +353,7 @@ def check_solution(solver, problem, solution, bound):
   (out, err) = proc.communicate()
   if 'model inconsistency detected' in err or not os.path.exists(tmp_fzn):
     return False
- 
+
   solv = eval(solver)
   inf = float('inf')
   rs = RunningSolver(
@@ -366,9 +366,9 @@ def check_solution(solver, problem, solution, bound):
   (out, err) = proc.communicate()
   if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out: 
     return False
-   
+
   return True
-  
+
 
 def process_output(solver, problem, lines, all_opt, check, schedule):
   """
@@ -628,7 +628,7 @@ def main(args):
     neighbours, static_time, black_list = presolve(
       static, problem, cores, mem_limit, all_opt, check, extractor, k, kb, lims
     )
-    
+
     print '%%%%% Solving %%%%%'
     pfolio = [s for s in pfolio if s not in black_list]
     if not neighbours or len(pfolio) <= cores:
@@ -666,7 +666,7 @@ def main(args):
       par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
     solve(schedule, problem, cores, mem_limit, all_opt, check)
-    
+
   except Exception as e:
     print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
     clean()
@@ -674,6 +674,6 @@ def main(args):
     sys.exit(1)
 
   clean()
-  
+
 if __name__ == '__main__':
   main(sys.argv[1:])
