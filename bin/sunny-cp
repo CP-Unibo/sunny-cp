@@ -68,8 +68,8 @@ def send_signal_solver(signal, solver):
 
 def clean():
   """
-  Utility for (possibly) cleaning temporary files and killing the solvers 
-  processes at the end of the solving process (even when the termination is 
+  Utility for (possibly) cleaning temporary files and killing the solvers
+  processes at the end of the solving process (even when the termination is
   forced externally).
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
@@ -119,7 +119,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
       if solver.process.poll() is not None:
         if solver.status == 'flatzinc':
           # Sometimes not all the lines are read from solver output.
-          lines = read_lines(solver.process)  
+          lines = read_lines(solver.process)
           if lines:
             p = process_output(solver, problem, lines, all_opt, check, schedule)
             if not p:
@@ -133,7 +133,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
            solver_timeout(solver, problem, schedule)
            continue
 
-      # Restart a solver if its solution is obsolete and its restart time is 
+      # Restart a solver if its solution is obsolete and its restart time is
       # actually expired.
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
@@ -156,19 +156,19 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
           continue
 
 def presolve(
-  schedule, problem, cores, mem_limit, all_opt, check, 
+  schedule, problem, cores, mem_limit, all_opt, check,
   extractor = None, k = 0, kb = None, lims = None
 ):
   """
   Runs (possibly in parallel on different cores) the pre-solving phase.
-  A part from the (possibly empty) static schedule execution, by properly 
-  setting the "extractor", "k", "kb", and "lims" this function also allows to 
-  extract the feature vector and then to compute the k-nearest neighbours of 
-  the problem (as soon as a free core is available). 
+  A part from the (possibly empty) static schedule execution, by properly
+  setting the "extractor", "k", "kb", and "lims" this function also allows to
+  extract the feature vector and then to compute the k-nearest neighbours of
+  the problem (as soon as a free core is available).
   This function returns a triplet (t, n, b) where:
     t  is the time taken by the whole pre-solving phase;
     n  is the (possibly empty) neighborhood of the problem;
-    b  is the (possibly empty) black list the solvers that failed during the 
+    b  is the (possibly empty) black list the solvers that failed during the
        pre-solving phase.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
@@ -179,17 +179,17 @@ def presolve(
     neigh_computed = False
   else:
     neigh_computed = True
-    
+
   # Launch the solvers (if any).
   for _ in range(cores):
     if schedule:
       solver = schedule.pop(0)
       run_solver(solver, problem)
-      
+
   # Loop for dealing with solvers execution.
   while RUNNING_SOLVERS or not neigh_computed:
     time.sleep(SLEEP_TIME)
-    
+
     if not neigh_computed and len(RUNNING_SOLVERS) < cores:
       print '% Extracting features...'
       feat_vector = extractor.extract_features([problem, lims])
@@ -224,7 +224,7 @@ def presolve(
       if solver.process.poll() is not None:
         if solver.status == 'flatzinc':
           # Sometimes not all the lines are read from solver output.
-          lines = read_lines(solver.process)  
+          lines = read_lines(solver.process)
           if lines:
             p = process_output(solver, problem, lines, all_opt, check, schedule)
             if not p:
@@ -240,7 +240,7 @@ def presolve(
            solver_timeout(solver, problem, schedule)
            continue
 
-      # Restart a solver if its solution is obsolete and its restart time is 
+      # Restart a solver if its solution is obsolete and its restart time is
       # actually expired.
       if solver.status == 'flatzinc' \
       and problem.bound_better_than(solver.obj_value) \
@@ -364,7 +364,7 @@ def check_solution(solver, problem, solution, bound):
   cmd = solv.fzn_exec + ' ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
-  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out: 
+  if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
     return False
 
   return True
@@ -529,7 +529,7 @@ def solver_timeout(solver, problem, schedule):
     new_solver = schedule.pop(0)
     if new_solver.timeout == 0:
       # In this case, all the scheduled solvers have been run (or are running on
-      # another core). This happens at time t >= T, where T is the timeout T of 
+      # another core). This happens at time t >= T, where T is the timeout T of
       # the SUNNY algorithm.
       if len(RUNNING_SOLVERS) == 1:
         print '% Solver not interrupted: it is the only running solver'
@@ -569,7 +569,7 @@ def suspend_solver(solver):
   send_signal_solver(signal.SIGSTOP, solver)
   SUSP_SOLVERS.append(solver)
   RUNNING_SOLVERS.remove(solver)
-  
+
 def resume_solver(solver, timeout):
   """
   Resumes a solver, and run it for timeout seconds.
@@ -587,7 +587,7 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   Initializes a schedule, making it ready to be executed.
   """
   global TMP_FILES
-  running_schedule = []  
+  running_schedule = []
   for (s, t) in schedule:
     so = eval(s)
     fzn_path = tmp_id + '.' + s + '.fzn'
@@ -615,12 +615,12 @@ def main(args):
     UPPER_BOUND, check = parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt 
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
-    
+
     print '%%%%% Pre-solving %%%%%'
     if cores >= len(pfolio):
-      # If the number of specified cores exceeds the portfolio size, then no 
+      # If the number of specified cores exceeds the portfolio size, then no
       # prediction is needed: we simply allocate a core per solver.
       print '% Features extraction not needed!'
       extractor = None
@@ -650,7 +650,7 @@ def main(args):
       print '% SUNNY sequential schedule:',seq_sched
       if len(seq_sched) <= cores:
         print '% Schedule size <= No. of cores! No re-scheduling needed!'
-        par_sched = [(s, float('+inf')) for (s, t) in 
+        par_sched = [(s, float('+inf')) for (s, t) in
           sorted(seq_sched, key = lambda x : x[0], reverse = True)
         ]
         not_sched = [
@@ -661,7 +661,7 @@ def main(args):
         print '% Parallelizing schedule on',cores,'cores'
         par_sched = parallelize(seq_sched, cores, timeout)
     par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
-    print '% SUNNY parallel schedule:',par_sched    
+    print '% SUNNY parallel schedule:',par_sched
     schedule = init_schedule(
       par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )

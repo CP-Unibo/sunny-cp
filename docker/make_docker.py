@@ -7,7 +7,7 @@ import shutil
 from subprocess import Popen
 
 DEF_PFOLIO = set([
-  'choco', 'chuffed', 'g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc', 
+  'choco', 'chuffed', 'g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc',
   'gecode', 'haifacsp', 'izplus', 'minisatid', 'ortools'
 ])
 
@@ -51,7 +51,7 @@ def add(solver, dockerfile):
     dockerfile.write('cd .. &&')
     dockerfile.write('rm -rf trunk\n')
   dockerfile.write('COPY ./' + solver + ' /sunny-cp/solvers/' + solver +'\n')
-    
+
 def main(args):
   print '% Preparing Dockerfile...',
   docker_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])

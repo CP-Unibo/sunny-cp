@@ -1,5 +1,5 @@
 """
-Module for generating all the subsets of a given set of elements. The following 
+Module for generating all the subsets of a given set of elements. The following
 code draws inspiration from:
 
   http://visualstudiomagazine.com/articles/2012/08/01/biginteger-data-type.aspx
@@ -7,22 +7,22 @@ code draws inspiration from:
 """
 
 def binom(n, k):
-  """ 
-  Computes the binomial coefficient "n choose k" 
+  """
+  Computes the binomial coefficient "n choose k"
   """
   if n < 0 or k < 0:
     raise Exception("Error: Negative argument in binomial coefficient!")
   if n < k:
     return 0
-  if n == k: 
+  if n == k:
     return 1
   if k == 0:
     return 1
   if k < n - k:
-    delta = n - k 
+    delta = n - k
     iMax = k
   else:
-    delta = k 
+    delta = k
     iMax = n - k
   ans = delta + 1
   for i in range(2, iMax + 1):
@@ -30,7 +30,7 @@ def binom(n, k):
   return ans
 
 def largestV(a, b, x):
-  """ 
+  """
   Helper function for get_subset
   """
   v = a - 1
@@ -39,7 +39,7 @@ def largestV(a, b, x):
   return v
 
 def get_subset(h, k, elements):
-  """ 
+  """
   Returns the (h+1)-th element, w.r.t. the lexicographic ordering, among all the
   subsets of elements having cardinality k.
   """
@@ -49,9 +49,9 @@ def get_subset(h, k, elements):
   a = n
   b = k
   # x is the "dual" of h.
-  x = maxM - h 
+  x = maxM - h
   for i in range(0, k):
-    ans[i] = largestV(a, b, x)    
+    ans[i] = largestV(a, b, x)
     x = x - binom(ans[i], b)
     a = ans[i]
     b = b - 1
@@ -63,7 +63,7 @@ def get_subset(h, k, elements):
 # Dummy testing.
 from time import clock
 elements = [
-  'S_1', 'S_2', 'S_3', 'S_4', 'S_5', 'S_6', 
+  'S_1', 'S_2', 'S_3', 'S_4', 'S_5', 'S_6',
   'S_7', 'S_8', 'S_9', 'S_10', 'S_11', 'S_12'
 ]
 n = len(elements)

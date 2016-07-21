@@ -5,11 +5,11 @@ Module for computing and parallelizing the solvers schedule of SUNNY algorithm.
 import csv
 from math import sqrt
 from combinations import *
-  
+
 def get_neighbours(feat_vector, k, kb):
   """
-  Returns a dictionary (inst_name, inst_info) of the k instances closer to the 
-  feat_vector in the knowledge base kb. If k <= 0, then k is set to the square 
+  Returns a dictionary (inst_name, inst_info) of the k instances closer to the
+  feat_vector in the knowledge base kb. If k <= 0, then k is set to the square
   root of the knowledge base size.
   """
   reader = csv.reader(open(kb, 'r'), delimiter = '|')
@@ -27,7 +27,7 @@ def get_neighbours(feat_vector, k, kb):
   if k <= 0:
     k = int(round(sqrt(n)))
   return dict((inst, infos[inst]) for (d, inst) in distances[0 : k])
- 
+
 def euclidean_distance(fv1, fv2):
   """
   Computes the Euclidean distance between two feature vectors fv1 and fv2.
@@ -41,7 +41,7 @@ def euclidean_distance(fv1, fv2):
 
 def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
   """
-  Given the neighborhood of a given CSP and the runtime infos, returns the 
+  Given the neighborhood of a given CSP and the runtime infos, returns the
   corresponding SUNNY schedule.
   """
   solved = {}
@@ -79,7 +79,7 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
           best_pfolio = sub_pfolio
     if old_pfolio == best_pfolio:
       break
-  # n is the number of instances solved by each solver plus the instances 
+  # n is the number of instances solved by each solver plus the instances
   # that no solver can solver.
   n = sum([len(solved[s]) for s in best_pfolio]) + (k - max_solved)
   schedule = {}
@@ -97,7 +97,7 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
     else:
       schedule[backup]  = timeout - tot_time
   sorted_schedule = sorted(
-    schedule.items(), 
+    schedule.items(),
     key = lambda x: times[x[0]]
   )
   assert(round(sum(t for (s, t) in sorted_schedule)) <= timeout)
@@ -105,13 +105,13 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
 
 def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
   """
-  Given the neighborhood of a given COP and the runtime infos, returns the 
+  Given the neighborhood of a given COP and the runtime infos, returns the
   corresponding SUNNY schedule.
   """
   scores = {}
   times  = {}
   areas  = {}
-  
+
   for solver in pfolio:
     scores[solver] = []
     times[solver] = 0.0
@@ -119,7 +119,7 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
   for inst, item in neighbours.items():
     item = eval(item)
     for solver in pfolio:
-      scores[solver].append(item[solver]['score']) 
+      scores[solver].append(item[solver]['score'])
       times[solver] += item[solver]['time']
       areas[solver] += item[solver]['area']
   max_score = 0
@@ -152,7 +152,7 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
           best_pfolio = sub_pfolio
     if old_pfolio == best_pfolio:
       break
-  # n is the number of instances solved by each solver plus the instances 
+  # n is the number of instances solved by each solver plus the instances
   # that no solver can solver.
   n = sum([sum(scores[s]) for s in best_pfolio]) + (k - max_score)
   schedule = {}

@@ -1,5 +1,5 @@
 '''
-Module for creating a Solver object for each constituent solver of the 
+Module for creating a Solver object for each constituent solver of the
 portfolio by automatically generating the src/pfolio_solvers.py file,
 according to the conventions specified in the README file of this folder.
 '''

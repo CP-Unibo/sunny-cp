@@ -1,12 +1,12 @@
 '''
-Module for defining a feature extractor that computes the feature vector of a 
+Module for defining a feature extractor that computes the feature vector of a
 problem. A feature extractor is simply a class that implements the static method
-extract_features(args) to return the feature vector. 
-The default extractor is mzn2feat, but the user can define its own extractor by 
+extract_features(args) to return the feature vector.
+The default extractor is mzn2feat, but the user can define its own extractor by
 simply implementing a corresponding new class (see example below).
 
-Actually using a static class is no more powerful than using only functions. 
-This is done for keeping all the auxiliary functions in the same class and for 
+Actually using a static class is no more powerful than using only functions.
+This is done for keeping all the auxiliary functions in the same class and for
 possible future extensions.
 '''
 
@@ -17,7 +17,7 @@ import json
 import psutil
 
 class mzn2feat:
-  
+
   @staticmethod
   def extract_features(args):
     problem = args[0]
@@ -55,8 +55,8 @@ class mzn2feat:
   @staticmethod
   def normalize(feat_vector, lims, lb = -1, ub = 1, def_value = -1):
     """
-    Given a feature vector, it returns a normalized one in which constant 
-    features are removed and feature values are scaled in [lb, ub] by 
+    Given a feature vector, it returns a normalized one in which constant
+    features are removed and feature values are scaled in [lb, ub] by
     exploiting the information already computed in lims dictionary.
     """
     norm_vector = []
@@ -78,11 +78,11 @@ class mzn2feat:
           assert lb <= norm_val <= ub
         norm_vector.append(norm_val)
     return norm_vector
- 
+
 '''
 # Example.
 class new_extractor:
-  
+
   @staticmethod
   def extract_features(args):
     #args parsing and processing

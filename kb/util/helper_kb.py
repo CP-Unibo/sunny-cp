@@ -6,7 +6,7 @@ import os
 import csv
 import sys
 import json
-  
+
 def compute_infos(
   info_file, timeout, lb_score, ub_score, lb_area, ub_area, check
 ):
@@ -93,19 +93,19 @@ def compute_infos(
         val    = item[solver]['val']
         time   = item[solver]['time']
         item[solver]['score'] = get_score(
-          info, val, lb_score, ub_score, min_val[inst], max_val[inst], goal, 
+          info, val, lb_score, ub_score, min_val[inst], max_val[inst], goal,
           check
         )
         #print inst, solver
         item[solver]['area'] = get_area(
-          info, lb_area, ub_area, min_values[inst], max_values[inst], goal, 
+          info, lb_area, ub_area, min_values[inst], max_values[inst], goal,
           time, timeout, values, check
         )
         del item[solver]['values']
         del item[solver]['info']
         del item[solver]['goal']
         del item[solver]['val']
-  
+
   return kb_csp, kb_cop
 
 def check_invariant(inv, a, b, inst, solv):
@@ -149,7 +149,7 @@ def get_area(
   ])
   n = len(scaled_vals) - 1
   a = scaled_vals[0][0]
-  #print a, 
+  #print a,
   for i in range(0, n):
     a += scaled_vals[i][1] * (scaled_vals[i + 1][0] - scaled_vals[i][0])
   if info == 'opt':
@@ -205,7 +205,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
       kb_row.append(info)
       writer.writerow(kb_row)
       continue
-      
+
     if not lims:
       for i in range(0, len(feat_vector)):
         lims[i] = [feat_vector[i], feat_vector[i]]
@@ -237,7 +237,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
           min_val = lims[i][0]
           max_val = lims[i][1]
           if min_val == max_val:
-            # Don't remove constant features but scale values. 
+            # Don't remove constant features but scale values.
             new_val = lb
           else:
             # Remove constants and scale.

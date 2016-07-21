@@ -1,41 +1,41 @@
 '''
 csv2kb: builds a knowledge base starting from corresponding CSV files.
-  
-Usage: python csv2kb.py [OPTIONS] <KB_NAME> <FEAT_FILE> <INFO_FILE> 
+
+Usage: python csv2kb.py [OPTIONS] <KB_NAME> <FEAT_FILE> <INFO_FILE>
 
 Options:
 
-  -h, --help                  
+  -h, --help
     Print this message
-    
+
   -t <timeout>
-    Solving timeout (in seconds) used for collecting the knowledge base runtime 
+    Solving timeout (in seconds) used for collecting the knowledge base runtime
     information in the <INFO_FILE>. By default, T = 1800.
-  
+
   -p <path>
-    Creates the folder <KB_NAME> containing the knowledge base at the specified 
+    Creates the folder <KB_NAME> containing the knowledge base at the specified
     path. The default path is in kb folder
-  
+
   -f <lb>,<ub>
     Scales all the features of <FEAT_FILE> in the range [lb, ub], with lb < ub.
     By default, lb = -1 and ub = 1.
-    
+
   -s <lb>,<ub>
     Computes the solving score of the COPs in <INFO_FILE> by scaling the partial
-    solutions in the range [lb, ub], where 0 <= lb < lb <= 1. 
+    solutions in the range [lb, ub], where 0 <= lb < lb <= 1.
     By default, lb = 0.25 and ub = 0.75
-    
+
   -a <lb>,<ub>
-    Computes the solving area of the COPs in <INFO_FILE> by scaling the partial 
-    solutions in the range [lb, ub], where 0 <= lb < lb <= 1. 
+    Computes the solving area of the COPs in <INFO_FILE> by scaling the partial
+    solutions in the range [lb, ub], where 0 <= lb < lb <= 1.
     By default, lb = 0.25 and ub = 0.75
-  
+
   --no-scale
     Not scales the features.
-  
+
   --no-const
     Not removes constant features.
-    
+
   --no-check
     Not performs consistency checks.
 '''
@@ -80,7 +80,7 @@ def main(args):
   scale = True
   const = True
   check = True
-  
+
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
@@ -137,7 +137,7 @@ def main(args):
     )
     # Process the features and make the knowledge base.
     make_kb(
-      kb_path, kb_name, feat_file, lb_feat, ub_feat, 
+      kb_path, kb_name, feat_file, lb_feat, ub_feat,
       scale, const, kb_csp, kb_cop
     )
   except Exception as e:
