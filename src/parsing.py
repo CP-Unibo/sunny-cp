@@ -47,9 +47,9 @@ Portfolio Options
     Set the backup solver of the portfolio. If the backup solver is not in the
     specified portfolio, the first solver of the portfolio is selected. The
     default backup solver is chuffed.
-  --g12
-    Use just the solvers of G12 platform, by using g12lazyfed as backup solver.
-    This is equivalent to set -P gecode,g12cbc,g12lazyfd,g12fd and -b gecode.
+  --mzn
+    Use just the solvers of MiniZinc bundle, by using gecode as backup solver.
+    This is equivalent to set -P gecode,g12lazyfd,g12fd,g12cbc and -b gecode.
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. The default
     knowledge base is in kb/all_T1800. For more details, see the README file in
@@ -359,7 +359,7 @@ def parse_arguments(args):
           item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
-    elif o == '--g12':
+    elif o == '--mzn':
       pfolio = ['gecode', 'g12lazyfd', 'g12fd', 'g12cbc']
       backup = 'gecode'
     elif o == '--check-solvers':
@@ -405,7 +405,7 @@ def get_args(args, pfolio):
     csp_opts += ['csp-a', 'csp-f']
     cop_opts += ['cop-a', 'cop-f']
     long_options = [o + '=' for o in long_options]
-    long_noval  = ['switch-search', 'help', 'keep', 'g12']
+    long_noval  = ['switch-search', 'help', 'keep', 'mzn']
     long_noval += ['switch-search-' + s for s in pfolio]
     long_noval += ['csp-' + o for o in long_noval]
     long_noval += ['cop-' + o for o in long_noval]
