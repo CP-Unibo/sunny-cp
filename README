@@ -9,10 +9,11 @@ It essentially implements the SUNNY algorithm described in [1][2][3] and extends
 its sequential version [4] that attended the MiniZinc Challenge 2014 [6].
 sunny-cp is built on top of state-of-the-art constraint solvers, including:
 Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/CBC, Gecode, HaifaCSP,
-iZplus, MinisatID, Opturion, OR-Tools. These solvers are not included by default
-in sunny-cp, except for those already included in MiniZinc 2.0 (i.e., G12/CBC,
-G12/LazyFD, and G12/FD). However, sunny-cp provides utilities for adding new
-solvers to the portfolio and for customizing their settings (see below).
+JaCoP, iZplus, MinisatID, Mistral, Opturion, OR-Tools, Picat. These solvers are 
+not included by default in sunny-cp, except for those already included in the 
+MiniZinc bundle (i.e., G12/CBC, G12/LazyFD, G12/FD, and Gecode).
+However, sunny-cp provides utilities for adding new solvers to the portfolio and
+for customizing their settings (see below).
 
 In a nutshell, sunny-cp relies on two sequential steps:
 
@@ -30,31 +31,30 @@ MiniZinc Challenge 2015 [6]. This version is a minor improvement of sunny-cp 2.0
 AUTHORS
 =======
 
-sunny-cp is developed by Roberto Amadini (University of Bologna/Lab.Focus INRIA)
-and Jacopo Mauro (University of Oslo). For any question or information, please
-contact us at:
+sunny-cp is developed by Roberto Amadini (University of Melbourne) and Jacopo
+Mauro (University of Oslo). For any question or information, please contact us:
 
-  amadini at cs.unibo.it
+  roberto.amadini at unimelb.edu.au
 
-  jmauro  at ifi.uio.no
+          jmauro  at ifi.uio.no
 
 
 PREREQUISITES
 =============
 
-sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully
-portable on other platforms. Some of the main requirements are:
+sunny-cp is tested on 64-bit machines running Ubuntu Operating System, and not 
+yet fully portable on other platforms. Some of the main requirements are:
 
-+ Python 2.x
++ Python >= 2.x
   https://www.python.org/
 
-+ MiniZinc 2.x
++ MiniZinc >= 2.0.13
   http://www.minizinc.org/
 
-+ mzn2feat 1.x
++ mzn2feat >= 1.2.1
   https://github.com/CP-Unibo/mzn2feat
 
-+ psutil 2.x
++ psutil >= 2.x
   https://pypi.python.org/pypi/psutil
 
 
@@ -80,15 +80,15 @@ SOLVERS
 =======
 
 By default, the portfolio of sunny-cp consists of the solvers included in the
-MiniZinc 2.0 suite, namely G12/CBC, G12/LazyFD, and G12/FD. However, sunny-cp
-provides utilities for adding new solvers to the portfolio and for customizing
-their settings.
+MiniZinc bundle, namely G12/CBC, G12/LazyFD, G12/FD, and Gecode. However,
+sunny-cp provides utilities for adding new solvers to the portfolio and for 
+customizing their settings.
 
 Note that now there is no more a default portfolio: when not better specified,
 the default portfolio consists of the solvers defined in the sunny-cp/solvers
 directory. For more details, see the README file in the sunny-cp/solvers folder
-and the sunny-cp usage. A part from the solvers already included in MiniZinc 2.0
-sunny-cp used also other solvers:
+and the sunny-cp usage. A part from the solvers already included in MiniZinc 
+suite, sunny-cp used also other solvers:
 
 + Choco
   http://choco-solver.org/
@@ -100,6 +100,7 @@ sunny-cp used also other solvers:
   http://www.minizinc.org/g12distrib.html (see MiniZinc version 1.6)
 
 + G12/Gurobi (not free)
+  http://www.gurobi.com/
 
 + Gecode
   http://www.gecode.org/
@@ -107,17 +108,26 @@ sunny-cp used also other solvers:
 + HaifaCSP
   http://tx.technion.ac.il/~mveksler/HCSP/index.html
 
++ JaCoP
+  http://jacop.osolpro.com/
+
 + iZplus
   http://www.constraint.org/ja/izc_download.html
 
 + MinisatID
   http://dtai.cs.kuleuven.be/krr/software/minisatid
 
++ Mistral
+  http://homepages.laas.fr/ehebrard/mistral.html
+
 + Opturion (not free)
   http://www.opturion.com
 
 + OR-Tools
   https://code.google.com/p/or-tools/
+
++ Picat
+  http://picat-lang.org/
 
 Note that the sunny-cp/docker directory already contains the binaries and the
 solver redefitions of a number of freely available solvers.
@@ -158,6 +168,8 @@ the file src/pfolio_solvers.py containing an object for each installed solver.
 
 INSTALLATION WITH DOCKER
 ========================
+
+TODO: Update docker!
 
 An alternative way to deploy sunny-cp is by using Docker (www.docker.com).
 Assuming Docker is installed, the first step is running make_docker.py script in
@@ -205,7 +217,7 @@ sunny-cp extracts a feature vector of the problem in order to apply the k-NN
 algorithm for determining the solvers schedule to be run in the following
 solving phase. By default, the feature vector is extracted by mzn2feat tool.
 sunny-cp provides the sources of this tool: for its installation, decompress the
-mzn2feat-1.2.tar.bz2 archive and follow the instruction in the README file of
+mzn2feat-1.2.1.tar.bz2 archive and follow the instruction in the README file of
 that folder. The sources of mzn2feat extractor are also available at
 https://github.com/CP-Unibo/mzn2feat. Moreover, the user can define its own
 extractor by implementing a corresponding class in src/features.py
@@ -246,9 +258,8 @@ ACKNOWLEDGMENTS
 ===============
 
 We would like to thank the staff of the Optimization Research Group of NICTA
-(National ICT of Australia) for allowing us to use G12/Gurobi, as
-well as for granting us the computational resources needed for building and
-testing sunny-cp.
+(National ICT of Australia) for allowing us to use G12/Gurobi, as well as for
+granting us the computational resources needed for building and testing sunny-cp.
 
 
 REFERENCES
