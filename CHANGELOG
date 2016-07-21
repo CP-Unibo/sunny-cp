@@ -17,4 +17,16 @@ Minor bugs and changes:
   - Avoid to create a copy of MiniZinc model
   - Avoid to set SUNNY_HOME environment variable
   - Bug fixing and cosmetic changes.
-  
+
+
+Version 2.2 (incoming)
+===========
+
+Major Changes:
+  - Included Gecode in the default solvers
+  - New supported solvers (docker) ???
+  - New default knoledge base ???
+
+Minor bugs and changes:
+  - Compatibility with mzn2feat 1.2
+  - Bug fixing and cosmetic changes.
