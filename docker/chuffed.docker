@@ -1,0 +1,8 @@
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+  git clone --depth=1 https://github.com/geoffchu/chuffed.git && \
+	mkdir chuffed_exec && \
+	mv chuffed/binary/linux/fzn_chuffed chuffed_exec && \
+	rm -rf chuffed && \
+	chmod 755 /solvers_exec/chuffed_exec/fzn_chuffed
+
