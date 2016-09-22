@@ -9,38 +9,47 @@
 predicate cumulative(array[int] of var int: s,
                      array[int] of var int: d,
                      array[int] of var int: r, var int: b) =
-    assert(index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
+    assert(
+        index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
         "cumulative: the 3 array arguments must have identical index sets",
-        assert(lb_array(d) >= 0 /\ lb_array(r) >= 0,
-            "cumulative: durations and resource usages must be non-negative",
-	(if is_fixed(d) /\ is_fixed(r) /\ is_fixed(b) then
-		chuffed_cumulative(s, fix(d), fix(r), fix(b))
-	else
-		decomp_cumulative(s, d, r, b)
-	endif)));
+        forall(i in index_set(d))(d[i] >= 0 /\ r[i] >= 0)
+	/\  if is_fixed(d) /\ is_fixed(r) /\ is_fixed(b) then
+		    chuffed_cumulative(s, fix(d), fix(r), fix(b))
+	    else
+		    chuffed_cumulative_vars(s, d, r, b)
+	    endif
+    );
 
+
+predicate cumulative_cal(array[int] of var int: s,
+                     array[int] of var int: d,
+                     array[int] of var int: r, var int: b,
+                     array[int,int] of int: cal,
+                     array[int] of int: tc, int: rho, int: resCal) =
+    let {
+        int: index1 = card(index_set_1of2(cal)),
+        int: index2 = card(index_set_2of2(cal)),
+        set of int: times = 0..index2-1
+    } in
+    assert(
+       index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
+       "cumulative: the 3 array arguments must have identical index sets",
+            chuffed_cumulative_cal(s, d, r, b, index1, index2, cal, tc, rho, resCal)
+    
+ %   forall( t in times ) (
+  %  b >= sum( i in index_set(s) ) (
+ %   bool2int( s[i] <= t /\ t < s[i] + d[i] ) * (cal[tc[i],t+1] + (1 - cal[tc[i],t+1]) * rho)* r[i] 
+ %   )
+);
 
 	% Global cumulative propagator
 	%
 predicate chuffed_cumulative(array[int] of var int: s, array[int] of int: d,
 	array[int] of int: r, int: b);
 
-	% Decomposition
-	%
-predicate decomp_cumulative(array[int] of var int: s,
-                     		array[int] of var int: d,
-                     		array[int] of var int: r, var int: b) =
-	(
-       	let { 
-          	set of int: tasks = 
-            	{i | i in index_set(s) where ub(r[i]) > 0 /\ ub(d[i]) > 0},
-          	set of int: times = lb_array(s) ..
-				max([ub(s[i]) + ub(d[i]) | i in tasks])
-     	} in
-        forall(t in times) (
-        	sum(i in tasks) (
-				r[i] * bool2int(s[i] <= t /\ t < s[i] + d[i])
-            ) <= b
-		)
-	);
+predicate chuffed_cumulative_vars(array[int] of var int: s, array[int] of var int: d,
+	array[int] of var int: r, var int: b);
+
+predicate chuffed_cumulative_cal(array[int] of var int: s, array[int] of var int: d,
+	array[int] of var int: r, var int: b, int: index1, int: index2, array[int,int] of int: cal, array[int] of int: tc, int: rho, int: resCal);
 
