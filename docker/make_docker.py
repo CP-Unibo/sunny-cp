@@ -7,51 +7,28 @@ import shutil
 from subprocess import Popen
 
 DEF_PFOLIO = set([
-  'choco', 'chuffed', 'g12cpx', 'g12lazyfd', 'g12fd', 'g12cbc',
-  'gecode', 'haifacsp', 'izplus', 'minisatid', 'ortools'
+	'g12lazyfd', 'g12fd', 'g12cbc',	'gecode',
+  'choco', 'chuffed',
+  'haifacsp', 'izplus', 'minisatid', 'ortools'
 ])
 
-def add(solver, dockerfile):
-  dockerfile.write('\n\n# Install ' + solver + '\n')
-  if solver == 'choco':
-    dockerfile.write('COPY ./choco_exec /solvers_exec/choco_exec\n')
-    dockerfile.write('RUN cd /solvers_exec/choco_exec && ')
-    dockerfile.write('wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-3.3.0/choco-parsers-3.3.0-with-dependencies.jar\n')
-    dockerfile.write('COPY ./choco /sunny-cp/solvers/choco\n')
-    dockerfile.write('ENV PATH /solvers_exec/choco_exec:$PATH\n')
-  elif solver == 'gecode':
-    dockerfile.write('RUN cd /solvers_exec && ')
-    dockerfile.write('wget http://www.gecode.org/download/gecode-4.4.0.tar.gz && ')
-    dockerfile.write('tar -zxvf gecode-4.4.0.tar.gz && ')
-    dockerfile.write('cd gecode-4.4.0 && ')
-    dockerfile.write('./configure --disable-examples --disable-set-vars --prefix=/solvers_exec/gecode-4.4.0 && ')
-    dockerfile.write('make && make install\n')
-    dockerfile.write('ENV PATH /solvers_exec/gecode-4.4.0/bin:$PATH\n')
-    dockerfile.write('ENV LD_LIBRARY_PATH=/solvers_exec/gecode-4.4.0/lib:$LD_LIBRARY_PATH\n')
-  elif solver == 'minisatid':
-    dockerfile.write('RUN cd /solvers_exec && ')
-    dockerfile.write('wget https://dtai.cs.kuleuven.be/krr/files/software/minisatid/minisatid-3.11.0-source.zip && ')
-    dockerfile.write('unzip minisatid-3.11.0-source.zip && ')
-    dockerfile.write('mkdir minisatid_exec && ')
-    dockerfile.write('cd minisatid_exec && ')
-    dockerfile.write('cmake /solvers_exec/krr-minisatid-869bec4a8bfb -DCMAKE_INSTALL_PREFIX=./ -DCMAKE_BUILD_TYPE="Release" && ')
-    dockerfile.write('make -j 4 && make install && ')
-    dockerfile.write('rm -rf /solvers_exec/krr-minisatid-869bec4a8bfb && ')
-    dockerfile.write('rm -rf /solvers_exec/minisatid-3.11.0-source.zip\n')
-    dockerfile.write('ENV PATH /solvers_exec/minisatid_exec/bin:$PATH\n')
-  elif solver == 'chuffed':
-    dockerfile.write('RUN cd /solvers_exec && ')
-    dockerfile.write('git clone https://github.com/geoffchu/chuffed &&')
-    dockerfile.write('cd chuffed &&')
-    dockerfile.write('mkdir build &&')
-    dockerfile.write('cd trunk &&')
-    dockerfile.write('cmake -DCMAKE_INSTALL_PREFIX:PATH=../build &&')
-    dockerfile.write('make &&')
-    dockerfile.write('make install &&')
-    dockerfile.write('cd .. &&')
-    dockerfile.write('rm -rf trunk\n')
-  dockerfile.write('COPY ./' + solver + ' /sunny-cp/solvers/' + solver +'\n')
 
+
+def add(solver, dockerfile):
+  	dockerfile.write('\n\n# Install ' + solver + '\n')
+  	script_directory = os.path.dirname(os.path.realpath(__file__))
+  	docker_file_map = {
+  		'choco' : 'choco.docker'
+  		}
+#,
+#  	'minisatid' : 'minisat'
+#  	'chuffed' : "chuffed'
+  	if solver in docker_file_map:
+  	  	with open(script_directory + "/" + docker_file_map[solver], "r") as f:
+  	  	  	for line in f:
+  	  	  		dockerfile.write(line)
+    		dockerfile.write('COPY ./' + solver + ' /sunny-cp/solvers/' + solver +'\n')
+    
 def main(args):
   print '% Preparing Dockerfile...',
   docker_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
@@ -65,9 +42,7 @@ def main(args):
       sys.exit(2)
     dockerfile.write('\n\n# create directory where to save the solvers executables\n')
     dockerfile.write('RUN mkdir /solvers_exec\n')
-    dockerfile.write('# install utilities\n')
-    dockerfile.write('RUN echo deb http://http.debian.net/debian jessie-backports main >> /etc/apt/sources.list && apt-get update && apt-get install -y unzip openjdk-8-jre-headless cmake && rm -rf /var/lib/apt/lists/*\n')
-    for solver in pfolio - set(['g12lazyfd', 'g12fd', 'g12cbc']):
+    for solver in pfolio - set(['g12lazyfd', 'g12fd', 'g12cbc', 'gecode']):
       add(solver, dockerfile)
   dockerfile.write('\n\n# install sunny-cp\n')
   dockerfile.write('RUN cd /sunny-cp && bash install\n')

@@ -3,23 +3,24 @@ MAINTAINER Jacopo Mauro
 
 # Install minizinc suite
 RUN cd / && \
-  wget https://github.com/MiniZinc/libminizinc/releases/download/2.0.6/minizinc-2.0.6-linux64.tar.gz && \
-  tar -zxvf minizinc-2.0.6-linux64.tar.gz && \
-  rm -rf minizinc-2.0.6-linux64.tar.gz
-ENV PATH /minizinc-2.0.6/bin:$PATH
+  wget https://github.com/MiniZinc/MiniZincIDE/releases/download/2.0.14/MiniZincIDE-2.0.14-bundle-linux-x86_64.tgz && \
+  tar -zxvf MiniZincIDE-2.0.14-bundle-linux-x86_64.tgz && \
+  rm -rf MiniZincIDE-2.0.14-bundle-linux-x86_64.tgz && \
+	mv MiniZincIDE-2.0.14-bundle-linux-x86_64 minizinc
+ENV PATH /minizinc:$PATH
 
 
 # Install packages for compiling the feature extractor
 RUN apt-get update && \
-  apt-get install -y flex bison && \
+  apt-get install -y flex bison qt5-default && \
   rm -rf /var/lib/apt/lists/*
 
     
 # Install feature extractor
 RUN cd / && \
-  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp && \
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
   cd /sunny-cp && \
-  tar -xjvf mzn2feat-1.1.2.tar.bz2 && \
+  tar -xjvf mzn2feat-1.2.1.tar.bz2 && \
   cd /sunny-cp/mzn2feat && \
   bash install --no-xcsp
 ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
