@@ -8,8 +8,8 @@ from subprocess import Popen
 
 DEF_PFOLIO = set([
 	'g12lazyfd', 'g12fd', 'g12cbc',	'gecode',
-  'choco', 'chuffed', 'haifacsp',
-  #, 'izplus', 'minisatid', 'ortools'
+  'choco', 'chuffed', 'haifacsp', 'minisatid'
+  #, 'izplus', , 'ortools'
 ])
 
 
@@ -21,6 +21,7 @@ def add(solver, dockerfile):
   		'choco' : 'choco.docker',
 			'chuffed' : 'chuffed.docker',
 			'haifacsp': 'haifacsp.docker',
+			'minisatid': 'minisatid.docker',
   		}
   	if solver in docker_file_map:
   	  	with open(script_directory + "/" + docker_file_map[solver], "r") as f:

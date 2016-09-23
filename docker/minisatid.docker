@@ -1,0 +1,10 @@
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	wget https://dtai.cs.kuleuven.be/krr/files/software/minisatid/minisatid-3.11.0-Linux.tar.gz && \
+	gzip -d minisatid-3.11.0-Linux.tar.gz && \
+	tar -xvf minisatid-3.11.0-Linux.tar && \
+	mv minisatid-3.11.0-Linux minisatid_exec && \
+	rm minisatid-3.11.0-Linux.tar.gz && \
+	rm minisatid-3.11.0-Linux.tar
+
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid_exec/lib
