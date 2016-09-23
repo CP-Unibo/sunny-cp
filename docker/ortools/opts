@@ -1,2 +1,2 @@
 all_opt = '-a'
-free_opt = '-free'
+free_opt  = '-f'

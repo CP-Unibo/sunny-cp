@@ -1,0 +1,6 @@
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	wget https://github.com/google/or-tools/releases/download/v4.4/or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
+	tar xvfz or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
+	rm or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
+	mv or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842 ortools_exec
