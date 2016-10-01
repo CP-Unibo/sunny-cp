@@ -7,8 +7,8 @@ import shutil
 from subprocess import Popen
 
 DEF_PFOLIO = set([
-	'g12lazyfd', 'g12fd', 'g12cbc',	'gecode',
-  'choco', 'chuffed', 'haifacsp', 'minisatid', 'mistral', 'ortools'
+	 'chuffed', 'g12lazyfd', 'g12fd', 'g12cbc',	'gecode',
+  'choco',  'haifacsp', 'minisatid', 'mistral', 'ortools'
   #, 'izplus', , 
 ])
 

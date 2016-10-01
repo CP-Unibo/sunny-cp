@@ -23,10 +23,7 @@ In a nutshell, sunny-cp relies on two sequential steps:
   2. SOLVING: consists in the parallel and cooperative execution of a number of
      the predicted solvers, selected by means of SUNNY algorithm.
 
-The version 2.0 of sunny-cp solver won the gold medal in the open category of
-MiniZinc Challenge 2015 [6]. This version is a minor improvement of sunny-cp 2.0
-(see the CHANGELOG for more details).
-
+sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015/6 [6].
 
 AUTHORS
 =======
@@ -130,7 +127,7 @@ suite, sunny-cp used also other solvers:
   http://picat-lang.org/
 
 Note that the sunny-cp/docker directory already contains the binaries and the
-solver redefitions of a number of freely available solvers.
+solver redefitions of a number of freely available/dowloadable solvers.
 G12/Gurobi is not publicly available; access has been kindly granted by NICTA
 Optimization Research Group of Melbourne (Australia). Note that CPX solver has
 been included in the MiniZinc suite until version 1.6, and no longer included
@@ -169,8 +166,6 @@ the file src/pfolio_solvers.py containing an object for each installed solver.
 INSTALLATION WITH DOCKER
 ========================
 
-TODO: Update docker!
-
 An alternative way to deploy sunny-cp is by using Docker (www.docker.com).
 Assuming Docker is installed, the first step is running make_docker.py script in
 the sunny-cp/docker folder:
@@ -178,13 +173,9 @@ the sunny-cp/docker folder:
   sunny-cp/docker$ python make_docker.py [solver1,solver2,...,solverN]
 
 where solver1,...,solverN is a list of the solvers to include in the portfolio.
-Actually, this list should be a sublist of the aforementioned freely available
-solvers, i.e.:
+Actually, this list must be a sublist of the available solvers.
+The first solver of the specified list is assumed to be the backup solver.
 
-  choco,chuffed,g12cpx,g12lazyfd,g12fd,g12cbc,gecode,haifacsp,izplus,minisatid,ortools
-
-The first solver of the specified list is assumed to be the backup solver. If no
-solver is specified, the default list g12lazyfd,g12fd,g12cbc is set.
 The make_docker script generates a corresponding Dockerfile that can be used for
 later building and executing the Docker image. However, if you only need the
 basic installation there is no need to run the python script: just use the file
@@ -232,8 +223,9 @@ computation. Unlike the previous knowledge bases, that contained thousands of
 instances, now the default knowledge base is far smaller: it consists of 76 CSP
 instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
 However, the user has the possibility of defining its own knowledge bases.
-The default sunny-cp knowledge base is sunny-cp/kb/mznc1215. For more details,
-see the README file in sunny-cp/kb folder.
+The default sunny-cp knowledge base is sunny-cp/kb/mznc1215. Moreover, also the 
+knowledge base mznc15 used in the MiniZinc Challenge 2016 is available.
+For more details, see the README file in sunny-cp/kb folder.
 
 
 TESTING
