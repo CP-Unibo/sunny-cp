@@ -24,9 +24,11 @@ Version 2.2 (incoming)
 
 Major Changes:
   - Included Gecode in the default solvers
-  - New supported solvers (docker) ???
-  - New default knoledge base ???
+  - New solvers
+  - New knoledge base
+  - Changed docker policy: only solvers publicly available are included
 
 Minor bugs and changes:
   - Compatibility with mzn2feat 1.2
+  - fzn-exec are compressed into fzn-exec.tar.gz
   - Bug fixing and cosmetic changes.

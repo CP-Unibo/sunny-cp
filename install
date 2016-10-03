@@ -54,6 +54,15 @@ fi
 echo 'OK!'
 
 export SUNNY_HOME=$PWD
+echo 'Extracting fzn-exec.tar.gz for:'
+for solver in g12cbc g12fd g12lazyfd gecode
+do
+  cd $SUNNY_HOME/solvers/$solver
+  echo '--- '$solver
+  tar xf fzn-exec.tar.gz
+done
+
+cd $SUNNY_HOME
 echo 'Checking solvers installation...'
 python solvers/make_pfolio.py
 
