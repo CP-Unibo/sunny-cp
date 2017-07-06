@@ -46,6 +46,7 @@ yet fully portable on other platforms. Some of the main requirements are:
   https://www.python.org/
 
 + MiniZinc >= 2.0.13
+  # FIXME: MiniZinc >= 2.1.5
   http://www.minizinc.org/
 
 + mzn2feat >= 1.2.1
