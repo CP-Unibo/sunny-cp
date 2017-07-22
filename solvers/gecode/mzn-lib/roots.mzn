@@ -6,8 +6,8 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2012-03-19 11:56:37 +1100 (Mon, 19 Mar 2012) $ by $Author: tack $
-%     $Revision: 12583 $
+%     $Date: 2016-05-23 22:18:23 +0200 (Mon, 23 May 2016) $ by $Author: schulte $
+%     $Revision: 15073 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -56,7 +56,7 @@ predicate roots(array[int] of var int: x, var set of int: s,
         else let {
             array[1..max(ub(t))] of var set of 0..max(index_set(x)): y,
         } in
-            int_set_channel(x,y) 
+            int_set_channel(x,y)
             /\
             gecode_array_set_element_union(t,y,s)
         endif

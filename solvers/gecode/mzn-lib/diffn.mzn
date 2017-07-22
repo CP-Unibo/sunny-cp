@@ -6,7 +6,7 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2011-06-04 01:27:50 +1000 (Sat, 04 Jun 2011) $ by $Author: tack $
+%     $Date: 2011-06-03 17:27:50 +0200 (Fri, 03 Jun 2011) $ by $Author: tack $
 %     $Revision: 12041 $
 %
 %  This file is part of Gecode, the generic constraint

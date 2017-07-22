@@ -8,8 +8,8 @@
 %     Mikael Lagerkvist, 2009
 %
 %  Last modified:
-%     $Date: 2011-03-08 19:54:48 +1100 (Tue, 08 Mar 2011) $ by $Author: tack $
-%     $Revision: 11787 $
+%     $Date: 2016-05-23 22:18:23 +0200 (Mon, 23 May 2016) $ by $Author: schulte $
+%     $Revision: 15073 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -38,7 +38,7 @@
 
 predicate cumulative(array[int] of var int: s,
                      array[int] of var int: d,
-                     array[int] of var int: r, var int: b) =              
+                     array[int] of var int: r, var int: b) =
     assert(index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
         "cumulative: the 3 array arguments must have identical index sets",
         assert(lb_array(d) >= 0 /\ lb_array(r) >= 0,
