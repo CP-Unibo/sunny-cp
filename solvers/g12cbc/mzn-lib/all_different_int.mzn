@@ -12,7 +12,11 @@ predicate all_different_int(array[int] of var int: x) =
     let {
         array[int,int] of var 0..1: x_eq_d = eq_encode(x)
     } in (
+      if card(index_set(x) > 0) then
         forall(d in index_set_2of2(x_eq_d))( sum(i in index_set_1of2(x_eq_d))( x_eq_d[i,d] ) <= 1 )
+      else
+        true
+      endif
     );
 
 
