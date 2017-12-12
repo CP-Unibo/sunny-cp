@@ -9,6 +9,19 @@ RUN pip install \
 	psutil \
 	click
 
+# Install packages for compiling the feature extractor and minizin suite
+RUN apt-get update && \
+  apt-get install -y \
+    flex \
+		bison \
+		nano \
+        libqt5core5a \
+        libqt5gui5 \
+        libqt5network5 \
+        libqt5webkit5 \
+        libqt5widgets5 && \
+  rm -rf /var/lib/apt/lists/*
+
 # Install minizinc suite
 RUN cd / && \
   wget https://github.com/MiniZinc/MiniZincIDE/releases/download/2.1.6/MiniZincIDE-2.1.6-bundle-linux-x86_64.tgz && \
@@ -18,14 +31,7 @@ RUN cd / && \
 ENV PATH /minizinc:$PATH
 
 
-# Install packages for compiling the feature extractor
-RUN apt-get update && \
-  apt-get install -y \
-    flex \
-		bison \
-    && \
-    #qt5-default && \
-  rm -rf /var/lib/apt/lists/*
+
 
     
 # Install feature extractor
