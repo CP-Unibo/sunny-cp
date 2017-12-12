@@ -37,6 +37,53 @@ Mauro (University of Oslo). For any question or information, please contact us:
           mauro.jacopo  at gmail.com
 
 
+INSTALLATION WITH DOCKER
+========================
+
+To deploy sunny-cp it is possibel to use [Docker](www.docker.com).
+
+sudo docker pull jacopomauro/hyvarrec
+sudo docker run -d -p <PORT>:9001 --name hyvarrec_container jacopomauro/hyvarrec
+
+curl -F "-P=gecode" -F "mzn=@test/examples/zebra.mzn" http://localhost:9001/process
+
+sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
+sudo docker exec -i -t mycont /bin/bash
+
+
+Assuming Docker is installed, the first step is running make_docker.py script in
+the sunny-cp/docker folder:
+
+  sunny-cp/docker$ python make_docker.py [solver1,solver2,...,solverN]
+
+where solver1,...,solverN is a list of the solvers to include in the portfolio.
+Actually, this list must be a sublist of the available solvers.
+The first solver of the specified list is assumed to be the backup solver.
+
+The make_docker script generates a corresponding Dockerfile that can be used for
+later building and executing the Docker image. However, if you only need the
+basic installation there is no need to run the python script: just use the file
+base-dockerfile as Dockerfile.
+
+If you are working on a Linux platform, just type:
+
+  sunny-cp/docker$ bash build_docker
+
+for building the Docker image and creating the sunny-cp-docker. Then, assuming
+that the PATH environment variable points to sunny-cp/bin, you can run the
+sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
+
+  sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
+
+Note that you must be superuser both for building the image and running Docker.
+If you want to rebuild a Docker image, make sure that you have removed the old 
+one with: 
+
+  sudo docker rmi sunny:docker
+
+For more information, please see the Docker documentation at docs.docker.com
+
+
 PREREQUISITES
 =============
 
@@ -165,41 +212,7 @@ for printing the help page. Note that the installation process will also create
 the file src/pfolio_solvers.py containing an object for each installed solver.
 
 
-INSTALLATION WITH DOCKER
-========================
 
-An alternative way to deploy sunny-cp is by using Docker (www.docker.com).
-Assuming Docker is installed, the first step is running make_docker.py script in
-the sunny-cp/docker folder:
-
-  sunny-cp/docker$ python make_docker.py [solver1,solver2,...,solverN]
-
-where solver1,...,solverN is a list of the solvers to include in the portfolio.
-Actually, this list must be a sublist of the available solvers.
-The first solver of the specified list is assumed to be the backup solver.
-
-The make_docker script generates a corresponding Dockerfile that can be used for
-later building and executing the Docker image. However, if you only need the
-basic installation there is no need to run the python script: just use the file
-base-dockerfile as Dockerfile.
-
-If you are working on a Linux platform, just type:
-
-  sunny-cp/docker$ bash build_docker
-
-for building the Docker image and creating the sunny-cp-docker. Then, assuming
-that the PATH environment variable points to sunny-cp/bin, you can run the
-sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
-
-  sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
-
-Note that you must be superuser both for building the image and running Docker.
-If you want to rebuild a Docker image, make sure that you have removed the old 
-one with: 
-
-  sudo docker rmi sunny:docker
-
-For more information, please see the Docker documentation at docs.docker.com
 
 
 FEATURES

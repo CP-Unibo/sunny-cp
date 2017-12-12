@@ -127,7 +127,7 @@ def run(server_class=HTTPServer, handler_class=MyServer, port=9001):
 @click.option('--port', '-p', type=click.INT, default=9001,
               help='Port used by the server to wait for requests.')
 def main(port):
-    run(port)
+    run(port=port)
 
 if __name__ == "__main__":
     main()
