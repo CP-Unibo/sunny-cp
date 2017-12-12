@@ -126,7 +126,7 @@ def run(server_class=HTTPServer, handler_class=MyServer, port=9001):
 if __name__ == "__main__":
     from sys import argv
 
-    if len(argv) == 2:
-        run(port=int(argv[1]))
-    else:
-        run()
+    # if len(argv) == 2:
+    #     run(port=int(argv[1]))
+    # else:
+    run()
