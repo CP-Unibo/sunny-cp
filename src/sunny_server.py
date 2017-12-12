@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-
 """
-Very simple HTTP server to call sunny-cp.
-Examples to send a POST request::
+A simple HTTP server to call sunny-cp.
+Examples for sending requests:
     curl -F "--help=" http://localhost:9001
     curl -F "-P=gecode" "mzn=@<FILE>" http://localhost:9001
 """
@@ -13,6 +12,7 @@ import cgi
 import tempfile
 import os
 import subprocess
+import click
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 
@@ -116,17 +116,18 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
 
-      
+
 def run(server_class=HTTPServer, handler_class=MyServer, port=9001):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print 'Starting httpd...'
     httpd.serve_forever()
 
-if __name__ == "__main__":
-    from sys import argv
+@click.command()
+@click.option('--port', '-p', type=click.INT, default=9001,
+              help='Port used by the server to wait for requests.')
+def main(port):
+    run(port)
 
-    # if len(argv) == 2:
-    #     run(port=int(argv[1]))
-    # else:
-    run()
+if __name__ == "__main__":
+    main()
