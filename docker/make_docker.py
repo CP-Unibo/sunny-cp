@@ -15,17 +15,17 @@ DEF_PFOLIO = set([
 
 
 def add(solver, dockerfile):
-  	dockerfile.write('\n\n# Install ' + solver + '\n')
-  	script_directory = os.path.dirname(os.path.realpath(__file__))
-  	docker_file_map = {
+    dockerfile.write('\n\n# Install ' + solver + '\n')
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    docker_file_map = {
   		'choco' : 'choco.docker',
-			'chuffed' : 'chuffed.docker',
-			'haifacsp': 'haifacsp.docker',
-			'minisatid': 'minisatid.docker',
-			'mistral': 'mistral.docker',
-			'ortools': 'ortools.docker',
-  		}
-  	if solver in docker_file_map:
+		'chuffed' : 'chuffed.docker',
+		'haifacsp': 'haifacsp.docker',
+		'minisatid': 'minisatid.docker',
+		'mistral': 'mistral.docker',
+		'ortools': 'ortools.docker',
+  	}
+    if solver in docker_file_map:
   	  	with open(script_directory + "/" + docker_file_map[solver], "r") as f:
   	  	  	for line in f:
   	  	  		dockerfile.write(line)
@@ -50,7 +50,7 @@ def main(args):
   dockerfile.write('RUN cd /sunny-cp && bash install\n')
   dockerfile.write('ENV PATH /sunny-cp/bin:$PATH\n')
   dockerfile.write('WORKDIR /sunny-cp\n')
-  dockerfile.write('ENTRYPOINT ["sunny-cp"]\n')
+  dockerfile.write('CMD ["python","/sunny-cp/src/sunny_server.py"]\n')
   print '...done!'
 
 if __name__ == '__main__':

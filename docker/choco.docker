@@ -1,4 +1,6 @@
-RUN echo deb http://http.debian.net/debian jessie-backports main >> /etc/apt/sources.list && apt-get update && apt-get install -y unzip openjdk-8-jre-headless cmake && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+		apt-get install -y unzip openjdk-8-jre-headless cmake && \
+		rm -rf /var/lib/apt/lists/*
 COPY ./choco_exec /solvers_exec/choco_exec
 RUN cd /solvers_exec/choco_exec && \
 	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-3.3.0/choco-parsers-3.3.0-with-dependencies.jar
