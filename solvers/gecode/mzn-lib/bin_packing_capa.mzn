@@ -6,8 +6,8 @@
 %     Guido Tack, 2010
 %
 %  Last modified:
-%     $Date: 2013-07-19 02:50:31 +0200 (Fri, 19 Jul 2013) $ by $Author: tack $
-%     $Revision: 13902 $
+%     $Date: 2017-04-13 13:34:08 +1000 (Thu, 13 Apr 2017) $ by $Author: tack $
+%     $Revision: 15636 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -39,9 +39,15 @@ include "bin_packing_load.mzn";
 predicate bin_packing_capa(array[int] of int: c,
                            array[int] of var int: bin,
                            array[int] of int: w) =
+    assert(index_set(bin) = index_set(w),
+        "bin_packing_capa: the bin and weight arrays must have identical index sets",
+    assert(lb_array(w) >= 0,
+        "bin_packing_capa: the weights must be non-negative",
+    assert(lb_array(c) >= 0,
+        "bin_packing_capa: the capacities must be non-negative",
     let {
         array[min(index_set(c))..max(index_set(c))] of var 0..ub_array(c): l
     } in (
         forall( i in index_set(l) ) ( l[i] <= c[i] )
     /\  bin_packing_load(l,bin,w)
-    );
+    ))));

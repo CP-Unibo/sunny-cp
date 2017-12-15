@@ -6,8 +6,8 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2015-03-17 11:20:12 +0100 (Tue, 17 Mar 2015) $ by $Author: tack $
-%     $Revision: 14444 $
+%     $Date: 2017-07-20 13:40:23 +1000 (Thu, 20 Jul 2017) $ by $Author: tack $
+%     $Revision: 16128 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -81,16 +81,15 @@ predicate array_float_element(var int: b, array[int] of float: as, var float: c)
 predicate array_var_float_element(var int: b, array[int] of var float: as, var float: c) =
     b in index_set(as) /\
     forall(d in index_set(as))( b = d -> as[d] = c );
-    
-% Define int_pow for CP solvers
-% r = x ^ y
-predicate int_pow( var int: x, var int: y, var int: r ) =
-  if is_fixed(y) /\ 2==fix(y) then r==x*x
-  elseif is_fixed(y) /\ 3==fix(y) then r==x*x*x
-  else
-    let {
-      array[ int, int ] of int: x2y = array2d( lb(x)..ub(x), lb(y)..ub(y),
-        [ pow( X, Y ) | X in lb(x)..ub(x), Y in lb(y)..ub(y) ] )
-    } in
-      r == x2y[ x, y ]
-  endif;
+
+predicate gecode_int_pow(var int: x, int: y, var int: z);
+
+predicate int_pow(var int: x, var int: y, var int: z) =
+    if is_fixed(y) then gecode_int_pow(x,fix(y),z)
+    else let {
+        array[lb(y)..ub(y)] of var int: pow_x = array1d(lb(y)..ub(y),
+          [if y=i then x else 0 endif | i in lb(y)..ub(y)]);
+        array[lb(y)..ub(y)] of var int: pow_table = array1d(lb(y)..ub(y),
+          [pow(pow_x[i],i) | i in lb(y)..ub(y)]);
+    } in z=pow_table[y]
+    endif;

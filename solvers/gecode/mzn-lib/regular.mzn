@@ -6,8 +6,8 @@
 %     Guido Tack, 2007
 %
 %  Last modified:
-%     $Date: 2009-09-08 17:42:03 +0200 (Tue, 08 Sep 2009) $ by $Author: schulte $
-%     $Revision: 9689 $
+%     $Date: 2017-01-29 20:51:44 +1100 (Sun, 29 Jan 2017) $ by $Author: tack $
+%     $Revision: 15376 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -34,5 +34,30 @@
 %
 %
 
+predicate gecode_regular(array[int] of var int: x, int: Q, int: S,
+                         array[int,int] of int: d, int: q0, set of int: F);
+
 predicate regular(array[int] of var int: x, int: Q, int: S,
-                  array[int,int] of int: d, int: q0, set of int: F);
+                  array[int,int] of int: d, int: q0, set of int: F) =
+    assert(Q > 0,
+        "regular: 'Q' must be greater than zero",
+
+    assert(S > 0,
+        "regular: 'S' must be greater than zero",
+
+    assert(index_set_1of2(d) = 1..Q /\ index_set_2of2(d) == 1..S,
+        "regular: the transition function 'd' must be [1..Q,1..S]",
+
+    assert(forall([d[i, j] in 0..Q | i in 1..Q, j in 1..S]),
+        "regular: transition function 'd' points to states outside 0..Q",
+
+        % Nb: we need the parentheses around the expression otherwise the
+        % parser thinks it's a generator call!
+    assert((q0 in 1..Q),
+        "regular: start state 'q0' not in 1..Q",
+
+    assert(F subset 1..Q,
+        "regular: final states in 'F' contain states outside 1..Q",
+
+    gecode_regular(x,Q,S,d,q0,F)
+    ))))));

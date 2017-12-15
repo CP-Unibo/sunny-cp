@@ -6,8 +6,8 @@
 %     Guido Tack, 2010
 %
 %  Last modified:
-%     $Date: 2012-03-19 01:56:37 +0100 (Mon, 19 Mar 2012) $ by $Author: tack $
-%     $Revision: 12583 $
+%     $Date: 2017-04-13 13:34:08 +1000 (Thu, 13 Apr 2017) $ by $Author: tack $
+%     $Revision: 15636 $
 %
 %  This file is part of Gecode, the generic constraint
 %  development environment:
@@ -42,4 +42,8 @@ predicate gecode_bin_packing_load(array[int] of var int: l,
 predicate bin_packing_load(array[int] of var int: l,
                            array[int] of var int: bin,
                            array[int] of int: w) =
-    gecode_bin_packing_load(l,bin,w,min(index_set(l)));
+    assert(index_set(bin) == index_set(w),
+        "bin_packing_load: the bin and weight arrays must have identical index sets",
+    assert(lb_array(w) >= 0,
+        "bin_packing_load: the weights must be non-negative",
+    gecode_bin_packing_load(l,bin,w,min(index_set(l)))));

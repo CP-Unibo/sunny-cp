@@ -14,12 +14,13 @@ RUN apt-get update && \
   apt-get install -y \
     flex \
 		bison \
-		nano \
-        libqt5core5a \
-        libqt5gui5 \
-        libqt5network5 \
-        libqt5webkit5 \
-        libqt5widgets5 && \
+		nano  && \
+		# qt libraires already comes with minizinc ide
+    #    libqt5core5a \
+    #    libqt5gui5 \
+    #    libqt5network5 \
+    #    libqt5webkit5 \
+    #    libqt5widgets5 && \
   rm -rf /var/lib/apt/lists/*
 
 # Install minizinc suite
@@ -29,11 +30,9 @@ RUN cd / && \
   rm -rf MiniZincIDE-2.1.6-bundle-linux-x86_64.tgz && \
 	mv MiniZincIDE-2.1.6-bundle-linux-x86_64 minizinc
 ENV PATH /minizinc:$PATH
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/minizinc/lib
 
 
-
-
-    
 # Install feature extractor
 RUN cd / && \
   git clone -b server --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
