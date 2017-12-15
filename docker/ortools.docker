@@ -1,6 +1,6 @@
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
-	wget https://github.com/google/or-tools/releases/download/v4.4/or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
-	tar xvfz or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
-	rm or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842.tar.gz && \
-	mv or-tools_flatzinc_Ubuntu-14.04-64bit_v4.4.3842 ortools_exec
+	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools_exec

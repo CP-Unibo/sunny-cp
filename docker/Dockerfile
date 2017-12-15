@@ -15,12 +15,11 @@ RUN apt-get update && \
     flex \
 		bison \
 		nano  && \
-		# qt libraires already comes with minizinc ide
-    #    libqt5core5a \
-    #    libqt5gui5 \
-    #    libqt5network5 \
-    #    libqt5webkit5 \
-    #    libqt5widgets5 && \
+		libqt5core5a \
+    libqt5gui5 \
+    libqt5network5 \
+    libqt5webkit5 \
+    libqt5widgets5 && \
   rm -rf /var/lib/apt/lists/*
 
 # Install minizinc suite
@@ -30,8 +29,6 @@ RUN cd / && \
   rm -rf MiniZincIDE-2.1.6-bundle-linux-x86_64.tgz && \
 	mv MiniZincIDE-2.1.6-bundle-linux-x86_64 minizinc
 ENV PATH /minizinc:$PATH
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/minizinc/lib
-
 
 # Install feature extractor
 RUN cd / && \
@@ -43,12 +40,28 @@ RUN cd / && \
 ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
 ENV PATH /sunny-cp/mzn2feat/bin:$PATH
 
-
-
-
-
 # install sunny-cp
 RUN cd /sunny-cp && bash install
 ENV PATH /sunny-cp/bin:$PATH
 WORKDIR /sunny-cp
 CMD ["python","/sunny-cp/src/sunny_server.py"]
+
+
+# Install ortools
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools_exec
+
+RUN apt-get update && \
+		apt-get install -y openjdk-8-jre-headless && \
+		rm -rf /var/lib/apt/lists/*
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+  mkdir choco_exec && \
+	cd choco_exec && \
+	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar
+
+# install all the solvers in sunny
+RUN cd /sunny-cp && bash install

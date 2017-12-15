@@ -7,8 +7,8 @@ import shutil
 from subprocess import Popen
 
 DEF_PFOLIO = set([
-	 'chuffed', 'g12lazyfd', 'g12fd', 'g12cbc',	'gecode',
-  'choco',  'haifacsp', 'minisatid', 'mistral', 'ortools'
+	'ortools', 'choco'
+  #'choco',  'haifacsp', 'minisatid', 'mistral', 'ortools'
   #, 'izplus', , 
 ])
 
@@ -36,6 +36,12 @@ def main(args):
   docker_path = '/'.join(os.path.realpath(__file__).split('/')[:-1])
   shutil.copyfile(docker_path + '/base-dockerfile', docker_path + '/Dockerfile')
   dockerfile = open(docker_path + '/Dockerfile', 'a')
+  dockerfile.write('\n\n# install sunny-cp\n')
+  dockerfile.write('RUN cd /sunny-cp && bash install\n')
+  dockerfile.write('ENV PATH /sunny-cp/bin:$PATH\n')
+  dockerfile.write('WORKDIR /sunny-cp\n')
+  dockerfile.write('CMD ["python","/sunny-cp/src/sunny_server.py"]\n')
+
   if args:
     solvers = args[0]
     pfolio = set(solvers.split(','))
@@ -46,11 +52,7 @@ def main(args):
     dockerfile.write('RUN mkdir /solvers_exec\n')
     for solver in pfolio - set(['g12lazyfd', 'g12fd', 'g12cbc', 'gecode']):
       add(solver, dockerfile)
-  dockerfile.write('\n\n# install sunny-cp\n')
   dockerfile.write('RUN cd /sunny-cp && bash install\n')
-  dockerfile.write('ENV PATH /sunny-cp/bin:$PATH\n')
-  dockerfile.write('WORKDIR /sunny-cp\n')
-  dockerfile.write('CMD ["python","/sunny-cp/src/sunny_server.py"]\n')
   print '...done!'
 
 if __name__ == '__main__':

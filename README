@@ -47,7 +47,9 @@ sudo docker run -d -p <PORT>:9001 --name hyvarrec_container jacopomauro/hyvarrec
 
 curl -F "-P=gecode" -F "mzn=@test/examples/zebra.mzn" http://localhost:9001/process
 
-sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
+sudo docker run --entrypoint="/bin/bash" -i --rm -t sunny
+
+jacopomauro/sunny_cp
 sudo docker exec -i -t mycont /bin/bash
 
 
@@ -84,50 +86,26 @@ one with:
 For more information, please see the Docker documentation at docs.docker.com
 
 
-PREREQUISITES
-=============
-
-sunny-cp is tested on 64-bit machines running Ubuntu Operating System, and not 
-yet fully portable on other platforms. Some of the main requirements are:
-
-+ Python >= 2.x
-  https://www.python.org/
-
-+ MiniZinc >= 2.0.13
-  # FIXME: MiniZinc >= 2.1.5
-  http://www.minizinc.org/
-
-+ mzn2feat >= 1.2.1
-  https://github.com/CP-Unibo/mzn2feat
-
-+ psutil >= 2.x
-  https://pypi.python.org/pypi/psutil
-
-
-CONTENTS
-========
-
-+ bin       contains the executables of sunny-cp
-
-+ docker    contains the utilities for installing sunny-cp with docker
-
-+ kb        contains the utilities for the knowledge base of sunny-cp
-
-+ src       contains the sources of sunny-cp
-
-+ solvers   contains the utilities for the constituent solvers of sunny-cp
-
-+ test      contains some MiniZinc examples for testing sunny-cp
-
-+ tmp       is aimed at containing the temporary files produced by sunny-cp.
-
-
 SOLVERS
 =======
 
 By default, the portfolio of sunny-cp consists of the solvers included in the
-MiniZinc bundle, namely G12/CBC, G12/LazyFD, G12/FD, and Gecode. However,
-sunny-cp provides utilities for adding new solvers to the portfolio and for 
+[MiniZinc](http://www.minizinc.org) bundle (2.1.6 version):
+* G12/CBC
+* G12/LazyFD
+* G12/FD
+* G12/MPI
+* [Gecode](http://www.gecode.org/)
+* [Chuffed](https://github.com/geoffchu/chuffed)
+
+Additionally the default installation comes with the following solvers:
+* [OR-Tools](https://code.google.com/p/or-tools/) (version v6.4.4495)
+* [Choco](http://choco-solver.org/) (version 4.0.4)
+
+Solvers used in the past but that now do not compile:
+* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html)
+
+sunny-cp provides utilities for adding new solvers to the portfolio and for
 customizing their settings.
 
 Note that now there is no more a default portfolio: when not better specified,
@@ -260,6 +238,44 @@ or alternatively you can test all the models of the folder by typing:
 The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are
 respectively redirected.
+
+PREREQUISITES
+=============
+
+sunny-cp is tested on 64-bit machines running Ubuntu Operating System, and not
+yet fully portable on other platforms. Some of the main requirements are:
+
++ Python >= 2.x
+  https://www.python.org/
+
++ MiniZinc >= 2.0.13
+  # FIXME: MiniZinc >= 2.1.5
+  http://www.minizinc.org/
+
++ mzn2feat >= 1.2.1
+  https://github.com/CP-Unibo/mzn2feat
+
++ psutil >= 2.x
+  https://pypi.python.org/pypi/psutil
+
+
+CONTENTS
+========
+
++ bin       contains the executables of sunny-cp
+
++ docker    contains the utilities for installing sunny-cp with docker
+
++ kb        contains the utilities for the knowledge base of sunny-cp
+
++ src       contains the sources of sunny-cp
+
++ solvers   contains the utilities for the constituent solvers of sunny-cp
+
++ test      contains some MiniZinc examples for testing sunny-cp
+
++ tmp       is aimed at containing the temporary files produced by sunny-cp.
+
 
 
 ACKNOWLEDGMENTS
