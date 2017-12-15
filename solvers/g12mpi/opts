@@ -1,2 +1,2 @@
 all_opt = '-a'
-free_opt  = '--ignore-user-search'
+free_opt  = '-f'

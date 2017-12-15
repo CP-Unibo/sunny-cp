@@ -14,7 +14,7 @@ RUN apt-get update && \
   apt-get install -y \
     flex \
 		bison \
-		nano  && \
+		nano \
 		libqt5core5a \
     libqt5gui5 \
     libqt5network5 \
@@ -46,22 +46,35 @@ ENV PATH /sunny-cp/bin:$PATH
 WORKDIR /sunny-cp
 CMD ["python","/sunny-cp/src/sunny_server.py"]
 
-
 # Install ortools
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
-	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools_exec
+	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
+	tar xvfz or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
+	rm or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
+	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools_exec && \
+  cd /sunny-cp && bash install
 
+# Install choco
 RUN apt-get update && \
 		apt-get install -y openjdk-8-jre-headless && \
 		rm -rf /var/lib/apt/lists/*
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
   mkdir choco_exec && \
 	cd choco_exec && \
-	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar
+	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar && \
+  cd /sunny-cp && bash install
 
-# install all the solvers in sunny
-RUN cd /sunny-cp && bash install
+# Install picat
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	wget http://picat-lang.org/download/picat22_linux64.tar.gz  && \
+	cd /solvers_exec && \
+	mv picat22_linux64 picat && \
+	cd picat && \
+	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
+	wget http://picat-lang.org/flatzinc/fzn_picat_cp.pi  && \
+	wget http://picat-lang.org/flatzinc/fzn_parser.pi  && \
+	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi  && \
+  cd /sunny-cp && bash install
+
