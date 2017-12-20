@@ -279,7 +279,7 @@ def parse_arguments(args):
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
       if not os.path.exists(lims):
-        print >> sys.stderr, 'Error! File ' + kb + ' not exists.'
+        print >> sys.stderr, 'Error! File ' + lims + ' not exists.'
         print >> sys.stderr, 'For help use --help'
         sys.exit(2)
     elif o == '-s':
