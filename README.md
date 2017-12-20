@@ -98,12 +98,27 @@ By default, the portfolio of sunny-cp consists of the solvers included in the
 * [Gecode](http://www.gecode.org/)
 * [Chuffed](https://github.com/geoffchu/chuffed)
 
-Additionally the default installation comes with the following solvers:
+Additionally, the default installation comes with the following solvers
+publicly available online:
 * [OR-Tools](https://code.google.com/p/or-tools/) (version v6.4.4495)
 * [Choco](http://choco-solver.org/) (version 4.0.4)
+* [Picat](http://picat-lang.org/) CP (version 2.2)
+* [Picat](http://picat-lang.org/) SAT (version 2.2)
+* [JaCoP](http://jacop.osolpro.com/) (version 4.4)
+* [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
+* [HaifaCSP](http://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
 
-Solvers used in the past but that now do not compile:
-* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html)
+We invite the developers interested in adding their solver to sunny-cp to contact us.
+Note that the included solvers are treated as black boxes, there is no guarantee
+that they are bug free.
+
+Solvers used in the past that are currently not included due to compilation problems
+or the fact that are not publicly available/free are:
+* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not compile)
+* [G12/Gurobi](http://www.gurobi.com/) (not free)
+* [iZplus](http://www.constraint.org/ja/izc_download.html) (not publicly available)
+* [Opturion](http://www.opturion.com) (not free)
+
 
 sunny-cp provides utilities for adding new solvers to the portfolio and for
 customizing their settings.
@@ -114,44 +129,10 @@ directory. For more details, see the README file in the sunny-cp/solvers folder
 and the sunny-cp usage. A part from the solvers already included in MiniZinc 
 suite, sunny-cp used also other solvers:
 
-+ Choco
-  http://choco-solver.org/
 
-+ Chuffed
-  https://github.com/geoffchu/chuffed
 
-+ CPX
-  http://www.minizinc.org/g12distrib.html (see MiniZinc version 1.6)
 
-+ G12/Gurobi (not free)
-  http://www.gurobi.com/
 
-+ Gecode
-  http://www.gecode.org/
-
-+ HaifaCSP
-  http://tx.technion.ac.il/~mveksler/HCSP/index.html
-
-+ JaCoP
-  http://jacop.osolpro.com/
-
-+ iZplus
-  http://www.constraint.org/ja/izc_download.html
-
-+ MinisatID
-  http://dtai.cs.kuleuven.be/krr/software/minisatid
-
-+ Mistral
-  http://homepages.laas.fr/ehebrard/mistral.html
-
-+ Opturion (not free)
-  http://www.opturion.com
-
-+ OR-Tools
-  https://code.google.com/p/or-tools/
-
-+ Picat
-  http://picat-lang.org/
 
 Note that the sunny-cp/docker directory already contains the binaries and the
 solver redefitions of a number of freely available and dowloadable solvers.

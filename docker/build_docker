@@ -1,6 +1,0 @@
-#!/bin/bash
-# Bash script for building a Docker image for sunny-cp.
-
-IN_PATH=`dirname "$(readlink -f ${BASH_SOURCE[0]})"`
-echo '% Building Image...'
-sudo docker build -t sunny:docker $IN_PATH

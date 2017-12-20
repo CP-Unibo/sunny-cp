@@ -1,8 +1,0 @@
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	git clone --depth 1 https://github.com/ehebrard/Mistral-2.0.git && \
-	mv Mistral-2.0 mistral_exec  && \
-	cd mistral_exec && \
-	make
-
-ENV PATH $PATH:/solvers_exec/mistral_exec/bin
