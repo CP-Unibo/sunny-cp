@@ -30,30 +30,13 @@ RUN cd / && \
 	mv MiniZincIDE-2.1.6-bundle-linux-x86_64 minizinc
 ENV PATH /minizinc:$PATH
 
-# Install feature extractor
-RUN cd / && \
-  git clone -b server --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
-  cd /sunny-cp && \
-  tar -xjvf mzn2feat-1.2.1.tar.bz2 && \
-  cd /sunny-cp/mzn2feat && \
-  bash install --no-xcsp
-ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
-ENV PATH /sunny-cp/mzn2feat/bin:$PATH
-
-# install sunny-cp
-RUN cd /sunny-cp && bash install
-ENV PATH /sunny-cp/bin:$PATH
-WORKDIR /sunny-cp
-CMD ["python","/sunny-cp/src/sunny_server.py"]
-
 # Install ortools
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
 	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
 	tar xvfz or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
 	rm or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
-	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools_exec && \
-  cd /sunny-cp && bash install
+	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools
 
 # Install choco
 RUN apt-get update && \
@@ -61,10 +44,9 @@ RUN apt-get update && \
 		rm -rf /var/lib/apt/lists/*
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
-  mkdir choco_exec && \
-	cd choco_exec && \
-	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar && \
-  cd /sunny-cp && bash install
+  mkdir choco && \
+	cd choco && \
+	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar
 
 # Install picat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
@@ -77,8 +59,7 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_cp.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_parser.pi  && \
-	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi  && \
-  cd /sunny-cp && bash install
+	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi
 
 # Install jacop
 RUN apt-get update && \
@@ -88,8 +69,7 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
 	mkdir jacop && \
 	cd jacop && \
-	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar && \
-  cd /sunny-cp && bash install
+	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar
 
 # Install minisat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
@@ -119,6 +99,20 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 #	make
 #ENV PATH $PATH:/solvers_exec/mistral/bin
 
+# Install feature extractor
+RUN cd / && \
+  git clone -b server --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
+  cd /sunny-cp && \
+  tar -xjvf mzn2feat-1.2.1.tar.bz2 && \
+  cd /sunny-cp/mzn2feat && \
+  bash install --no-xcsp
+ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
+ENV PATH /sunny-cp/mzn2feat/bin:$PATH
 
+# install sunny-cp
+RUN cd /sunny-cp && bash install
+ENV PATH /sunny-cp/bin:$PATH
+WORKDIR /sunny-cp
+CMD ["python","/sunny-cp/src/sunny_server.py"]
 
 
