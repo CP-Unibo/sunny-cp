@@ -68,13 +68,57 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 
 # Install picat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	wget http://picat-lang.org/download/picat22_linux64.tar.gz  && \
 	cd /solvers_exec && \
-	mv picat22_linux64 picat && \
+	wget http://picat-lang.org/download/picat22_linux64.tar.gz  && \
+	tar xvfz picat22_linux64.tar.gz && \
+	rm picat22_linux64.tar.gz && \
+	mv Picat picat && \
 	cd picat && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_cp.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_parser.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi  && \
   cd /sunny-cp && bash install
+
+# Install jacop
+RUN apt-get update && \
+		apt-get install -y openjdk-8-jre-headless && \
+		rm -rf /var/lib/apt/lists/*
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	mkdir jacop && \
+	cd jacop && \
+	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar && \
+  cd /sunny-cp && bash install
+
+# Install minisat
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	wget https://dtai.cs.kuleuven.be/krr/files/software/minisatid/minisatid-3.11.0-Linux.tar.gz && \
+	gzip -d minisatid-3.11.0-Linux.tar.gz && \
+	tar -xvf minisatid-3.11.0-Linux.tar && \
+	mv minisatid-3.11.0-Linux minisatid && \
+	rm minisatid-3.11.0-Linux.tar
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
+
+# Install haifacsp
+RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+	cd /solvers_exec && \
+	wget --no-check-certificate http://ie.technion.ac.il/~ofers/HCSP/hcsp-1.3.0-x86_64.tar.xz && \
+	tar -xJf hcsp-1.3.0-x86_64.tar.xz && \
+	mv hcsp-1.3.0-x86_64 haifacsp && \
+	rm hcsp-1.3.0-x86_64.tar.xz
+
+# Mistral
+# Does not compile anymore -> temporarly removed
+#RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
+#	cd /solvers_exec && \
+#	git clone --depth 1 https://github.com/ehebrard/Mistral-2.0.git && \
+#	mv Mistral-2.0 mistral  && \
+#	cd mistral_exec && \
+#	make
+#ENV PATH $PATH:/solvers_exec/mistral/bin
+
+
+
 
