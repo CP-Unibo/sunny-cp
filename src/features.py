@@ -60,6 +60,9 @@ class mzn2feat:
     exploiting the information already computed in lims dictionary.
     """
     norm_vector = []
+    # if not limits are defined then return the feature vector
+    if len(lims) == 0:
+      return feat_vector
     for i in range(0, len(feat_vector)):
       j = str(i)
       if lims[j][0] != lims[j][1]:

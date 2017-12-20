@@ -53,14 +53,14 @@ Assuming that `<MZN>` is the path of the mzn file to solve,
 to run the solver on it is possible to invoke it by a multipart post request as follows.
 
 ```
-curl -F "mzn=@<MZN>" http://localhost:9001/process
+curl -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
 
 This will run sunny-cp with the default parameters on the minizinc instance.
 If a `<DZN>` file is also needed, sunny-cp can be invoked as follows.
 
 ```
-curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:9001/process
+curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:<PORT>/process
 ```
 
 sunny-cp options can be passed by adding the string "option=value" as additional
@@ -70,17 +70,17 @@ For instance to solve the `<MZN>` using only the gecode solver (option `-P`)
 the post request to perform is the following one.
 
 ```
-curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:9001/process
+curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
 
 To see the options supported by sunny-cp please run the following command.
 
 ```
-curl -F "--help=true" http://localhost:9001/process
+curl -F "--help=" http://localhost:<PORT>/process
 ```
 
 To select sunny-cp flags (like `--help` above) it is possible to add the string
-"flag=true".
+"flag=".
 
 Note that the post requests will return the output generate by sunny-cp at the
 end of its execution. In case partial solutions are need, it is possible 
