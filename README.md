@@ -1,5 +1,4 @@
-SUNNY-CP 2.2
-============
+# SUNNY-CP 2.2
 
 SUNNY-CP: a Parallel CP Portfolio Solver
 
@@ -26,70 +25,101 @@ In a nutshell, sunny-cp relies on two sequential steps:
 sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
 and 2017 [6].
 
-AUTHORS
-=======
+## Authors
 
 sunny-cp is developed by Roberto Amadini (University of Melbourne) and Jacopo
 Mauro (University of Oslo). For any question or information, please contact us:
-
-  roberto.amadini at unimelb.edu.au
-
-          mauro.jacopo  at gmail.com
+* roberto.amadini at unimelb.edu.au
+* mauro.jacopo  at gmail.com
 
 
-INSTALLATION WITH DOCKER
-========================
+## Installation & Usage by HTTP POST requests 
 
-To deploy sunny-cp it is possibel to use [Docker](www.docker.com).
+To install sunny-cp it is possible to use [Docker](www.docker.com) available for
+the majority of the operating systems. It can then be used by simply sending a 
+post request to the server deployed by using docker.
 
-sudo docker pull jacopomauro/hyvarrec
-sudo docker run -d -p <PORT>:9001 --name hyvarrec_container jacopomauro/hyvarrec
+The Docker image is availabe in Docker Hub. To install it please run the
+following commands.
 
-curl -F "-P=gecode" -F "mzn=@test/examples/zebra.mzn" http://localhost:9001/process
+```
+sudo docker pull jacopomauro/sunny_cp
+sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny_cp
+```
 
-sudo docker run --entrypoint="/bin/bash" -i --rm -t sunny
+where `<PORT>` is the port used to use the functionalities of the service.
 
-jacopomauro/sunny_cp
-sudo docker exec -i -t mycont /bin/bash
+Assuming that `<MZN>` is the path of the mzn file to solve,
+to run the solver on it is possible to invoke it by a multipart post request as follows.
 
+```
+curl -F "mzn=@<MZN>" http://localhost:9001/process
+```
 
-Assuming Docker is installed, the first step is running make_docker.py script in
-the sunny-cp/docker folder:
+This will run sunny-cp with the default parameters on the minizinc instance.
+If a `<DZN>` file is also needed, sunny-cp can be invoked as follows.
 
-  sunny-cp/docker$ python make_docker.py [solver1,solver2,...,solverN]
+```
+curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:9001/process
+```
 
-where solver1,...,solverN is a list of the solvers to include in the portfolio.
-Actually, this list must be a sublist of the available solvers.
-The first solver of the specified list is assumed to be the backup solver.
+sunny-cp options can be passed by adding the string "option=value" as additional
+part of the request.
 
-The make_docker script generates a corresponding Dockerfile that can be used for
-later building and executing the Docker image. However, if you only need the
-basic installation there is no need to run the python script: just use the file
-base-dockerfile as Dockerfile.
+For instance to solve the `<MZN>` using only the gecode solver (option `-P`)
+the post request to perform is the following one.
 
-If you are working on a Linux platform, just type:
+```
+curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:9001/process
+```
 
-  sunny-cp/docker$ bash build_docker
+To see the options supported by sunny-cp please run the following command.
 
-for building the Docker image and creating the sunny-cp-docker. Then, assuming
-that the PATH environment variable points to sunny-cp/bin, you can run the
-sunny-cp-docker command for emulating the sunny-cp solver, e.g.:
+```
+curl -F "--help=true" http://localhost:9001/process
+```
 
-  sunny-cp/test/examples$ sunny-cp-docker zebra.mzn
+To select sunny-cp flags (like `--help` above) it is possible to add the string
+"flag=true".
 
-Note that you must be superuser both for building the image and running Docker.
-If you want to rebuild a Docker image, make sure that you have removed the old 
-one with: 
+Note that the post requests will return the output generate by sunny-cp at the
+end of its execution. In case partial solutions are need, it is possible 
+to interact with sunny-cp from command line as specified in the remaining part of 
+the section.
 
-  sudo docker rmi sunny:docker
+#### Interacting with SUNNY-CP from command line
 
-For more information, please see the Docker documentation at docs.docker.com
+To interact with SUNNY-CP, it is possible to run the docker container getting
+a direct access to the bash. This can be done by running the following command.
 
+```
+sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
+```
 
-SOLVERS
-=======
+This will give access to the bash and SUNNY-CP can be invoked by running the
+`sunny-cp` command. To move the mzn and dzn files within the container
+the `scp` command can be used or, alternatively, it is possible also to 
+start the container with some shared volume (see
+[Docker documentation](https://docs.docker.com/engine/admin/volumes/volumes/)
+for more information.)
 
-By default, the portfolio of sunny-cp consists of the solvers included in the
+Note that sunny-cp can be also install on a Linux operating machine. To understand
+the dependencies and the installation instructions, we invite the interested
+user to consult the commands defined in the Dockerfile in the docker subfolder.
+
+#### Cleaning
+
+To clean up please lunch the following commands:
+
+```
+sudo docker stop sunny_cp_container
+sudo docker rm sunny_cp_container
+sudo docker rmi jacopomauro/sunny_cp
+```
+
+## Solvers supported
+
+The default image of SUNNY-CP consists of the solvers included in the
 [MiniZinc](http://www.minizinc.org) bundle (2.1.6 version):
 * G12/CBC
 * G12/LazyFD
@@ -98,7 +128,7 @@ By default, the portfolio of sunny-cp consists of the solvers included in the
 * [Gecode](http://www.gecode.org/)
 * [Chuffed](https://github.com/geoffchu/chuffed)
 
-Additionally, the default installation comes with the following solvers
+Additionally, the default installation comes with the following solvers,
 publicly available online:
 * [OR-Tools](https://code.google.com/p/or-tools/) (version v6.4.4495)
 * [Choco](http://choco-solver.org/) (version 4.0.4)
@@ -108,167 +138,83 @@ publicly available online:
 * [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
 * [HaifaCSP](http://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
 
-We invite the developers interested in adding their solver to sunny-cp to contact us.
-Note that the included solvers are treated as black boxes, there is no guarantee
-that they are bug free.
+These are the solvers that constitute the default portfolio (when not better specified,
+the default portfolio consists of the solvers defined in the sunny-cp/solvers
+directory).
 
-Solvers used in the past that are currently not included due to compilation problems
-or the fact that are not publicly available/free are:
+Note that the included solvers are treated as black boxes, there is no guarantee
+that they are bug free. The user can check
+the soundness of a solution with the option `--check-solvers`.
+
+#### Adding a solver
+
+It is possible to add manually a solver in the portfolio and sunny-cp provides
+utilities for adding new solvers to the portfolio and for
+customizing their settings. If interested, more details
+on how to add a solver can be found in the README file in the sunny-cp/solvers folder.
+
+Previous version of SUNNY-CP for instance supported solvers that are currently not included
+by default due to compilation problems
+or the fact that are not publicly available/free. The old solvers that are not provided
+with the current default configuration are:
 * [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not compile)
 * [G12/Gurobi](http://www.gurobi.com/) (not free)
 * [iZplus](http://www.constraint.org/ja/izc_download.html) (not publicly available)
 * [Opturion](http://www.opturion.com) (not free)
 
+We invite the developers interested in adding their solver
+to the default image of sunny-cp to contact us.
 
-sunny-cp provides utilities for adding new solvers to the portfolio and for
-customizing their settings.
-
-Note that now there is no more a default portfolio: when not better specified,
-the default portfolio consists of the solvers defined in the sunny-cp/solvers
-directory. For more details, see the README file in the sunny-cp/solvers folder
-and the sunny-cp usage. A part from the solvers already included in MiniZinc 
-suite, sunny-cp used also other solvers:
-
-
-
-
-
-
-Note that the sunny-cp/docker directory already contains the binaries and the
-solver redefitions of a number of freely available and dowloadable solvers.
-G12/Gurobi is not publicly available; access has been kindly granted by NICTA
-Optimization Research Group of Melbourne (Australia). Note that CPX solver has
-been included in the MiniZinc suite until version 1.6, and no longer included
-from version 2.0. Opturion is an enhancement of CPX. If you are interested in
-using these solvers, please contact directly their developers.
-
-NOTE: sunny-cp is not responsible of buggy solvers. However, the user can check
-the soundness of a solution with the option --check-solvers.
-
-
-BASIC INSTALLATION
-==================
-
-Once downloaded the sources, move into sunny-cp folder and run install script:
-
-  sunny-cp$ bash install
-
-This is a minimal installation script that checks the proper installation of
-Python (and psutil), MiniZinc, mzn2feat. In addition, it checks the installation
-of the constituent solvers (in the corresponding folder) and compiles all the
-python sources of sunny-cp. If the installation is successful, the following
-message will be printed on standard output:
-
-  --- Everything went well!
-  To complete sunny-cp installation just append <PATH_TO_SUNNY-CP>/sunny-cp/bin
-  to the PATH environment variable.
-
-Once the PATH variable is set, check the installation by typing the command:
-
-  sunny-cp --help
-
-for printing the help page. Note that the installation process will also create
-the file src/pfolio_solvers.py containing an object for each installed solver.
-
-
-
-
-
-FEATURES
-========
+## Features
 
 During the presolving phase (in parallel with the static schedule execution)
 sunny-cp extracts a feature vector of the problem in order to apply the k-NN
 algorithm for determining the solvers schedule to be run in the following
-solving phase. By default, the feature vector is extracted by mzn2feat tool.
-sunny-cp provides the sources of this tool: for its installation, decompress the
-mzn2feat-1.2.1.tar.bz2 archive and follow the instruction in the README file of
-that folder. The sources of mzn2feat extractor are also available at
-https://github.com/CP-Unibo/mzn2feat. Moreover, the user can define its own
-extractor by implementing a corresponding class in src/features.py
+solving phase. By default, the feature vector is extracted by the
+[mzn2feat tool](https://github.com/CP-Unibo/mzn2feat).
+The user can define its own extractor by implementing a corresponding
+class in `src/features.py`.
 
 
-KNOWLEDGE BASE
-==============
+## Knowledge Base
 
 The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that
 consists of a folder containing the information relevant for the schedule
-computation. Unlike the previous knowledge bases, that contained thousands of
-instances, now the default knowledge base is far smaller: it consists of 76 CSP
-instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
+computation.
+For the time being the default knowlege base of SUNNY-CP is empty.
 However, the user has the possibility of defining its own knowledge bases.
-
-The default sunny-cp knowledge base is sunny-cp/kb/mznc1215. Moreover, also the 
-knowledge base mznc15 used in the MiniZinc Challenge 2016 is available.
 For more details, see the README file in sunny-cp/kb folder.
 
+In the sunny-cp/kb/mznc1215 folder it is possible to retrieve the 
+knowledge base created in 2015 consisting of 76 CSP
+instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
+Moreover, also the knowledge base mznc15 used in the MiniZinc Challenge 2016 is available.
 
-TESTING
-=======
+## Testing
 
 Although a full support for automatic testing is not yet implemented, in the
 sunny-cp/test/examples folder there is a number of simple MiniZinc models.
-You can run them individually, e.g., by typing:
+When using the tool from command line, the user can test all the models by running
+the following command
 
-  test/examples$ sunny-cp zebra.mzn
-
-or alternatively you can test all the models of the folder by typing:
-
-  test/examples$ bash run_examples
+```
+ test/examples$ bash run_examples
+```
 
 The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are
 respectively redirected.
 
-PREREQUISITES
-=============
-
-sunny-cp is tested on 64-bit machines running Ubuntu Operating System, and not
-yet fully portable on other platforms. Some of the main requirements are:
-
-+ Python >= 2.x
-  https://www.python.org/
-
-+ MiniZinc >= 2.0.13
-  # FIXME: MiniZinc >= 2.1.5
-  http://www.minizinc.org/
-
-+ mzn2feat >= 1.2.1
-  https://github.com/CP-Unibo/mzn2feat
-
-+ psutil >= 2.x
-  https://pypi.python.org/pypi/psutil
-
-
-CONTENTS
-========
-
-+ bin       contains the executables of sunny-cp
-
-+ docker    contains the utilities for installing sunny-cp with docker
-
-+ kb        contains the utilities for the knowledge base of sunny-cp
-
-+ src       contains the sources of sunny-cp
-
-+ solvers   contains the utilities for the constituent solvers of sunny-cp
-
-+ test      contains some MiniZinc examples for testing sunny-cp
-
-+ tmp       is aimed at containing the temporary files produced by sunny-cp.
-
-
-
-ACKNOWLEDGMENTS
-===============
+## Acknowledgement
 
 We would like to thank the staff of the Optimization Research Group of NICTA
 (National ICT of Australia) for allowing us to use G12/Gurobi, as well as for
 granting us the computational resources needed for building and testing sunny-cp.
+We also thank all the developers of the constituent solvers without which sunny-cp
+could not exists.
 
 
-REFERENCES
-==========
+## References
 
   [1]  R. Amadini, M. Gabbrielli, and J. Mauro. SUNNY: a Lazy Portfolio Approach
        for Constraint Solving 2013. In ICLP, 2014.
