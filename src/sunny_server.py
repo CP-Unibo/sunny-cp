@@ -28,9 +28,15 @@ class MyServer(BaseHTTPRequestHandler):
         Handle GET requests.
         '''
         logging.debug('GET %s' % (self.path))
-        self.send_response(400)
-        self.send_header('Content-type', 'text/plain')
-        self.end_headers()
+        if urlparse.urlparse(self.path).path == "/solvers":
+            self._set_headers()
+            solvers_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),os.pardir,"solvers")
+            solvers = [name for name in os.listdir(solvers_path) if os.path.isdir(os.path.join(solvers_path, name))]
+            self.wfile.write("{}\n".format(",".join(solvers)))
+        else:
+            self.send_response(400)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
 
     def do_HEAD(self):
         self._set_headers()

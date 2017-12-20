@@ -82,6 +82,12 @@ curl -F "--help=" http://localhost:<PORT>/process
 To select sunny-cp flags (like `--help` above) it is possible to add the string
 "flag=".
 
+To understand what are the solvers installed you can use the following get request.
+
+```
+curl http://localhost:<PORT>/solvers
+```
+
 Note that the post requests will return the output generate by sunny-cp at the
 end of its execution. In case partial solutions are need, it is possible 
 to interact with sunny-cp from command line as specified in the remaining part of 
@@ -103,7 +109,14 @@ start the container with some shared volume (see
 [Docker documentation](https://docs.docker.com/engine/admin/volumes/volumes/)
 for more information.)
 
-Note that sunny-cp can be also install on a Linux operating machine. To understand
+If they `sunny_cp_container` is already running it is possible to have bash
+access to that container by running the following command.
+
+```
+sudo docker exec -i -t sunny_cp_container /bin/bash
+```
+
+Note that sunny-cp can be also installed on a Linux operating machine. To understand
 the dependencies and the installation instructions, we invite the interested
 user to consult the commands defined in the Dockerfile in the docker subfolder.
 

@@ -51,9 +51,8 @@ Portfolio Options
     Use just the solvers of MiniZinc bundle, by using gecode as backup solver.
     This is equivalent to set -P gecode,g12lazyfd,g12fd,g12cbc and -b gecode.
   -K <PATH>
-    Absolute path of the folder which contains the knowledge base. The default
-    knowledge base is in kb/all_T1800. For more details, see the README file in
-    kb folder
+    Absolute path of the folder which contains the knowledge base. For more
+    details, see the README file in kb folder
   -s <SCHEDULE>
     Specifies a static schedule to be run before executing the SUNNY algorithm.
     It must be passed in the form  s_1,t_1,s_2,t_2,...,s_m,t_m  where t_i is the
