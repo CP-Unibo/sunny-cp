@@ -35,7 +35,7 @@ Mauro (University of Oslo). For any question or information, please contact us:
 
 ## Installation & Usage by HTTP POST requests 
 
-To install sunny-cp it is possible to use [Docker](www.docker.com) available for
+To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
 the majority of the operating systems. It can then be used by simply sending a 
 post request to the server deployed by using docker.
 
