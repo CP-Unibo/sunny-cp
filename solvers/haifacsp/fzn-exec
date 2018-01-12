@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/solvers_exec/haifacsp/hcsp.big -F fzn "$@"

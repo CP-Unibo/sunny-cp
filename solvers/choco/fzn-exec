@@ -1,0 +1,3 @@
+#! /bin/sh
+
+java -cp .:/solvers_exec/choco/choco-parsers-4.0.4-with-dependencies.jar org.chocosolver.parser.flatzinc.ChocoFZN  "$@"

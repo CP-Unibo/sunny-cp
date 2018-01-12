@@ -1,0 +1,6 @@
+#!/bin/bash
+
+/solvers_exec/mistral_exec/fz/mistral-fz "$@"
+
+
+

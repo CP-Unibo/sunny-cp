@@ -101,16 +101,17 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 
 # Install feature extractor
 RUN cd / && \
-  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
-  cd /sunny-cp && \
-  tar -xjvf mzn2feat-1.2.1.tar.bz2 && \
-  cd /sunny-cp/mzn2feat && \
+  git clone --depth=1 https://github.com/CP-Unibo/mzn2feat.git && \
+  cd /mzn2feat && \
   bash install --no-xcsp
-ENV MZN2FEAT_HOME /sunny-cp/mzn2feat
-ENV PATH /sunny-cp/mzn2feat/bin:$PATH
+ENV MZN2FEAT_HOME /mzn2feat
+ENV PATH /mzn2feat/bin:$PATH
 
 # install sunny-cp
-RUN cd /sunny-cp && bash install
+RUN cd / && \
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
+  cd /sunny-cp && \
+  bash install
 ENV PATH /sunny-cp/bin:$PATH
 WORKDIR /sunny-cp
 CMD ["python","/sunny-cp/src/sunny_server.py"]

@@ -1,0 +1,3 @@
+#! /bin/sh
+
+java -jar /solvers_exec/jacop/jacop-4.4.0.jar "$@"
