@@ -109,7 +109,7 @@ start the container with some shared volume (see
 [Docker documentation](https://docs.docker.com/engine/admin/volumes/volumes/)
 for more information.)
 
-If they `sunny_cp_container` is already running it is possible to have bash
+If the `sunny_cp_container` is already running it is possible to have bash
 access to that container by running the following command.
 
 ```
@@ -166,7 +166,7 @@ utilities for adding new solvers to the portfolio and for
 customizing their settings. If interested, more details
 on how to add a solver can be found in the README file in the sunny-cp/solvers folder.
 
-Previous version of SUNNY-CP for instance supported solvers that are currently not included
+Previous versions of SUNNY-CP for instance supported solvers that are currently not included
 by default due to compilation problems
 or the fact that are not publicly available/free. The old solvers that are not provided
 with the current default configuration are:
