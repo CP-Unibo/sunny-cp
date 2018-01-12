@@ -101,7 +101,7 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 
 # Install feature extractor
 RUN cd / && \
-  git clone -b server --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
   cd /sunny-cp && \
   tar -xjvf mzn2feat-1.2.1.tar.bz2 && \
   cd /sunny-cp/mzn2feat && \
