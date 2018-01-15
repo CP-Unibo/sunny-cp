@@ -1,3 +1,0 @@
-#! /bin/sh
-
-/solvers_exec/minisatid/bin/minisatid-3.11.0 -f=fz "$@"

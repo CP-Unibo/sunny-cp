@@ -1,0 +1,3 @@
+#! /bin/sh
+
+/solvers_exec/picat/picat /solvers_exec/picat/fzn_picat_cp  "$@"

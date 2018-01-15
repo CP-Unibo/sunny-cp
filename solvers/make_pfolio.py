@@ -42,20 +42,20 @@ for solver in solvers:
   if proc.returncode != 0:
     print err
     print 'Error! Solver',solver,'not installed'
-    continue
+    sys.exit(1)
   for line in out.split(';\n'):
-    # FIXME: For version 2.1.6
+    # FIXME: For MiniZinc versions >= 2.1.6
     intro = 'X_INTRODUCED_0_ = '
-    # FIXME: For version 2.1.5
+    # FIXME: For MiniZinc versions <= 2.1.5
     #intro = 'X_INTRODUCED_0 = '
     idx = line.find(intro)
     if idx >= 0:
       val = line[idx + len(intro):]
       continue
     if 'constraint' in line:
-      # FIXME: For version 2.1.6
+      # FIXME: For MiniZinc versions >= 2.1.6
       line = line.replace('X_INTRODUCED_0_', val)
-      # FIXME: For version 2.1.5
+      # FIXME: For MiniZinc versions <= 2.1.5
       #line = line.replace('X_INTRODUCED_0', val)
       constraint = solver + ".constraint = '" + line + "'\n"
       pfolio_file.write(solver + ".constraint = '" + line + "'\n")

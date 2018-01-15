@@ -1,5 +1,0 @@
-#!/bin/bash
-
-/solvers_exec/ortools/bin/fzn-or-tools "$@"
-
-
