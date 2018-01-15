@@ -77,13 +77,13 @@ This is a minimal installation script that checks the prerequisites, compiles
 all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
 it creates file SUNNY_HOME/src/pfolio_solvers.py).
 If the installation is successful, you will see the following message:
-
+```
   --- Everything went well!
   To complete sunny-cp installation you just have to add/modify the
   environment variables SUNNY_HOME and PATH:
   1. SUNNY_HOME must point to: "$PWD"/sunny-cp
   2. PATH must be extended to include: "$PWD"/bin
-
+```
 It is important to set such variables in order to use sunny-cp. Once the 
 variables are set, check the installation by typing the command: 
 
