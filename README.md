@@ -38,7 +38,7 @@ Mauro (University of Oslo). For any question or information, please contact us:
 To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
 the majority of the operating systems. It can then be used by simply sending a 
 post request to the server deployed by using docker (for a local installation of
-sunny-cp please see the Local Installation section below). 
+sunny-cp please see the Manual Installation section below). 
 
 The Docker image is availabe in Docker Hub. To install it please run the
 following commands.
@@ -112,7 +112,7 @@ sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
 ```
 
 This will give access to the bash and SUNNY-CP can be invoked by running the
-`sunny-cp` command like a local installation.
+`sunny-cp` command like a manual installation.
 To move the mzn and dzn files within the container
 the `scp` command can be used or, alternatively, it is possible also to 
 start the container with some shared volume (see
@@ -190,7 +190,7 @@ is also available. For more details, see the README file in sunny-cp/kb folder.
 
 + docker	contains the dockerfile used to generate the image in the dockerhub
 
-## Bacic Installation
+## Manual Installation
 
 sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully 
 portable on other platforms. Since the virtualization of Docker can have an 
