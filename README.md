@@ -33,63 +33,91 @@ Mauro (University of Oslo). For any question or information, please contact us:
 * roberto.amadini at unimelb.edu.au
 * mauro.jacopo  at gmail.com
 
-## Prerequisites
+## Installation & Usage by HTTP POST requests 
 
-sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully 
-portable on other platforms. Some of the main requirements are:
+To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
+the majority of the operating systems. It can then be used by simply sending a 
+post request to the server deployed by using docker (for a local installation of
+sunny-cp please see the Local Installation section below). 
 
-+ Python (version >= 2)
-  https://www.python.org/
+The Docker image is availabe in Docker Hub. To install it please run the
+following commands.
 
-+ MiniZinc (version >= 2.7.1)
-  http://www.minizinc.org/
-
-+ mzn2feat (version >= 1.2.1)
-  http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
-
-+ psutil (version >= 2)
-  https://pypi.python.org/pypi/psutil
-
-+ click (version >= 6)
-  http://click.pocoo.org/
-
-## Contents
-
-+ bin     contains the executables of sunny-cp
-
-+ kb      contains the utilities for the knowledge base of sunny-cp
-
-+ src     contains the sources of sunny-cp
-
-+ solvers contains the utilities for the constituent solvers of sunny-cp
-
-+ test    contains some MiniZinc examples for testing sunny-cp
-
-+ tmp     is aimed at containing the temporary files produced by sunny-cp.
-
-## Bacic Installation
-
-Once downloaded the sources, move into sunny-cp folder and run install.sh:
 ```
-  sunny-cp$ ./install.sh
+sudo docker pull jacopomauro/sunny_cp
+sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny_cp
 ```
-This is a minimal installation script that checks the prerequisites, compiles 
-all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
-it creates file SUNNY_HOME/src/pfolio_solvers.py).
-If the installation is successful, you will see the following message:
+
+where `<PORT>` is the port used to use the functionalities of the service.
+
+Assuming that `<MZN>` is the path of the mzn file to solve,
+to run the solver on it is possible to invoke it by a multipart post request as follows.
+
 ```
-  --- Everything went well!
-  To complete sunny-cp installation you just have to add/modify the
-  environment variables SUNNY_HOME and PATH:
-  1. SUNNY_HOME must point to: "$PWD"/sunny-cp
-  2. PATH must be extended to include: "$PWD"/bin
+curl -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
-It is important to set such variables in order to use sunny-cp. Once the 
-variables are set, check the installation by typing the command: 
+
+This will run sunny-cp with the default parameters on the minizinc instance.
+If a `<DZN>` file is also needed, sunny-cp can be invoked as follows.
+
 ```
-  sunny-cp --help
+curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:<PORT>/process
 ```
-for printing the help page.
+
+sunny-cp options can be passed by adding the string "option=value" as additional
+part of the request.
+
+For instance to solve the `<MZN>` using only the gecode solver (option `-P`)
+the post request to perform is the following one.
+
+```
+curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:<PORT>/process
+```
+
+To see the options supported by sunny-cp please run the following command.
+
+```
+curl -F "--help=" http://localhost:<PORT>/process
+```
+
+To select sunny-cp flags (like `--help` above) it is possible to add the string
+"flag=".
+ 
+To understand what are the solvers installed you can use the following get request.
+ 
+```
+curl http://localhost:<PORT>/solvers
+```
+ 
+Note that the post requests will return the output generate by sunny-cp at the
+end of its execution. In case partial solutions are need, it is possible 
+to interact with sunny-cp from command line as specified in the remaining part of 
+the section.
+
+To clean up please lunch the following commands:
+ 
+```
+sudo docker stop sunny_cp_container
+sudo docker rm sunny_cp_container
+sudo docker rmi jacopomauro/sunny_cp
+```
+ 
+#### Interacting with SUNNY-CP from command line
+ 
+To interact with SUNNY-CP, it is possible to run the docker container getting
+a direct access to the bash. This can be done by running the following command.
+ 
+```
+sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
+```
+
+This will give access to the bash and SUNNY-CP can be invoked by running the
+`sunny-cp` command like a local installation.
+To move the mzn and dzn files within the container
+the `scp` command can be used or, alternatively, it is possible also to 
+start the container with some shared volume (see
+[Docker documentation](https://docs.docker.com/engine/admin/volumes/volumes/)
+for more information.)
 
 ## Solvers
 
@@ -123,9 +151,14 @@ option `--check-solvers`.
 During the presolving phase (in parallel with the static schedule execution) 
 sunny-cp extracts a feature vector of the problem in order to compute the 
 solvers schedule possibly run in the solving phase. By default, the feature 
-vector is extracted by mzn2feat tool. sunny-cp provide the sources of this tool: 
-for its installation, decompress the mzn2feat-1.0.tar.bz2 archive and follow the 
-instruction in the README file of that folder. However, the user can define its 
+vector is extracted by mzn2feat tool available at
+[https://github.com/CP-Unibo/mzn2feat](https://github.com/CP-Unibo/mzn2feat).
+
+When using docker this tool is already installed in the image. In case of local
+installation it needs otherwise to be installed manually following the 
+instruction in the README file of mzn2feat.
+
+Note that the user can define its 
 own extractor by implementing a corresponding class in src/features.py
 
 ## Knowledge Base
@@ -139,6 +172,78 @@ The sunny-cp/kb/mznc1215 folder contains a knowledge base consisting of 76 CSP
 instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
 Moreover, the knowledge base mznc15 used in the MiniZinc Challenges 2016--2017 
 is also available. For more details, see the README file in sunny-cp/kb folder.
+
+
+## Contents of this git repository
+
++ bin     contains the executables of sunny-cp
+
++ kb      contains the utilities for the knowledge base of sunny-cp
+
++ src     contains the sources of sunny-cp
+
++ solvers contains the utilities for the constituent solvers of sunny-cp
+
++ test    contains some MiniZinc examples for testing sunny-cp
+
++ tmp     is aimed at containing the temporary files produced by sunny-cp
+
++ docker	contains the dockerfile used to generate the image in the dockerhub
+
+## Bacic Installation
+
+sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully 
+portable on other platforms. Since the virtualization of Docker can have an 
+effect on its performances, SUNNY-CP can be installed locally assuming a Linux
+operating system. Some of the main requirements for its installation are:
+
++ Python (version >= 2)
+  https://www.python.org/
+
++ MiniZinc (version >= 2.7.1)
+  http://www.minizinc.org/
+
++ mzn2feat (version >= 1.2.1)
+  http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
+
++ psutil (version >= 2)
+  https://pypi.python.org/pypi/psutil
+
++ click (version >= 6)
+  http://click.pocoo.org/
+
+
+Once downloaded the sources, move into sunny-cp folder and run install.sh.
+
+```
+  sunny-cp$ ./install.sh
+```
+
+This is a minimal installation script that checks the prerequisites, compiles 
+all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
+it creates file SUNNY_HOME/src/pfolio_solvers.py).
+
+If the installation is successful, you will see the following message:
+
+```
+  --- Everything went well!
+  To complete sunny-cp installation you just have to add/modify the
+  environment variables SUNNY_HOME and PATH:
+  1. SUNNY_HOME must point to: "$PWD"/sunny-cp
+  2. PATH must be extended to include: "$PWD"/bin
+```
+
+It is important to set such variables in order to use sunny-cp. Once the 
+variables are set, check the installation by typing the command: 
+
+```
+  sunny-cp --help
+```
+for printing the help page.
+
+Note that installing SUNNY-CP is recommended only for expert linux users.
+More detail information of the commands and the additional requirents to install
+SUNNY-CP and its solvers can be found in the Dockerfile in the docker folder.
 
 ## Testing
 
@@ -154,9 +259,19 @@ The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are
 respectively redirected.
 
-## Installation with Docker
-*** TODO ***
+## Additional info
 
+Previous versions of SUNNY-CP supported solvers that are currently not included
+in the docker image due to compilation problems
+or the fact that are not publicly available/free. The old solvers that are not provided
+with the current default configuration are:
+* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not compile)
+* [G12/Gurobi](http://www.gurobi.com/) (not free)
+* [iZplus](http://www.constraint.org/ja/izc_download.html) (not publicly available)
+* [Opturion](http://www.opturion.com) (not free)
+
+We invite the developers interested in adding their solver
+to the default image of sunny-cp to contact us.
 
 ## Acknowledgement
 

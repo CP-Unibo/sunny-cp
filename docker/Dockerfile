@@ -30,13 +30,29 @@ RUN cd / && \
 	mv MiniZincIDE-2.1.6-bundle-linux-x86_64 minizinc
 ENV PATH /minizinc:$PATH
 
+# Install feature extractor
+RUN cd / && \
+  git clone --depth=1 https://github.com/CP-Unibo/mzn2feat.git && \
+  cd /mzn2feat && \
+  bash install --no-xcsp
+ENV MZN2FEAT_HOME /mzn2feat
+ENV PATH /mzn2feat/bin:$PATH
+
+# install sunny-cp (basic one with only minizin solvers)
+RUN cd / && \
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
+  cd /sunny-cp && \
+  bash install.sh
+ENV PATH /sunny-cp/bin:$PATH
+
 # Install ortools
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
 	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
 	tar xvfz or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
 	rm or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
-	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools
+	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools && \
+	mv /sunny-cp/docker_solvers/ortools /sunny-cp/solvers
 
 # Install choco
 RUN apt-get update && \
@@ -46,7 +62,8 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
   mkdir choco && \
 	cd choco && \
-	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar
+	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar && \
+	mv /sunny-cp/docker_solvers/choco /sunny-cp/solvers
 
 # Install picat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
@@ -59,7 +76,9 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_cp.pi  && \
 	wget http://picat-lang.org/flatzinc/fzn_parser.pi  && \
-	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi
+	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi && \
+	mv /sunny-cp/docker_solvers/picat_cp /sunny-cp/solvers && \
+	mv /sunny-cp/docker_solvers/picat_sat /sunny-cp/solvers
 
 # Install jacop
 RUN apt-get update && \
@@ -69,7 +88,8 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
 	mkdir jacop && \
 	cd jacop && \
-	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar
+	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar && \
+	mv /sunny-cp/docker_solvers/jacop /sunny-cp/solvers
 
 # Install minisat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
@@ -79,7 +99,8 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	tar -xvf minisatid-3.11.0-Linux.tar && \
 	mv minisatid-3.11.0-Linux minisatid && \
 	rm minisatid-3.11.0-Linux.tar
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib && \
+	mv /sunny-cp/docker_solvers/minisat /sunny-cp/solvers
 
 # Install haifacsp
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
@@ -87,7 +108,8 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	wget --no-check-certificate http://ie.technion.ac.il/~ofers/HCSP/hcsp-1.3.0-x86_64.tar.xz && \
 	tar -xJf hcsp-1.3.0-x86_64.tar.xz && \
 	mv hcsp-1.3.0-x86_64 haifacsp && \
-	rm hcsp-1.3.0-x86_64.tar.xz
+	rm hcsp-1.3.0-x86_64.tar.xz && \
+	mv /sunny-cp/docker_solvers/haifacsp /sunny-cp/solvers
 
 # Mistral
 # Does not compile anymore -> temporarly removed
@@ -99,21 +121,11 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 #	make
 #ENV PATH $PATH:/solvers_exec/mistral/bin
 
-# Install feature extractor
-RUN cd / && \
-  git clone --depth=1 https://github.com/CP-Unibo/mzn2feat.git && \
-  cd /mzn2feat && \
-  bash install --no-xcsp
-ENV MZN2FEAT_HOME /mzn2feat
-ENV PATH /mzn2feat/bin:$PATH
-
-# install sunny-cp
-RUN cd / && \
-  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
-  cd /sunny-cp && \
-  bash install
-ENV PATH /sunny-cp/bin:$PATH
+# install the added solver in sunny-cp
+RUN cd /sunny-cp && \
+  bash install.sh
 WORKDIR /sunny-cp
 CMD ["python","/sunny-cp/src/sunny_server.py"]
+
 
 
