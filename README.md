@@ -26,13 +26,6 @@ In a nutshell, sunny-cp relies on two sequential steps:
 sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
 and 2017 [6].
 
-## Authors
-
-sunny-cp is developed by Roberto Amadini (University of Melbourne) and Jacopo
-Mauro (University of Oslo). For any question or information, please contact us:
-* roberto.amadini at unimelb.edu.au
-* mauro.jacopo  at gmail.com
-
 ## Installation & Usage by HTTP POST requests 
 
 To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
@@ -42,60 +35,48 @@ sunny-cp please see the Manual Installation section below).
 
 The Docker image is availabe in Docker Hub. To install it please run the
 following commands.
-
 ```
 sudo docker pull jacopomauro/sunny_cp
 sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny_cp
 ```
-
 where `<PORT>` is the port used to use the functionalities of the service.
 
 Assuming that `<MZN>` is the path of the mzn file to solve,
 to run the solver on it is possible to invoke it by a multipart post request as follows.
-
 ```
 curl -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
-
 This will run sunny-cp with the default parameters on the minizinc instance.
 If a `<DZN>` file is also needed, sunny-cp can be invoked as follows.
-
 ```
 curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:<PORT>/process
 ```
-
 sunny-cp options can be passed by adding the string "option=value" as additional
 part of the request.
 
 For instance to solve the `<MZN>` using only the gecode solver (option `-P`)
 the post request to perform is the following one.
-
 ```
 curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
-
 To see the options supported by sunny-cp please run the following command.
-
 ```
 curl -F "--help=" http://localhost:<PORT>/process
 ```
-
 To select sunny-cp flags (like `--help` above) it is possible to add the string
 "flag=".
  
 To understand what are the solvers installed you can use the following get request.
- 
 ```
 curl http://localhost:<PORT>/solvers
 ```
- 
+
 Note that the post requests will return the output generate by sunny-cp at the
 end of its execution. In case partial solutions are need, it is possible 
 to interact with sunny-cp from command line as specified in the remaining part of 
 the section.
 
 To clean up please lunch the following commands:
- 
 ```
 sudo docker stop sunny_cp_container
 sudo docker rm sunny_cp_container
@@ -106,11 +87,9 @@ sudo docker rmi jacopomauro/sunny_cp
  
 To interact with SUNNY-CP, it is possible to run the docker container getting
 a direct access to the bash. This can be done by running the following command.
- 
 ```
 sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
 ```
-
 This will give access to the bash and SUNNY-CP can be invoked by running the
 `sunny-cp` command like a manual installation.
 To move the mzn and dzn files within the container
@@ -177,17 +156,11 @@ is also available. For more details, see the README file in sunny-cp/kb folder.
 ## Contents of this git repository
 
 + bin     contains the executables of sunny-cp
-
 + kb      contains the utilities for the knowledge base of sunny-cp
-
 + src     contains the sources of sunny-cp
-
 + solvers contains the utilities for the constituent solvers of sunny-cp
-
 + test    contains some MiniZinc examples for testing sunny-cp
-
 + tmp     is aimed at containing the temporary files produced by sunny-cp
-
 + docker	contains the dockerfile used to generate the image in the dockerhub
 
 ## Manual Installation
@@ -197,34 +170,21 @@ portable on other platforms. Since the virtualization of Docker can have an
 effect on its performances, SUNNY-CP can be installed locally assuming a Linux
 operating system. Some of the main requirements for its installation are:
 
-+ Python (version >= 2)
-  https://www.python.org/
-
-+ MiniZinc (version >= 2.7.1)
-  http://www.minizinc.org/
-
-+ mzn2feat (version >= 1.2.1)
-  http://www.cs.unibo.it/~amadini/mzn2feat-1.0.tar.bz2
-
-+ psutil (version >= 2)
-  https://pypi.python.org/pypi/psutil
-
-+ click (version >= 6)
-  http://click.pocoo.org/
-
++ [Python](https://www.python.org/) (version >= 2)
++ [MiniZinc](http://www.minizinc.org/) (version >= 2.7.1)
++ [mzn2feat](https://github.com/CP-Unibo/mzn2feat) (version >= 1.2.1)
++ [psutil](https://pypi.python.org/pypi/psutil) (version >= 2)
++ [click](http://click.pocoo.org/) (version >= 6)
 
 Once downloaded the sources, move into sunny-cp folder and run install.sh.
-
 ```
   sunny-cp$ ./install.sh
 ```
-
 This is a minimal installation script that checks the prerequisites, compiles 
 all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
 it creates file SUNNY_HOME/src/pfolio_solvers.py).
 
 If the installation is successful, you will see the following message:
-
 ```
   --- Everything went well!
   To complete sunny-cp installation you just have to add/modify the
@@ -235,7 +195,6 @@ If the installation is successful, you will see the following message:
 
 It is important to set such variables in order to use sunny-cp. Once the 
 variables are set, check the installation by typing the command: 
-
 ```
   sunny-cp --help
 ```
@@ -250,11 +209,9 @@ SUNNY-CP and its solvers can be found in the Dockerfile in the docker folder.
 Although a full support for automatic testing is not yet implemented, in the
 sunny-cp/test/examples folder there is a number of simple MiniZinc models.
 The user can test all the models by running the following command:
-
 ```
  test/examples$ ./run_examples
 ```
-
 The run_examples script also produces output.log and errors.log files in the
 test/examples folder, where the standard output/error of the tested models are
 respectively redirected.
@@ -273,13 +230,19 @@ with the current default configuration are:
 We invite the developers interested in adding their solver
 to the default image of sunny-cp to contact us.
 
+## Authors
+
+sunny-cp is developed by Roberto Amadini (University of Melbourne) and Jacopo
+Mauro (University of Oslo). For any question or information, please contact us:
+* roberto.amadini at unimelb.edu.au
+* mauro.jacopo  at gmail.com
+
 ## Acknowledgement
 
 We would like to thank the staff of the former Optimization Research Group of 
 NICTA (National ICT of Australia) for granting us the computational resources 
 needed for building and testing sunny-cp. We also thank all the developers of 
 the constituent solvers without which sunny-cp scould not exists.
-
 
 ## References
 
