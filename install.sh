@@ -51,13 +51,12 @@ fi
 echo 'OK!'
 
 echo -n 'Testing mzn2feat installation...'
-which minizinc 1>/dev/null
+which mzn2feat 1>/dev/null
 ret=$?
 if 
   [ $ret -ne 0 ]
 then
   echo 'Error! mzn2feat not properly installed'
-  echo 'Please decompress mzn2feat-1.1.1.tar.bz2 and install the mzn2feat tool.'
   echo 'Aborted.'
   exit $ret
 fi
