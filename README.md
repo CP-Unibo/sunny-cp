@@ -26,6 +26,16 @@ In a nutshell, sunny-cp relies on two sequential steps:
 sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
 and 2017 [6].
 
+## Contents of this git repository
+
++ bin     contains the executables of sunny-cp
++ kb      contains the utilities for the knowledge base of sunny-cp
++ src     contains the sources of sunny-cp
++ solvers contains the utilities for the constituent solvers of sunny-cp
++ test    contains some MiniZinc examples for testing sunny-cp
++ tmp     is aimed at containing the temporary files produced by sunny-cp
++ docker	contains the dockerfile used to generate the image in the dockerhub
+
 ## Installation & Usage by HTTP POST requests 
 
 To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
@@ -64,7 +74,7 @@ To see the options supported by sunny-cp please run the following command.
 curl -F "--help=" http://localhost:<PORT>/process
 ```
 To select sunny-cp flags (like `--help` above) it is possible to add the string
-"flag=".
+"flag=". For example, the option `--mzn` is set with -F "--mzn=".
  
 To understand what are the solvers installed you can use the following get request.
 ```
@@ -98,13 +108,29 @@ start the container with some shared volume (see
 [Docker documentation](https://docs.docker.com/engine/admin/volumes/volumes/)
 for more information.)
 
+## Manual Installation
+
+sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully 
+portable on other platforms. If you want to avoid the virtualization via Docker, 
+you can manually install sunny-cp on Linux operating systems. 
+Some of the main requirements for its installation are:
+
++ [Python](https://www.python.org/) (version >= 2)
++ [MiniZinc](http://www.minizinc.org/) (version >= 2.7.1)
++ [mzn2feat](https://github.com/CP-Unibo/mzn2feat) (version >= 1.2.1)
++ [psutil](https://pypi.python.org/pypi/psutil) (version >= 2)
++ [click](http://click.pocoo.org/) (version >= 6)
+
+To manually install sunny-cp, simply run the install.sh script in the main 
+directory.
+
 ## Solvers
 
 By default, sunny-cp uses the solvers contained in the MiniZinc bundle, that is:
 * G12/CBC
 * G12/LazyFD
 * G12/FD
-* G12/MPI
+* G12/MIP
 * [Gecode](http://www.gecode.org/)
 * [Chuffed](https://github.com/geoffchu/chuffed)
 
@@ -151,30 +177,6 @@ The sunny-cp/kb/mznc1215 folder contains a knowledge base consisting of 76 CSP
 instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
 Moreover, the knowledge base mznc15 used in the MiniZinc Challenges 2016--2017 
 is also available. For more details, see the README file in sunny-cp/kb folder.
-
-
-## Contents of this git repository
-
-+ bin     contains the executables of sunny-cp
-+ kb      contains the utilities for the knowledge base of sunny-cp
-+ src     contains the sources of sunny-cp
-+ solvers contains the utilities for the constituent solvers of sunny-cp
-+ test    contains some MiniZinc examples for testing sunny-cp
-+ tmp     is aimed at containing the temporary files produced by sunny-cp
-+ docker	contains the dockerfile used to generate the image in the dockerhub
-
-## Manual Installation
-
-sunny-cp is tested on 64-bit machines running Ubuntu 12.04, and not yet fully 
-portable on other platforms. Since the virtualization of Docker can have an 
-effect on its performances, SUNNY-CP can be installed locally assuming a Linux
-operating system. Some of the main requirements for its installation are:
-
-+ [Python](https://www.python.org/) (version >= 2)
-+ [MiniZinc](http://www.minizinc.org/) (version >= 2.7.1)
-+ [mzn2feat](https://github.com/CP-Unibo/mzn2feat) (version >= 1.2.1)
-+ [psutil](https://pypi.python.org/pypi/psutil) (version >= 2)
-+ [click](http://click.pocoo.org/) (version >= 6)
 
 Once downloaded the sources, move into sunny-cp folder and run install.sh.
 ```
