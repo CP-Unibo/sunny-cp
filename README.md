@@ -121,8 +121,34 @@ Some of the main requirements for its installation are:
 + [psutil](https://pypi.python.org/pypi/psutil) (version >= 2)
 + [click](http://click.pocoo.org/) (version >= 6)
 
-To manually install sunny-cp, simply run the install.sh script in the main 
-directory.
+To manually install sunny-cp, simply run the `install.sh` script in the main 
+directory:
+```
+  sunny-cp$ ./install.sh
+```
+This is a minimal installation script that checks the prerequisites, compiles 
+all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
+it creates file SUNNY_HOME/src/pfolio_solvers.py).
+
+If the installation is successful, you will see the following message:
+```
+  --- Everything went well!
+  To complete sunny-cp installation you just have to add/modify the
+  environment variables SUNNY_HOME and PATH:
+  1. SUNNY_HOME must point to: "$PWD"/sunny-cp
+  2. PATH must be extended to include: "$PWD"/bin
+```
+
+It is important to set such variables in order to use sunny-cp. Once the 
+variables are set, check the installation by typing the command: 
+```
+  sunny-cp --help
+```
+for printing the help page.
+
+Note that installing SUNNY-CP is recommended only for expert linux users.
+More detail information of the commands and the additional requirents to install
+SUNNY-CP and its solvers can be found in the Dockerfile in the docker folder.
 
 ## Solvers
 
@@ -177,34 +203,6 @@ The sunny-cp/kb/mznc1215 folder contains a knowledge base consisting of 76 CSP
 instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
 Moreover, the knowledge base mznc15 used in the MiniZinc Challenges 2016--2017 
 is also available. For more details, see the README file in sunny-cp/kb folder.
-
-Once downloaded the sources, move into sunny-cp folder and run install.sh.
-```
-  sunny-cp$ ./install.sh
-```
-This is a minimal installation script that checks the prerequisites, compiles 
-all the python sources of sunny-cp and builds the portfolio of sunny-cp (e.g., 
-it creates file SUNNY_HOME/src/pfolio_solvers.py).
-
-If the installation is successful, you will see the following message:
-```
-  --- Everything went well!
-  To complete sunny-cp installation you just have to add/modify the
-  environment variables SUNNY_HOME and PATH:
-  1. SUNNY_HOME must point to: "$PWD"/sunny-cp
-  2. PATH must be extended to include: "$PWD"/bin
-```
-
-It is important to set such variables in order to use sunny-cp. Once the 
-variables are set, check the installation by typing the command: 
-```
-  sunny-cp --help
-```
-for printing the help page.
-
-Note that installing SUNNY-CP is recommended only for expert linux users.
-More detail information of the commands and the additional requirents to install
-SUNNY-CP and its solvers can be found in the Dockerfile in the docker folder.
 
 ## Testing
 
