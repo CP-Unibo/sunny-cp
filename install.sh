@@ -62,6 +62,17 @@ then
 fi
 echo 'OK!'
 
+echo 'Adding solvers to the portfolio...'
+python solvers/make_pfolio.py
+ret=$?
+if
+  [ $ret -ne 0 ]
+then
+  echo 'Aborted.'
+  exit $ret
+fi
+echo 'OK!'
+
 echo 'Compiling python sources...'
 for f in `find src -name *.py` `find kb -name *.py` ./bin/sunny-cp
 do
@@ -81,16 +92,6 @@ done
 
 export SUNNY_HOME=$PWD
 cd $SUNNY_HOME
-echo 'Adding solvers to the portfolio...'
-python solvers/make_pfolio.py
-ret=$?
-if 
-  [ $ret -ne 0 ]
-then
-  echo 'Aborted.'
-  exit $ret
-fi
-echo 'OK!'
 
 echo "--- Everything went well!"
 echo "To complete sunny-cp installation just append $PWD/bin"
