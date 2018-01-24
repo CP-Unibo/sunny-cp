@@ -38,6 +38,8 @@ SLEEP_TIME = 0.1
 LOWER_BOUND = float('-inf')
 # Initial lower bound of the problem to be solved.
 UPPER_BOUND = float('+inf')
+# Initial starting time of the algorithm.
+STARTING_TIME = time.time()
 
 def handler(signum = None, frame = None):
   """
@@ -398,6 +400,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
         print line
         if not all_opt:
           print '% Search completed by',solver.name()
+          print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
           clean()
           sys.exit(0)
       elif problem.bound_worse_than(solver.obj_value):
@@ -416,6 +419,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
             return False
         problem.best_bound = solver.obj_value
         print '% Current Best Bound: ' + str(solver.obj_value)
+        print '% Current Solution Time: ' + str(time.time() - STARTING_TIME)
         if all_opt:
           for (var, val) in solver.solution.items():
             if var != solver.obj_var or solver.output_var:
@@ -438,6 +442,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
             print '----------'
             if problem.isCSP():
               print '% Search completed by',solver.name()
+              print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
               clean()
               sys.exit(0)
           else:
@@ -456,6 +461,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
           print '----------'
         print '=========='
       print '% Search completed by',solver.name()
+      print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
       clean()
       sys.exit(0)
     elif ' = ' in line:
