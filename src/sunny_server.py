@@ -102,16 +102,18 @@ class MyServer(BaseHTTPRequestHandler):
                 cmd += mzn
                 cmd += dzn
             else:
-                cmd = ["mzn2feat","-o","dict"] + extra_param
+                cmd = ["mzn2feat"] + extra_param
                 for i in mzn:
                     cmd += ["-i",i]
                 for i in dzn:
                     cmd += ["-d",i]
 
-            logging.debug('Running cmd %s' + unicode(cmd))
+            logging.debug('Running cmd {}'.format(cmd))
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = process.communicate()
             if process.returncode != 0:
+                logging.debug("The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
+                    process.returncode,out,err))
                 self.send_response(400)
                 self.send_header('Content-type', 'text/plain')
                 self.end_headers()

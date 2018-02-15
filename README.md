@@ -47,7 +47,7 @@ The Docker image is availabe in Docker Hub. To install it please run the
 following commands.
 ```
 sudo docker pull jacopomauro/sunny_cp
-sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny_cp
+sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny-cp
 ```
 where `<PORT>` is the port used to use the functionalities of the service.
 
@@ -76,15 +76,21 @@ curl -F "--help=" http://localhost:<PORT>/process
 To select sunny-cp flags (like `--help` above) it is possible to add the string
 "flag=". For example, the option `--mzn` is set with -F "--mzn=".
  
+Note that the post requests will return the output generate by sunny-cp at the
+end of its execution. In case partial solutions are need, it is possible 
+to interact with sunny-cp from command line as specified in the remaining part of 
+the section.
+
 To understand what are the solvers installed you can use the following get request.
 ```
 curl http://localhost:<PORT>/solvers
 ```
 
-Note that the post requests will return the output generate by sunny-cp at the
-end of its execution. In case partial solutions are need, it is possible 
-to interact with sunny-cp from command line as specified in the remaining part of 
-the section.
+It is also possible to get the feature vector of an instance by using the following
+post request.
+```
+curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:<PORT>/get_features
+```
 
 To clean up please lunch the following commands:
 ```
