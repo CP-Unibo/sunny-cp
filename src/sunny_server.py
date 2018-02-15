@@ -65,10 +65,10 @@ class MyServer(BaseHTTPRequestHandler):
         # logging.debug('Parameters %s' % unicode(query_values))
         # logging.debug('Post data %s' % unicode(postvars))
 
-        if urlparse.urlparse(self.path).path == "/process":
+        if urlparse.urlparse(self.path).path == "/process" or urlparse.urlparse(self.path).path == "/get_features":
             mzn = []
             dzn = []
-            cmd = ["sunny-cp"]
+            extra_param = []
             for i in postvars:
                 if i.startswith('mzn'):
                     logging.debug("Found mzn input file")
@@ -91,13 +91,22 @@ class MyServer(BaseHTTPRequestHandler):
                         return
                     if postvars[i][0] == "":
                         logging.debug("Found flag %s" % i)
-                        cmd.append(i)
+                        extra_param.append(i)
                     else:
                         logging.debug("Found parameter %s with value %s" % (i,postvars[i]))
-                        cmd.append(i)
-                        cmd.append(postvars[i][0])
-            cmd += mzn
-            cmd += dzn
+                        extra_param.append(i)
+                        extra_param.append(postvars[i][0])
+
+            if urlparse.urlparse(self.path).path == "/process":
+                cmd = ["sunny-cp"] + extra_param
+                cmd += mzn
+                cmd += dzn
+            else:
+                cmd = ["mzn2feat","-o","dict"] + extra_param
+                for i in mzn:
+                    cmd += ["-i",i]
+                for i in dzn:
+                    cmd += ["-d",i]
 
             logging.debug('Running cmd %s' + unicode(cmd))
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
