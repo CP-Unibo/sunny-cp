@@ -14,6 +14,8 @@ import os
 import subprocess
 import click
 
+# default timeout in seconds for sunny
+TIMEOUT = 1200
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 
 
@@ -66,6 +68,7 @@ class MyServer(BaseHTTPRequestHandler):
         # logging.debug('Post data %s' % unicode(postvars))
 
         if urlparse.urlparse(self.path).path == "/process" or urlparse.urlparse(self.path).path == "/get_features":
+            timeout = unicode(TIMEOUT)
             mzn = []
             dzn = []
             extra_param = []
@@ -94,15 +97,18 @@ class MyServer(BaseHTTPRequestHandler):
                         extra_param.append(i)
                     else:
                         logging.debug("Found parameter %s with value %s" % (i,postvars[i]))
+                        if i == "-T":
+                            if "inf" not in postvars[i][0]:
+                                timeout = postvars[i][0]
                         extra_param.append(i)
                         extra_param.append(postvars[i][0])
 
             if urlparse.urlparse(self.path).path == "/process":
-                cmd = ["sunny-cp"] + extra_param
+                cmd = ["timeout", timeout, "sunny-cp"] + extra_param
                 cmd += mzn
                 cmd += dzn
             else:
-                cmd = ["mzn2feat"] + extra_param
+                cmd = ["timeout", timeout, "mzn2feat"] + extra_param
                 for i in mzn:
                     cmd += ["-i",i]
                 for i in dzn:
