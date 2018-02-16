@@ -117,7 +117,7 @@ class MyServer(BaseHTTPRequestHandler):
             logging.debug('Running cmd {}'.format(cmd))
             process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = process.communicate()
-            if process.returncode != 0:
+            if process.returncode != 0 and process.returncode != 124:
                 logging.debug("The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
                     process.returncode,out,err))
                 self.send_response(400)
