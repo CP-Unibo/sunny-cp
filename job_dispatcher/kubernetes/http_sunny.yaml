@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: http-sunny
+  name: http-sunny
+  namespace: sunny-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: http-sunny
+  template:
+    metadata:
+      labels:
+        run: http-sunny
+    spec:
+      containers:
+        - name: http-sunny
+          image: jacopomauro/sunny-cp
+          ports:
+          - containerPort: 9001
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: run
+                operator: In
+                values:
+                - http-sunny
+            topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: http-sunny
+  name: http-sunny
+  namespace: sunny-namespace
+spec:
+  ports:
+    - name: port-1
+      port: 9001
+      protocol: TCP
+      targetPort: 9001
+  selector:
+    run: http-sunny

@@ -1,0 +1,14 @@
+apiVersion: v1
+data:
+  balance-algorithm: leastconn
+  dynamic-scaling: "true"
+  timeout-client: "1h"
+  timeout-client-fin: "1h"
+  timeout-keep-alive: "61m"
+  timeout-server: "1h"
+  timeout-server-fin: "1h"
+  timeout-tunnel: "2h"
+kind: ConfigMap
+metadata:
+  name: haproxy-configmap
+  namespace: sunny-namespace

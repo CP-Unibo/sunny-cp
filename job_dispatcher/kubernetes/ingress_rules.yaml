@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sunny-ingress-rule
+  namespace: sunny-namespace
+spec:
+  rules:
+  - host: sunny
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: http-sunny
+          servicePort: 9001
