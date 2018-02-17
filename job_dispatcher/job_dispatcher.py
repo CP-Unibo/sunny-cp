@@ -62,7 +62,7 @@ def get_mzn_dzn_pairs(dir_name):
 @click.command()
 @click.option('--request-file',
               help='CSV containing the job to dispatch',
-              type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=True, readable=True,
+              type=click.Path(exists=False, file_okay=True, dir_okay=False, writable=True, readable=True,
                               resolve_path=True),
               default="requests.csv")
 @click.option('--problems-dir',
