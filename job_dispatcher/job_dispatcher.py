@@ -38,6 +38,23 @@ def cli(log_level):
     logging.basicConfig(level=log_level)
 
 ################################
+# Utility functions
+################################
+
+def get_hash_id(mzn_file,dzn_file):
+    '''
+    Computes the hash to be used as id for the instance
+    '''
+    h = hashlib.sha256()
+    with open(mzn_file) as f:
+        h.update(f.read())
+    if dzn_file:
+        with open(dzn_file) as f:
+            h.update(f.read())
+    id = h.hexdigest()
+    return id
+
+################################
 # Get the list
 ################################
 
@@ -70,45 +87,62 @@ def get_mzn_dzn_pairs(dir_name):
               type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=False, readable=True,
                               resolve_path=True),
               default="./")
-@click.option('--solvers','-s',multiple=True,
+@click.option('--solver','-s',multiple=True,
               help='Solver to use',
+              default=[])
+@click.option('--database-file',
+              help='Sqlite database file, if any, to avoid repeating experiments.',
+              multiple=True,
+              type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=False, readable=True,
+                              resolve_path=True),
               default=[])
 def create_request_list(
         request_file,
         problems_dir,
-        solvers
+        solver,
+        database_file
         ):
     '''
     Create the request list using mzn, dzn files in a directory.
     '''
-    logging.info("Solvers to use: {}".format(",".join(solvers)))
+    if len(database_file) > 1:
+        logging.error("Only one database is supported. Exiting")
+        sys.exit(1)
+
+    logging.info("Solvers to use: {}".format(",".join(solver)))
 
     mzn_dzn_pair = get_mzn_dzn_pairs(problems_dir)
     logging.info("Retrieved {} problems to solve".format(len(mzn_dzn_pair)))
 
-    triples = [(x,y,z) for (x,y) in mzn_dzn_pair for z in solvers]
-    with open(request_file,'wb') as f:
-        for (x,y,z) in [(x,y,z) for (x,y) in mzn_dzn_pair for z in solvers]:
-            f.write("{}|{}|{}\n".format(x,y,z))
+    if database_file:
+        logging.info("Computing the hash functions of the instances")
+        maps_id_pair = {get_hash_id(x,y):(x,y) for (x,y) in mzn_dzn_pair}
+        maps_pair_id = {maps_id_pair[x]:x for x in maps_id_pair}
+        logging.info("Using the hash function {} unique problems to solve were found".format(len(maps_id_pair)))
+
+        connection = sqlite3.connect(database_file[0])
+        cursor = connection.cursor()
+        with open(request_file,'wb') as f:
+            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in mzn_dzn_pair]:
+                cursor.execute("SELECT count(*) FROM results WHERE id = ? AND solvers= ?", (maps_pair_id[(x,y)],z))
+                data = cursor.fetchone()[0]
+                if data == 0:
+                    f.write("{}|{}|{}\n".format(x, y, z))
+                else:
+                    logging.warning("Solver {} already used to solve problem {}".format(z,[x,y]))
+        connection.close()
+
+    else:
+        with open(request_file,'wb') as f:
+            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in mzn_dzn_pair]:
+                f.write("{}|{}|{}\n".format(x,y,z))
+
 cli.add_command(create_request_list)
 
 
 ################################
 # Get results running sunny remotely
 ################################
-
-def get_hash_id(mzn_file,dzn_file):
-    '''
-    Computes the hash to be used as id for the instance
-    '''
-    h = hashlib.sha256()
-    with open(mzn_file) as f:
-        h.update(f.read())
-    if dzn_file:
-        with open(dzn_file) as f:
-            h.update(f.read())
-    id = h.hexdigest()
-    return id
 
 
 def parse_solver_output(output):
