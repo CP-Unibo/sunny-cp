@@ -98,9 +98,9 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	gzip -d minisatid-3.11.0-Linux.tar.gz && \
 	tar -xvf minisatid-3.11.0-Linux.tar && \
 	mv minisatid-3.11.0-Linux minisatid && \
-	rm minisatid-3.11.0-Linux.tar
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib && \
+	rm minisatid-3.11.0-Linux.tar && \
 	mv /sunny-cp/docker_solvers/minisatid /sunny-cp/solvers
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 
 # Install haifacsp
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
