@@ -46,7 +46,7 @@ sunny-cp please see the Manual Installation section below).
 The Docker image is availabe in Docker Hub. To install it please run the
 following commands.
 ```
-sudo docker pull jacopomauro/sunny_cp
+sudo docker pull jacopomauro/sunny-cp
 sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny-cp
 ```
 where `<PORT>` is the port used to use the functionalities of the service.
@@ -96,7 +96,7 @@ To clean up please lunch the following commands:
 ```
 sudo docker stop sunny_cp_container
 sudo docker rm sunny_cp_container
-sudo docker rmi jacopomauro/sunny_cp
+sudo docker rmi jacopomauro/sunny-cp
 ```
  
 #### Interacting with SUNNY-CP from command line
