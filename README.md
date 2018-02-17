@@ -104,7 +104,7 @@ sudo docker rmi jacopomauro/sunny-cp
 To interact with SUNNY-CP, it is possible to run the docker container getting
 a direct access to the bash. This can be done by running the following command.
 ```
-sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny_cp
+sudo docker run --entrypoint="/bin/bash" -i --rm -t jacopomauro/sunny-cp
 ```
 This will give access to the bash and SUNNY-CP can be invoked by running the
 `sunny-cp` command like a manual installation.
