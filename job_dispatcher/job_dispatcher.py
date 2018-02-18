@@ -19,6 +19,7 @@ import hashlib
 import Queue
 from threading import Thread
 import sys
+import time
 
 import click
 
@@ -26,6 +27,8 @@ QUEUE = Queue.Queue()
 MZN_ID = 0
 DZN_ID = 1
 SOL_ID = 2
+
+SLEEP_TIME = 1
 
 
 @click.group()
@@ -209,7 +212,9 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     if item[DZN_ID]:
                         files['dzn'] = open(item[DZN_ID], 'rb')
                     logging.debug("Thread {} sending request".format(thread_num))
-                    response = requests.post(url + "/get_features", files=files, headers={'host': hostname} if hostname else {})
+                    response = requests.post(url + "/get_features", files=files,
+                                                 headers={'host': hostname} if hostname else {})
+                    time.sleep(SLEEP_TIME)
                     logging.debug("Thread {} received answer with code {}.".format(thread_num, response.status_code))
                     # handle error in the answer
                     if response.status_code != requests.codes.ok:
@@ -260,6 +265,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
 
                 logging.debug("Thread {} sending request".format(thread_num))
                 response = requests.post(url + "/process", files=files, headers={'host': hostname} if hostname else {})
+                time.sleep(SLEEP_TIME)
                 logging.debug("Thread {} received answer with code {}.".format(thread_num,response.status_code))
                 if response.status_code != requests.codes.ok:
                     logging.error("Error {}. Ended up with error {}, response {}.".format(
@@ -289,8 +295,13 @@ def worker(thread_num,database_file,timeout,url,hostname):
             # Handle empty queue here
             break
         except requests.exceptions.RequestException as e:
-            logging.critical("Connection problems {}. Request discarded.".format(unicode(e)))
+            logging.critical("Error {}. Connection request exception {}".format(unicode(e)))
             QUEUE.task_done()
+        except requests.exceptions.ConnectionError as e:
+            logging.error("Error {}. Connection error {}".format(
+                item, e))
+            QUEUE.task_done()
+
     connection.close()
     logging.info("Thread {} terminated".format(thread_num))
 
