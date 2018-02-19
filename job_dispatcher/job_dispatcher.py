@@ -29,7 +29,9 @@ DZN_ID = 1
 SOL_ID = 2
 OPTIONS_ID = 3
 
+# sleep time in seconds after an http request
 SLEEP_TIME = 1
+SLEEP_TIME_AFTER_ERROR = 60
 
 
 @click.group()
@@ -227,6 +229,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                         logging.error("Error {}. Feature vector request ended up with error {}, response {}.".format(
                             item, response.status_code, response.text))
                         QUEUE.task_done()
+                        time.sleep(SLEEP_TIME_AFTER_ERROR)
                         continue
                     # parse the answer
                     try:
@@ -239,6 +242,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                             "Error {}. Feature vector response {} can not be parsed.".format(
                                 item, response.text))
                         QUEUE.task_done()
+                        time.sleep(SLEEP_TIME_AFTER_ERROR)
                         continue
                     # compute the type of the problem
                     goal = "sat"
@@ -310,9 +314,11 @@ def worker(thread_num,database_file,timeout,url,hostname):
         except requests.exceptions.RequestException as e:
             logging.critical("Error {}. Connection request exception {}".format(item,unicode(e)))
             QUEUE.task_done()
+            time.sleep(SLEEP_TIME_AFTER_ERROR)
         except requests.exceptions.ConnectionError as e:
             logging.error("Error {}. Connection error {}".format(item, e))
             QUEUE.task_done()
+            time.sleep(SLEEP_TIME_AFTER_ERROR)
 
     connection.close()
     logging.info("Thread {} terminated".format(thread_num))
