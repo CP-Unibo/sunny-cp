@@ -135,7 +135,7 @@ def create_request_list(
                 cursor.execute("SELECT count(*) FROM results WHERE id = ? AND solvers= ?", (maps_pair_id[(x,y)],z))
                 data = cursor.fetchone()[0]
                 if data == 0:
-                    f.write("{}|{}|{}\n".format(x, y, z))
+                    f.write("{}|{}|{}|{}\n".format(x, y, z, extra_options))
                 else:
                     logging.warning("Solver {} already used to solve problem {}".format(z,[x,y]))
         connection.close()
