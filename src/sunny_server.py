@@ -20,6 +20,7 @@ logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 
 
 class MyServer(BaseHTTPRequestHandler):
+
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
@@ -115,25 +116,31 @@ class MyServer(BaseHTTPRequestHandler):
                     cmd += ["-d",i]
 
             logging.debug('Running cmd {}'.format(cmd))
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = process.communicate()
-            if process.returncode != 0 and process.returncode != 124:
-                logging.debug("The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
-                    process.returncode,out,err))
-                self.send_response(400)
-                self.send_header('Content-type', 'text/plain')
-                self.end_headers()
-                self.wfile.write(out)
-                self.wfile.write(err)
-            else:
-                self.send_response(200)
-                self.send_header('Content-type', 'text/plain')
-                self.end_headers()
-                self.wfile.write(out)
-            # delete files
-            for i in mzn + dzn:
-                if os.path.exists(i):
-                    os.remove(i)
+            try:
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = process.communicate()
+                if process.returncode != 0 and process.returncode != 124:
+                    logging.debug("The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
+                        process.returncode,out,err))
+                    self.send_response(400)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(out)
+                    self.wfile.write(err)
+                else:
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(out)
+
+            finally:
+                # delete files
+                for i in mzn + dzn:
+                    if os.path.exists(i):
+                        os.remove(i)
+                # stop process in case of errors
+                if process.poll() == None:
+                    process.kill()
         else:
             self.send_response(400)
             self.send_header('Content-type', 'text/plain')
