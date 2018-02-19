@@ -312,11 +312,12 @@ def worker(thread_num,database_file,timeout,url,hostname):
             # Handle empty queue here
             break
         except requests.exceptions.RequestException as e:
-            logging.critical("Error {}. Connection request exception {}".format(item,unicode(e)))
+            logging.critical("Error {}. Connection request exception {}. Time {}".format(
+                item,e,datetime.datetime.now()))
             QUEUE.task_done()
             time.sleep(SLEEP_TIME_AFTER_ERROR)
         except requests.exceptions.ConnectionError as e:
-            logging.error("Error {}. Connection error {}".format(item, e))
+            logging.error("Error {}. Connection error {}. Time {}".format(item, e, datetime.datetime.now()))
             QUEUE.task_done()
             time.sleep(SLEEP_TIME_AFTER_ERROR)
 
@@ -451,16 +452,13 @@ def generate_kb_files(
     connection = sqlite3.connect(database_file)
     cursor = connection.cursor()
 
-    logging.info("Start to create the feature_file")
     instance_type = {}
-    with open(feature_file,'wb') as f:
-        for row in cursor.execute("SELECT id,features,type FROM instances", ()):
-            instance_type[row[0]] = row[2]
-            # structure: inst|[f_1, ..., f_n]
-            f.write("{}|{}\n".format(row[0],row[1]))
+    used_instances = set([])
+    for row in cursor.execute("SELECT id,features,type FROM instances", ()):
+        instance_type[row[0]] = row[2]
     logging.info("Processed {} instances".format(len(instance_type)))
 
-
+    logging.info("Start to create the info_file")
     with open(info_file, 'wb') as f:
         for (id,solvers,timeout_inst,output) in cursor.execute("SELECT id,solvers,timeout,output FROM results", ()):
             # instance id not found in table
@@ -473,6 +471,12 @@ def generate_kb_files(
             if timeout > timeout_inst and (result["time"] <=0 or result["time"] > timeout):
                 logging.warning("Timeout {} for instance {} and solvers {} is not enough. Ignored".format(
                     timeout_inst,id,solvers))
+                continue
+
+            # solver ended up in error
+            if result["result"] == "unk" and result["time"] > 0:
+                logging.warning("Erronous execution for instance {} and solvers {}. Ignored".format(
+                    id,solvers))
                 continue
 
             # timeout too big
@@ -512,9 +516,20 @@ def generate_kb_files(
                 result["val"],
                 json.dumps(result["solutions"]).replace('"','')
             ))
+            used_instances.add(id)
+
+    logging.info("Start to create the feature_file")
+    instance_type = {}
+    with open(feature_file,'wb') as f:
+        for row in cursor.execute("SELECT id,features,type FROM instances", ()):
+            if row[0] in used_instances:
+                # structure: inst|[f_1, ..., f_n]
+                f.write("{}|{}\n".format(row[0],row[1]))
+
+
 
     connection.close()
-    logging.info("To generate the KB directory test_kb locally run 'csv2kb.py -p ./ test_kb {} {}'".format(feature_file,info_file))
+    logging.info("To generate the KB directory test_kb locally run 'python $SUNNY_HOME/kb/util/csv2kb.py -p . test_kb {} {}'".format(feature_file,info_file))
 cli.add_command(generate_kb_files)
 
 ################################
@@ -546,13 +561,13 @@ def check_anomalies(
     for row in cursor.execute("SELECT id,mzn,dzn,type FROM instances", ()):
         instances[row[0]] = (row[1:])
 
-    # list all real unk (the ones where the solver terminated before the timeout) or unb
+    # list all errors (the ones where the solver terminated before the timeout) or unb
     for i in results:
         for j in results[i]:
             if results[i][j]["result"] == "unb":
                 logging.info("UNBOUND: instance {}, solver {}".format(instances[i],j))
             elif results[i][j]["result"] == "unk" and results[i][j]["time"] > 0:
-                logging.info("UNKNOWN: instance {}, solver {}".format(instances[i][0:2], j))
+                logging.info("SOLVER ERROR: instance {}, solver {} terminated with unk before the timeout".format(instances[i][0:2], j))
 
     # opt value is consistent
     for i in results:
@@ -583,7 +598,43 @@ def check_anomalies(
                     logging.info("MAX greater than OPTIMA: instance {}, optima {}, values {}".format(
                         instances[i][0:2], min(op_values),
                         {x: best_values[x] for x in best_values if best_values[x] > max(op_values)}))
-    pass
+
+    # statistics per solver and marginal solver
+    statistics = {}
+    marginal_solver = {"not_solved": 0}
+    for i in results:
+        for j in results[i]:
+            if j not in statistics:
+                statistics[j] = {"total": 0}
+            statistics[j]["total"] += 1
+            if results[i][j]["result"] not in statistics[j]:
+                statistics[j][results[i][j]["result"]] = 1
+            else:
+                statistics[j][results[i][j]["result"]] += 1
+
+        if instances[i][2] == "sat":
+            solvers = sorted([(results[i][x]["time"],x) for x in results[i] if
+                               results[i][x]["result"] == "sat" or results[i][x]["result"] == "uns"])
+        else:
+            solvers = sorted([(results[i][x]["time"],x) for x in results[i] if
+                               results[i][x]["result"] == "opt"])
+            if not solvers:
+                if instances[i][2] == "min":
+                    solvers = sorted([(results[i][x]["time"],min(results[i][x]["solutions"].values()),x)
+                                      for x in results[i] if results[i][x]["result"] == "sat" and results[i][x]["solutions"]])
+                else:
+                    solvers = sorted([(results[i][x]["time"],max(results[i][x]["solutions"].values()),x)
+                                      for x in results[i] if results[i][x]["result"] == "sat" and results[i][x]["solutions"]])
+        if solvers:
+            if solvers[0][-1] in marginal_solver:
+                marginal_solver[solvers[0][-1]] += 1
+            else:
+                marginal_solver[solvers[0][-1]] = 1
+        else:
+            marginal_solver["not_solved"] += 1
+    logging.info("Solver responses: {}".format(json.dumps(statistics,indent=2)))
+    logging.info("Marginal solver: {}".format(json.dumps(marginal_solver, indent=2)))
+    logging.info("Total number of instances: {}".format(len(instances)))
 cli.add_command(check_anomalies)
 
 if __name__ == '__main__':
