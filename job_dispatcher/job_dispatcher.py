@@ -239,7 +239,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                             continue
                         # parse the answer
                         try:
-                            feature_vector = [float(x) for x in response.replace("nan","1").text.split(",")]
+                            feature_vector = [float(x) for x in response.text.replace("nan","1").split(",")]
                             # the s_goal is the feature having index 59
                             s_goal = feature_vector[59]
                             logging.debug("Obtained feature vector {}".format(feature_vector))
