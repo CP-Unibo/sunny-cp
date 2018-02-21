@@ -41,7 +41,8 @@ SLEEP_TIME_AFTER_ERROR = 60
               default="DEBUG")
 def cli(log_level):
     # Configure logging
-    logging.basicConfig(level=log_level)
+    logging.basicConfig(format="[%(asctime)s][%(levelname)s][%(name)s]%(message)s",
+                        level=log_level)
 
 ################################
 # Utility functions
@@ -206,120 +207,119 @@ def worker(thread_num,database_file,timeout,url,hostname):
     while not QUEUE.empty():
         try:
             item = QUEUE.get()
-            logging.debug("Thread {} process request {}".format(thread_num, item))
-            if os.path.isfile(item[MZN_ID]) and item[SOL_ID] and (not item[DZN_ID] or os.path.isfile(item[DZN_ID])):
-                id = get_hash_id(item[MZN_ID], item[DZN_ID] if item[DZN_ID] else "")
-                logging.debug("The hash of the files is {}".format(id))
+            try:
+                logging.debug("Thread {} process request {}".format(thread_num, item))
+                if os.path.isfile(item[MZN_ID]) and item[SOL_ID] and (not item[DZN_ID] or os.path.isfile(item[DZN_ID])):
+                    id = get_hash_id(item[MZN_ID], item[DZN_ID] if item[DZN_ID] else "")
+                    logging.debug("The hash of the files is {}".format(id))
 
-                # check if id is already in the DB or otherwise compute its feature vector
-                cursor.execute("SELECT count(*) FROM instances WHERE id = ?", (id,))
-                data = cursor.fetchone()[0]
-                if data == 0:
-                    logging.debug("Instance {} not found in the DB".format(id))
-                    files = {'mzn': open(item[MZN_ID], 'rb')}
+                    # check if id is already in the DB or otherwise compute its feature vector
+                    cursor.execute("SELECT count(*) FROM instances WHERE id = ?", (id,))
+                    data = cursor.fetchone()[0]
+                    if data == 0:
+                        logging.debug("Instance {} not found in the DB".format(id))
+                        files = {'mzn': open(item[MZN_ID], 'rb')}
+                        if item[DZN_ID]:
+                            files['dzn'] = open(item[DZN_ID], 'rb')
+                        logging.debug("Thread {} sending request".format(thread_num))
+                        response = requests.post(url + "/get_features", files=files,
+                                                     headers={'host': hostname} if hostname else {})
+                        time.sleep(SLEEP_TIME)
+                        logging.debug("Thread {} received answer with code {}.".format(thread_num, response.status_code))
+                        # handle error in the answer
+                        if response.status_code != requests.codes.ok:
+                            logging.error("Error {}. Thread {}. Feature vector request ended up with error {}, response {}.".format(
+                                item, thread_num, response.status_code, response.text))
+                            time.sleep(SLEEP_TIME_AFTER_ERROR)
+                            continue
+                        # parse the answer
+                        try:
+                            feature_vector = [float(x) if "nan" not in x else 0 for x in response.text.split(",")]
+                            # the s_goal is the feature having index 59
+                            s_goal = feature_vector[59]
+                            logging.debug("Obtained feature vector {}".format(feature_vector))
+                        except ValueError:
+                            logging.error(
+                                "Error {}. Thread {}. Feature vector response {} can not be parsed.".format(
+                                    item, thread_num, response.text))
+                            time.sleep(SLEEP_TIME_AFTER_ERROR)
+                            continue
+                        # compute the type of the problem
+                        goal = "sat"
+                        if s_goal == 2:
+                            goal = "min"
+                        elif s_goal == 3:
+                            goal = "max"
+                        logging.debug("Update the DB with instance having id {}".format(id))
+                        cursor.execute("INSERT or REPLACE INTO instances(id,mzn,dzn,type,features,date) VALUES" +
+                                       "(?,?,?,?,?,?)", (
+                                           id,
+                                           item[MZN_ID],
+                                           item[DZN_ID] if item[DZN_ID] else "",
+                                           goal,
+                                           unicode(feature_vector),
+                                           datetime.datetime.now()))
+                        connection.commit()
+                    else:
+                        cursor.execute("SELECT type FROM instances WHERE id = ?", (id,))
+                        goal = cursor.fetchone()[0]
+
+                    # try to solve the problem remotely
+                    files = {'mzn': open(item[MZN_ID], 'rb'),
+                             '-P': item[SOL_ID],
+                             '-T': unicode(timeout)}
                     if item[DZN_ID]:
                         files['dzn'] = open(item[DZN_ID], 'rb')
+                    if goal != "sat":
+                        files['-a'] = ""
+                    if item[OPTIONS_ID]:
+                        ls = [x.split("=") for x in OPTIONS_ID.split(",")]
+                        ls_errors = [ x for x in ls if len(x) != 2]
+                        if ls_errors:
+                            logging.warning("Ignoring options {} for instance {}".format(ls_errors,item))
+                        for option in [x for x in ls if len(x) == 2]:
+                            files[option[0]] = option[1]
+
                     logging.debug("Thread {} sending request".format(thread_num))
-                    response = requests.post(url + "/get_features", files=files,
-                                                 headers={'host': hostname} if hostname else {})
+                    response = requests.post(url + "/process", files=files, headers={'host': hostname} if hostname else {})
                     time.sleep(SLEEP_TIME)
-                    logging.debug("Thread {} received answer with code {}.".format(thread_num, response.status_code))
-                    # handle error in the answer
+                    logging.debug("Thread {} received answer with code {}.".format(thread_num,response.status_code))
                     if response.status_code != requests.codes.ok:
-                        logging.error("Error {}. Feature vector request ended up with error {}, response {}.".format(
-                            item, response.status_code, response.text))
-                        QUEUE.task_done()
-                        time.sleep(SLEEP_TIME_AFTER_ERROR)
-                        continue
-                    # parse the answer
-                    try:
-                        feature_vector = [float(x) if "nan" not in x else 0 for x in response.text.split(",")]
-                        # the s_goal is the feature having index 59
-                        s_goal = feature_vector[59]
-                        logging.debug("Obtained feature vector {}".format(feature_vector))
-                    except ValueError:
-                        logging.error(
-                            "Error {}. Feature vector response {} can not be parsed.".format(
-                                item, response.text))
-                        QUEUE.task_done()
-                        time.sleep(SLEEP_TIME_AFTER_ERROR)
-                        continue
-                    # compute the type of the problem
-                    goal = "sat"
-                    if s_goal == 2:
-                        goal = "min"
-                    elif s_goal == 3:
-                        goal = "max"
-                    logging.debug("Update the DB with instance having id {}".format(id))
-                    cursor.execute("INSERT or REPLACE INTO instances(id,mzn,dzn,type,features,date) VALUES" +
-                                   "(?,?,?,?,?,?)", (
-                                       id,
-                                       item[MZN_ID],
-                                       item[DZN_ID] if item[DZN_ID] else "",
-                                       goal,
-                                       unicode(feature_vector),
-                                       datetime.datetime.now()))
-                    connection.commit()
-                else:
-                    cursor.execute("SELECT type FROM instances WHERE id = ?", (id,))
-                    goal = cursor.fetchone()[0]
-
-                # try to solve the problem remotely
-                files = {'mzn': open(item[MZN_ID], 'rb'),
-                         '-P': item[SOL_ID],
-                         '-T': unicode(timeout)}
-                if item[DZN_ID]:
-                    files['dzn'] = open(item[DZN_ID], 'rb')
-                if goal != "sat":
-                    files['-a'] = ""
-                if item[OPTIONS_ID]:
-                    ls = [ x.split("=") for x in OPTIONS_ID.split(",")]
-                    ls_errors = [ x for x in ls if len(x) != 2]
-                    if ls_errors:
-                        logging.warning("Ignoring options {} for instance {}".format(ls_errors,item))
-                    for option in [x for x in ls if len(x) == 2]:
-                        files[option[0]] = option[1]
-
-                logging.debug("Thread {} sending request".format(thread_num))
-                response = requests.post(url + "/process", files=files, headers={'host': hostname} if hostname else {})
-                time.sleep(SLEEP_TIME)
-                logging.debug("Thread {} received answer with code {}.".format(thread_num,response.status_code))
-                if response.status_code != requests.codes.ok:
-                    logging.error("Error {}. Ended up with error {}, response {}.".format(
-                        item,response.status_code,response.text))
-                else:
-                    # parse the response
-                    json_result = parse_solver_output(response.text)
-                    if "error" in json_result:
-                        logging.error("Error {}. Wrong parse of answer {} in response <<<<< {} >>>>>".format(
-                            item, json_result["error"],response.text
-                        ))
+                        logging.error("Error {}. Thread {}. Ended up with error {}, response {}.".format(
+                            item, thread_num, response.status_code, response.text))
                     else:
-                        logging.debug("Parsed solution into json object {}".format(json.dumps(json_result)))
-                        logging.debug("Update the DB for item {}".format(item))
-                        cursor.execute("INSERT or REPLACE INTO results(id,solvers,timeout,date,output) VALUES (?,?,?,?,?)", (
-                            id,
-                            item[SOL_ID],
-                            timeout,
-                            datetime.datetime.now(),
-                            json.dumps(json_result)))
-                        connection.commit()
-                        logging.info("OK {}|{}".format(item,id))
-            else:
-                logging.error("ERROR {}. Request not well formed".format(item, item[DZN_ID]))
-            QUEUE.task_done()
+                        # parse the response
+                        json_result = parse_solver_output(response.text)
+                        if "error" in json_result:
+                            logging.error("Error {}. Thread {}. Wrong parse of answer {} in response <<<<< {} >>>>>".format(
+                                item, thread_num, json_result["error"],response.text
+                            ))
+                        else:
+                            logging.debug("Parsed solution into json object {}".format(json.dumps(json_result)))
+                            logging.debug("Update the DB for item {}".format(item))
+                            cursor.execute("INSERT or REPLACE INTO results(id,solvers,timeout,date,output) VALUES (?,?,?,?,?)", (
+                                id,
+                                item[SOL_ID],
+                                timeout,
+                                datetime.datetime.now(),
+                                json.dumps(json_result)))
+                            connection.commit()
+                            logging.info("OK {}|{}".format(item,id))
+                else:
+                    logging.error("ERROR {}. Thread {}. Request not well formed".format(item, thread_num, item[DZN_ID]))
+            except requests.exceptions.RequestException as e:
+                logging.critical("Error {}. Thread {}. Connection request exception {}. Time {}".format(
+                    item, e, thread_num, datetime.datetime.now()))
+                time.sleep(SLEEP_TIME_AFTER_ERROR)
+            except requests.exceptions.ConnectionError as e:
+                logging.error("Error {}. Thread {}. Connection error {}. Time {}".format(
+                    item, thread_num, e, datetime.datetime.now()))
+                time.sleep(SLEEP_TIME_AFTER_ERROR)
+            finally:
+                QUEUE.task_done()
         except Queue.Empty:
             # Handle empty queue here
             break
-        except requests.exceptions.RequestException as e:
-            logging.critical("Error {}. Connection request exception {}. Time {}".format(
-                item,e,datetime.datetime.now()))
-            QUEUE.task_done()
-            time.sleep(SLEEP_TIME_AFTER_ERROR)
-        except requests.exceptions.ConnectionError as e:
-            logging.error("Error {}. Connection error {}. Time {}".format(item, e, datetime.datetime.now()))
-            QUEUE.task_done()
-            time.sleep(SLEEP_TIME_AFTER_ERROR)
 
     connection.close()
     logging.info("Thread {} terminated".format(thread_num))
