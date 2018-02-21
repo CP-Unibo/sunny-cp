@@ -574,12 +574,22 @@ def check_anomalies(
                 logging.info("SOLVER ERROR: instance {}, solver {} terminated with unk before the timeout".format(instances[i][0:2], j))
 
     # opt value is consistent
+    possible_erroneous_solvers = set([])
     for i in results:
         if instances[i][2] == "sat":
             sat = [j for j in results[i] if results[i][j]["result"] == "sat"]
             unsat = [j for j in results[i] if results[i][j]["result"] == "uns"]
             if sat and unsat:
                 logging.info("SAT-UNSAT inconsistency: instance {}, sat {}, unsat {}".format(instances[i][0:2],sat,unsat))
+                if len(sat) > len(unsat):
+                    logging.info("Possible culprits {}".format(unsat))
+                    possible_erroneous_solvers.update(unsat)
+                elif len(sat) < len(unsat):
+                    logging.info("Possible culprits {}".format(sat))
+                    possible_erroneous_solvers.update(sat)
+                else:
+                    if not(set(sat).issubset(possible_erroneous_solvers) or set(unsat).issubset(possible_erroneous_solvers)):
+                        logging.info("Impossible to automatically detect culprits. Manual intervention needed.")
         else: # min or max problems
             best_values = {}
             for j in results[i]:
@@ -593,15 +603,32 @@ def check_anomalies(
             if len(op_values) > 1:
                 logging.info("TWO OPTIMA: instance {}, values {}".format(
                     instances[i][0:2],{x: best_values[x] for x in best_values if results[i][x]["result"] == "opt"}))
+                culprit_dict = {x: [y for y in best_values if results[i][y]["result"] == "opt" and best_values[y] == x]
+                                for x in op_values}
+                culprit_list = sorted([(len(culprit_dict[x]),x) for x in culprit_dict])
+                set_A = set(culprit_dict[culprit_list[0][1]])
+                set_B = set(culprit_dict[culprit_list[1][1]])
+                if culprit_list[0][0] < culprit_list[1][0]:
+                    logging.info("Possible culprits {}".format(set_A))
+                    possible_erroneous_solvers.update(set_A)
+                else:
+                    if not (set_A.issubset(possible_erroneous_solvers) or set_B.issubset(possible_erroneous_solvers)):
+                        logging.info("Impossible to automatically detect culprits. Manual intervention needed.")
+            op_values = set()
+            op_values.update([best_values[j] for j in best_values if results[i][j]["result"] == "opt" and
+                              j not in possible_erroneous_solvers])
             if op_values:
                 if instances[i][2] == "min" and min(op_values) > min(best_values.values()):
                     logging.info("MIN less than OPTIMA: instance {}, optima {}, values {}".format(
                         instances[i][0:2], min(op_values),
                         {x: best_values[x] for x in best_values if best_values[x] < min(op_values)}))
+                    possible_erroneous_solvers.update([x for x in best_values if best_values[x] < min(op_values)])
                 elif instances[i][2] == "max" and max(op_values) > max(best_values.values()):
                     logging.info("MAX greater than OPTIMA: instance {}, optima {}, values {}".format(
                         instances[i][0:2], min(op_values),
                         {x: best_values[x] for x in best_values if best_values[x] > max(op_values)}))
+                    possible_erroneous_solvers.update([x for x in best_values if best_values[x] > max(op_values)])
+    logging.info("Possible automatically detected culprits: {}".format(possible_erroneous_solvers))
 
     # statistics per solver and marginal solver
     statistics = {}
