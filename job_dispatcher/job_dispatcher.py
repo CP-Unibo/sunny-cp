@@ -33,6 +33,9 @@ OPTIONS_ID = 3
 SLEEP_TIME = 1
 SLEEP_TIME_AFTER_ERROR = 60
 
+# requests timeout
+REQUESTS_TIMEOUT = 3610
+
 
 @click.group()
 @click.option('--log-level',
@@ -223,7 +226,9 @@ def worker(thread_num,database_file,timeout,url,hostname):
                             files['dzn'] = open(item[DZN_ID], 'rb')
                         logging.debug("Thread {} sending request".format(thread_num))
                         response = requests.post(url + "/get_features", files=files,
-                                                     headers={'host': hostname} if hostname else {})
+                                                 headers={'host': hostname} if hostname else {},
+                                                 timeout=REQUESTS_TIMEOUT
+                                                 )
                         time.sleep(SLEEP_TIME)
                         logging.debug("Thread {} received answer with code {}.".format(thread_num, response.status_code))
                         # handle error in the answer
@@ -281,7 +286,9 @@ def worker(thread_num,database_file,timeout,url,hostname):
                             files[option[0]] = option[1]
 
                     logging.debug("Thread {} sending request".format(thread_num))
-                    response = requests.post(url + "/process", files=files, headers={'host': hostname} if hostname else {})
+                    response = requests.post(url + "/process", files=files,
+                                             headers={'host': hostname} if hostname else {},
+                                             timeout=REQUESTS_TIMEOUT)
                     time.sleep(SLEEP_TIME)
                     logging.debug("Thread {} received answer with code {}.".format(thread_num,response.status_code))
                     if response.status_code != requests.codes.ok:
@@ -309,11 +316,11 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     logging.error("ERROR {}. Thread {}. Request not well formed".format(item, thread_num, item[DZN_ID]))
             except requests.exceptions.RequestException as e:
                 logging.critical("Error {}. Thread {}. Connection request exception {}. Time {}".format(
-                    item, e, thread_num, datetime.datetime.now()))
+                    item, thread_num, e))
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             except requests.exceptions.ConnectionError as e:
                 logging.error("Error {}. Thread {}. Connection error {}. Time {}".format(
-                    item, thread_num, e, datetime.datetime.now()))
+                    item, thread_num, e))
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             finally:
                 QUEUE.task_done()
