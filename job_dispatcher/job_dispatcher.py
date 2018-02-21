@@ -70,8 +70,8 @@ def get_hash_id(mzn_file,dzn_file):
 
 def get_mzn_dzn_pairs(dir_name):
     dirs = [os.path.join(dir_name,f) for f in os.listdir(dir_name) if os.path.isdir(os.path.join(dir_name,f))]
-    mzn = [os.path.join(dir_name,f) for f in os.listdir(dir_name) if f.endswith(".mzn")]
-    dzn = [os.path.join(dir_name,f) for f in os.listdir(dir_name) if f.endswith(".dzn")]
+    mzn = [os.path.join(dir_name,f) for f in os.listdir(dir_name) if f.endswith(".mzn") and not f.startswith(".")]
+    dzn = [os.path.join(dir_name,f) for f in os.listdir(dir_name) if f.endswith(".dzn") and not f.startswith(".")]
 
     ls = []
     for d in dirs:
@@ -137,7 +137,7 @@ def create_request_list(
         connection = sqlite3.connect(database_file[0])
         cursor = connection.cursor()
         with open(request_file,'wb') as f:
-            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in mzn_dzn_pair]:
+            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in maps_pair_id]:
                 cursor.execute("SELECT count(*) FROM results WHERE id = ? AND solvers= ?", (maps_pair_id[(x,y)],z))
                 data = cursor.fetchone()[0]
                 if data == 0:
