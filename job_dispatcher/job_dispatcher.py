@@ -234,7 +234,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                             continue
                         # parse the answer
                         try:
-                            feature_vector = [float(x) if "nan" not in x else 0 for x in response.text.split(",")]
+                            feature_vector = [float(x) for x in response.replace("nan","1").text.split(",")]
                             # the s_goal is the feature having index 59
                             s_goal = feature_vector[59]
                             logging.debug("Obtained feature vector {}".format(feature_vector))
@@ -505,6 +505,10 @@ def generate_kb_files(
                     result["val"] = unicode(min(result["solutions"].values()))
                 elif instance_type[id] == "max":
                     result["val"] = unicode(max(result["solutions"].values()))
+
+            # discard the results where result is unknown
+            if result["result"] == "unk":
+                continue
 
             # stucture: inst|solver|goal|answer|time|val|values
             f.write("{}|{}|{}|{}|{}|{}|{}\n".format(
