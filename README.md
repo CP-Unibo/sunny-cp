@@ -182,6 +182,8 @@ file in the SUNNY_HOME/solvers folder and the sunny-cp usage.
 Note that sunny-cp does not guarantee that its constituent solvers are bug free.
 However, the user can check the soundness of a solution with the command line 
 option `--check-solvers`.
+In particular we recommend the usage of this option for haifacsp and minisatid
+which installed version are bugged.
 
 ## Features
 

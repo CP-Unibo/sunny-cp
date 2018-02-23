@@ -336,7 +336,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                 else:
                     logging.error("ERROR {}. Thread {}. Request not well formed".format(item, thread_num, item[DZN_ID]))
             except requests.exceptions.RequestException as e:
-                logging.critical("Error {}. Thread {}. Connection request exception {}. Time {}".format(
+                logging.critical("Error {}. Thread {}. Connection request exception {}".format(
                     item, thread_num, e))
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             except requests.exceptions.ConnectionError as e:
