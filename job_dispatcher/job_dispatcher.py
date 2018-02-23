@@ -299,7 +299,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     if goal != "sat":
                         files['-a'] = ""
                     if item[OPTIONS_ID]:
-                        ls = [x.split("=") for x in OPTIONS_ID.split(";")]
+                        ls = [x.split("=") for x in item[OPTIONS_ID].split(";")]
                         ls_errors = [ x for x in ls if len(x) != 2]
                         if ls_errors:
                             logging.warning("Ignoring options {} for instance {}".format(ls_errors,item))
