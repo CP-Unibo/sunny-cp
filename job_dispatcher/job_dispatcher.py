@@ -107,14 +107,21 @@ def get_mzn_dzn_pairs(dir_name):
                               resolve_path=True),
               default=[])
 @click.option('--extra-options',
-              help='Extra options for calling sunny, comma separated. E.g., -P=gecode,-a=',
+              help='Extra options for calling sunny, semi colon separated. E.g., -P=gecode;-a=',
               default="")
+@click.option('--exclude-list',
+              help='Instance file to exclude. For excluding all extra options the * may be used.',
+              type=click.Path(exists=True, file_okay=True, dir_okay=False, writable=False, readable=True,
+                              resolve_path=True),
+              multiple=True,
+              default=[])
 def create_request_list(
         request_file,
         problems_dir,
         solver,
         database_file,
-        extra_options
+        extra_options,
+        exclude_list
         ):
     '''
     Create the request list using mzn, dzn files in a directory.
@@ -128,6 +135,20 @@ def create_request_list(
     mzn_dzn_pair = get_mzn_dzn_pairs(problems_dir)
     logging.info("Retrieved {} problems to solve".format(len(mzn_dzn_pair)))
 
+    exclude_instances = []
+    if exclude_list:
+        with open(exclude_list[0],"rb") as f:
+            row_lines = f.readlines()
+            for line in row_lines:
+                if line.strip():
+                    ls = line.replace("\n","").split('|')
+                    if len(ls) != 4:
+                        logging.critical("The line {} of the exclude list file {} is not formatted correctly".format(
+                            line.strip(), exclude_list))
+                        sys.exit(1)
+                    if ls[-1] == "*" or extra_options == ls[-1]:
+                        exclude_instances.append((ls[0],ls[1],ls[2]))
+
     if database_file:
         logging.info("Computing the hash functions of the instances")
         maps_id_pair = {get_hash_id(x,y):(x,y) for (x,y) in mzn_dzn_pair}
@@ -137,7 +158,7 @@ def create_request_list(
         connection = sqlite3.connect(database_file[0])
         cursor = connection.cursor()
         with open(request_file,'wb') as f:
-            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in maps_pair_id]:
+            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in maps_pair_id if (x,y,z) not in exclude_instances]:
                 cursor.execute("SELECT count(*) FROM results WHERE id = ? AND solvers= ?", (maps_pair_id[(x,y)],z))
                 data = cursor.fetchone()[0]
                 if data == 0:
@@ -148,7 +169,7 @@ def create_request_list(
 
     else:
         with open(request_file,'wb') as f:
-            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in mzn_dzn_pair]:
+            for (x,y,z) in [(x,y,z) for z in solver for (x,y) in mzn_dzn_pair if (x,y,z) not in exclude_instances]:
                 f.write("{}|{}|{}|{}\n".format(x,y,z,extra_options))
 
 cli.add_command(create_request_list)
@@ -278,7 +299,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     if goal != "sat":
                         files['-a'] = ""
                     if item[OPTIONS_ID]:
-                        ls = [x.split("=") for x in OPTIONS_ID.split(",")]
+                        ls = [x.split("=") for x in OPTIONS_ID.split(";")]
                         ls_errors = [ x for x in ls if len(x) != 2]
                         if ls_errors:
                             logging.warning("Ignoring options {} for instance {}".format(ls_errors,item))
