@@ -68,9 +68,9 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 # Install picat
 RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 	cd /solvers_exec && \
-	wget http://picat-lang.org/download/picat22_linux64.tar.gz  && \
-	tar xvfz picat22_linux64.tar.gz && \
-	rm picat22_linux64.tar.gz && \
+	wget http://picat-lang.org/download/picat23_linux64.tar.gz  && \
+	tar xvfz picat23_linux64.tar.gz && \
+	rm picat23_linux64.tar.gz && \
 	mv Picat picat && \
 	cd picat && \
 	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
