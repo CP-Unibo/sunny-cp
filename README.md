@@ -169,8 +169,8 @@ By default, sunny-cp uses the solvers contained in the MiniZinc bundle, that is:
 It is however possible to use, via Docker, the following solvers:
 * [OR-Tools](https://code.google.com/p/or-tools/) (version v6.4.4495)
 * [Choco](http://choco-solver.org/) (version 4.0.4)
-* [Picat](http://picat-lang.org/) CP (version 2.2)
-* [Picat](http://picat-lang.org/) SAT (version 2.2)
+* [Picat](http://picat-lang.org/) CP (version 2.3)
+* [Picat](http://picat-lang.org/) SAT (version 2.3)
 * [JaCoP](http://jacop.osolpro.com/) (version 4.4)
 * [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
 * [HaifaCSP](http://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)

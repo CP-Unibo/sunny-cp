@@ -25,10 +25,11 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchExpressions:
-              - key: run
-                operator: In
-                values:
-                - http-sunny
+                - key: run
+                  operator: In
+                  values:
+                  - http-sunny
+                  - haproxy-ingress
             topologyKey: kubernetes.io/hostname
 ---
 apiVersion: v1

@@ -36,6 +36,8 @@ SLEEP_TIME_AFTER_ERROR = 60
 # requests timeout
 REQUESTS_TIMEOUT = 3610
 
+# for reporting what is in seconds a significant time difference
+SIGNIFICANT_TIME_DIFFERENCE = 10
 
 @click.group()
 @click.option('--log-level',
@@ -340,7 +342,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     item, thread_num, e))
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             except requests.exceptions.ConnectionError as e:
-                logging.error("Error {}. Thread {}. Connection error {}. Time {}".format(
+                logging.error("Error {}. Thread {}. Connection error {}".format(
                     item, thread_num, e))
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             finally:
@@ -661,6 +663,7 @@ def check_anomalies(
     # statistics per solver and marginal solver
     statistics = {}
     marginal_solver = {"not_solved": 0}
+    significant_marginal_solver = {}
     for i in results:
         for j in results[i]:
             if j not in statistics:
@@ -689,10 +692,21 @@ def check_anomalies(
                 marginal_solver[solvers[0][-1]] += 1
             else:
                 marginal_solver[solvers[0][-1]] = 1
+                significant_marginal_solver[solvers[0][-1]] = 0
         else:
             marginal_solver["not_solved"] += 1
+
+        # significant time difference
+        if len(solvers) > 1:
+            if solvers[0][0] > solvers[1][0] + SIGNIFICANT_TIME_DIFFERENCE:
+                significant_marginal_solver[solvers[0][-1]] += 1
+        elif solvers:
+            significant_marginal_solver[solvers[0][-1]] += 1
+
+
     logging.info("Solver responses: {}".format(json.dumps(statistics,indent=2)))
     logging.info("Marginal solver: {}".format(json.dumps(marginal_solver, indent=2)))
+    logging.info("Significant marginal solver: {}".format(json.dumps(significant_marginal_solver, indent=2)))
     logging.info("Total number of instances: {}".format(len(instances)))
 cli.add_command(check_anomalies)
 
