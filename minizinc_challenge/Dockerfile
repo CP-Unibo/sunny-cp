@@ -45,9 +45,7 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 RUN echo $'#!/bin/bash \n\
 sunny-cp -f "$@" \n' > /minizinc/mzn-exec-par && \
 echo $'#!/bin/bash \n\
-sunny-cp -f "$@" \n' > /minizinc/mzn-exec-free && \
-rm /minizinc/mzn-exec-fd && \
-rm /minizinc/mzn-exec-fd
+sunny-cp -f "$@" \n' > /minizinc/mzn-exec-free
 
 RUN cd /sunny-cp && \
     bash install.sh
