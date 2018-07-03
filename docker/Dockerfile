@@ -103,23 +103,23 @@ RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 
 # Install haifacsp
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	wget --no-check-certificate http://ie.technion.ac.il/~ofers/HCSP/hcsp-1.3.0-x86_64.tar.xz && \
-	tar -xJf hcsp-1.3.0-x86_64.tar.xz && \
-	mv hcsp-1.3.0-x86_64 haifacsp && \
-	rm hcsp-1.3.0-x86_64.tar.xz && \
-	mv /sunny-cp/docker_solvers/haifacsp /sunny-cp/solvers
+# not available anymore online
+#RUN cd /solvers_exec && \
+#	wget --no-check-certificate http://ie.technion.ac.il/~ofers/HCSP/hcsp-1.3.0-x86_64.tar.xz && \
+#	tar -xJf hcsp-1.3.0-x86_64.tar.xz && \
+#	mv hcsp-1.3.0-x86_64 haifacsp && \
+#	rm hcsp-1.3.0-x86_64.tar.xz && \
+#	mv /sunny-cp/docker_solvers/haifacsp /sunny-cp/solvers
 
 # Mistral
-# Does not compile anymore -> temporarly removed
-#RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-#	cd /solvers_exec && \
-#	git clone --depth 1 https://github.com/ehebrard/Mistral-2.0.git && \
+# Compiles but does not print output on zebra instance and other instances
+#RUN cd /solvers_exec && \
+#	git clone --depth 1 --recursive https://github.com/ehebrard/Mistral-2.0.git && \
 #	mv Mistral-2.0 mistral  && \
-#	cd mistral_exec && \
-#	make
-#ENV PATH $PATH:/solvers_exec/mistral/bin
+#	cd mistral && \
+#	make && \
+#	mv /sunny-cp/docker_solvers/mistral /sunny-cp/solvers
+#ENV PATH $PATH:/solvers_exec/mistral/fz
 
 # install the added solver in sunny-cp
 RUN cd /sunny-cp && \

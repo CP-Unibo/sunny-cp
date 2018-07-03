@@ -173,7 +173,10 @@ It is however possible to use, via Docker, the following solvers:
 * [Picat](http://picat-lang.org/) SAT (version 2.3)
 * [JaCoP](http://jacop.osolpro.com/) (version 4.4)
 * [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
+<!---
 * [HaifaCSP](http://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
+HaifaCSP is not available anymore online
+--->
 
 Once a solver is installed on your machine, it is easy to add it to 
 the portfolio and to customize its settings. For more details, see the README 
