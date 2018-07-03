@@ -46,6 +46,7 @@ RUN echo $'#!/bin/bash \n\
 sunny-cp -f "$@" \n' > /minizinc/mzn-exec-par && \
 echo $'#!/bin/bash \n\
 sunny-cp -f "$@" \n' > /minizinc/mzn-exec-free && \
+rm /minizinc/mzn-exec-fd && \
 rm /minizinc/mzn-exec-fd
 
 RUN cd /sunny-cp && \
