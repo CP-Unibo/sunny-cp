@@ -1,0 +1,5 @@
+#! /bin/sh
+TMP=$(mktemp)
+mzn2fzn -G gecode "$@" -O $TMP.ozn
+sunny-cp "$@" | solns2out $TMP.ozn
+rm ${TMP}

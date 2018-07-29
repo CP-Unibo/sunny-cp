@@ -382,11 +382,11 @@ def parse_arguments(args):
              opts.append(['--' + o[6:], a])
 
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-  if not ozn:
-    problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
-  else:
+  if ozn:
     problem = Problem(mzn, dzn, ozn, solve)
     ozn = True
+  else:
+    problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
     cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
       check, ozn
