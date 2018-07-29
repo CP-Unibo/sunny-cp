@@ -348,9 +348,8 @@ def check_solution(solver, problem, solution, bound):
   outfile.close()
 
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
-  cmd = 'mzn2fzn --output-ozn-to-file ' + problem.ozn_path + ' -I '  \
-      + eval(solver).mznlib + ' ' + tmp_mzn + ' ' + problem.dzn_path \
-      + ' -o ' + tmp_fzn
+  cmd = 'mzn2fzn --no-output-ozn -I ' + eval(solver).mznlib + ' ' + tmp_mzn \
+      + ' ' + problem.dzn_path + ' -o ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
   if 'model inconsistency detected' in err or not os.path.exists(tmp_fzn):
@@ -614,14 +613,12 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
 def main(args):
   global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND
   try:
+
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
     solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
-    UPPER_BOUND, check, ozn = parse_arguments(args)
-    if (ozn):
-      TMP_FILES = []
-    else:
-      TMP_FILES = [problem.ozn_path]
+    UPPER_BOUND, check = parse_arguments(args)
+    TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
       static, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )

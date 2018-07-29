@@ -216,7 +216,6 @@ def parse_arguments(args):
     kb = DEF_KB_COP
     lims = DEF_LIMS_COP
   pfolio = DEF_PFOLIO
-  ozn = False
 
   # Arguments parsing.
   for o, a in opts:
@@ -319,8 +318,6 @@ def parse_arguments(args):
       else:
         for item in solver_options.values():
           item['options'] += ' ' + a
-    elif o.startswith('--ozn-file'):
-      ozn = a;
     elif o.startswith('--wait-time'):
       wait_time = float(a)
       if wait_time < 0:
@@ -382,14 +379,10 @@ def parse_arguments(args):
              opts.append(['--' + o[6:], a])
 
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-  if ozn:
-    problem = Problem(mzn, dzn, ozn, solve)
-    ozn = True
-  else:
-    problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
+  problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
     cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
-      check, ozn
+      check
 
 def get_args(args, pfolio):
   """
@@ -404,7 +397,7 @@ def get_args(args, pfolio):
     long_options += [
       o + '-' + s for o in long_options for s in pfolio
     ]
-    long_options += ['check-solvers', 'ozn-file']
+    long_options += ['check-solvers']
     csp_opts = ['csp-' + o + '=' for o in options + long_options]
     cop_opts = ['cop-' + o + '=' for o in options + long_options]
     csp_opts += ['csp-a', 'csp-f']
