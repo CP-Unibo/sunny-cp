@@ -5,10 +5,6 @@
 %  Copyright:
 %     Guido Tack, 2007
 %
-%  Last modified:
-%     $Date: 2017-01-29 20:51:44 +1100 (Sun, 29 Jan 2017) $ by $Author: tack $
-%     $Revision: 15376 $
-%
 %  This file is part of Gecode, the generic constraint
 %  development environment:
 %     http://www.gecode.org

@@ -1,106 +1,82 @@
 FROM python:2-stretch
 MAINTAINER Jacopo Mauro
 
-# expose port 9001 for the sunny-cp server
-EXPOSE 9001
-
-# Install python modules
-RUN pip install \
-	psutil \
-	click
-
 # Install packages for compiling the feature extractor and minizin suite
 RUN apt-get update && \
   apt-get install -y \
     flex \
-		bison \
-		nano \
-		libqt5core5a \
-    libqt5gui5 \
-    libqt5network5 \
-    libqt5webkit5 \
-    libqt5widgets5 && \
-  rm -rf /var/lib/apt/lists/*
+	bison \
+	# for gecode
+	libgl1 \
+	# for choco and jacop
+	openjdk-8-jre-headless && \
+  rm -rf /var/lib/apt/lists/* && \
+  pip install \
+	psutil \
+	click
 
-# Install minizinc suite
-RUN cd / && \
-  wget https://github.com/MiniZinc/MiniZincIDE/releases/download/2.1.7/MiniZincIDE-2.1.7-bundle-linux-x86_64.tgz && \
-  tar -zxvf MiniZincIDE-2.1.7-bundle-linux-x86_64.tgz && \
-  rm -rf MiniZincIDE-2.1.7-bundle-linux-x86_64.tgz && \
-	mv MiniZincIDE-2.1.7-bundle-linux-x86_64 minizinc
-ENV PATH /minizinc:$PATH
+# minizinc + gecode + chuffed
+COPY --from=jacopomauro/minizinc:v2.2.1 /tool/MiniZincIDE /tool/MiniZincIDE
+ENV PATH "$PATH:/tool/MiniZincIDE/bin"
+ENV LD_LIBRARY_PATH "$LD_LIBRARY_PATH:/tool/MiniZincIDE/lib"
 
 # Install feature extractor
-RUN cd / && \
+RUN cd /tool && \
   git clone --depth=1 https://github.com/CP-Unibo/mzn2feat.git && \
-  cd /mzn2feat && \
+  cd mzn2feat && \
   bash install --no-xcsp
-ENV MZN2FEAT_HOME /mzn2feat
-ENV PATH /mzn2feat/bin:$PATH
+ENV MZN2FEAT_HOME /tool/mzn2feat
+ENV PATH /tool/mzn2feat/bin:$PATH
 
-# install sunny-cp (basic one with only minizin solvers)
-RUN cd / && \
+# install sunny-cp (basic one with only minizinc solvers)
+RUN cd /tool && \
   git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
-  cd /sunny-cp && \
+  cd sunny-cp && \
   bash install.sh
-ENV PATH /sunny-cp/bin:$PATH
+ENV PATH /tool/sunny-cp/bin:$PATH
 
-# Install ortools
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
-	tar xvfz or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
-	rm or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495.tar.gz && \
-	mv or-tools_flatzinc_Debian-9.1-64bit_v6.4.4495 ortools && \
-	mv /sunny-cp/docker_solvers/ortools /sunny-cp/solvers
+# or-tools
+COPY --from=jacopomauro/or-tools:v6.9.1 /tool/or-tools /tool/ortools
+RUN mkdir -p /tool/sunny-cp/solvers/ortools && \
+    ln -s /tool/ortools/ortools/flatzinc/mznlib_sat /tool/sunny-cp/solvers/ortools/mzn-lib && \
+    ln -s /tool/ortools/bin/fzn-or-tools /tool/sunny-cp/solvers/ortools/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/ortools/opts
+
 
 # Install choco
-RUN apt-get update && \
-		apt-get install -y openjdk-8-jre-headless && \
-		rm -rf /var/lib/apt/lists/*
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-  mkdir choco && \
-	cd choco && \
-	wget https://github.com/chocoteam/choco-parsers/releases/download/choco-parsers-4.0.4/choco-parsers-4.0.4-with-dependencies.jar && \
-	mv /sunny-cp/docker_solvers/choco /sunny-cp/solvers
+COPY --from=jacopomauro/choco:v4.0.4 /tool/choco /tool/choco
+RUN mkdir -p /tool/sunny-cp/solvers/choco && \
+    ln -s /tool/choco/mzn-lib /tool/sunny-cp/solvers/choco/mzn-lib && \
+    ln -s /tool/choco/fzn-choco /tool/sunny-cp/solvers/choco/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/choco/opts
 
 # Install picat
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	wget http://picat-lang.org/download/picat23_linux64.tar.gz  && \
-	tar xvfz picat23_linux64.tar.gz && \
-	rm picat23_linux64.tar.gz && \
-	mv Picat picat && \
-	cd picat && \
-	wget http://picat-lang.org/flatzinc/fzn_picat_sat.pi  && \
-	wget http://picat-lang.org/flatzinc/fzn_picat_cp.pi  && \
-	wget http://picat-lang.org/flatzinc/fzn_parser.pi  && \
-	wget http://picat-lang.org/flatzinc/fzn_tokenizer.pi && \
-	mv /sunny-cp/docker_solvers/picat_cp /sunny-cp/solvers && \
-	mv /sunny-cp/docker_solvers/picat_sat /sunny-cp/solvers
+COPY --from=jacopomauro/picat:v2.5 /tool/picat /tool/picat
+RUN mkdir -p /tool/sunny-cp/solvers/picat && \
+    ln -s /tool/picat/mzn-lib /tool/sunny-cp/solvers/picat/mzn-lib && \
+    ln -s /tool/picat/fzn-picat /tool/sunny-cp/solvers/picat/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/picat/opts
 
 # Install jacop
-RUN apt-get update && \
-		apt-get install -y openjdk-8-jre-headless && \
-		rm -rf /var/lib/apt/lists/*
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	mkdir jacop && \
-	cd jacop && \
-	wget http://central.maven.org/maven2/org/jacop/jacop/4.4.0/jacop-4.4.0.jar && \
-	mv /sunny-cp/docker_solvers/jacop /sunny-cp/solvers
+COPY --from=jacopomauro/jacop:v4.4.0 /tool/jacop /tool/jacop
+RUN mkdir -p /tool/sunny-cp/solvers/jacop && \
+    ln -s /tool/jacop/mzn-lib /tool/sunny-cp/solvers/jacop/mzn-lib && \
+    ln -s /tool/jacop/fzn-jacop /tool/sunny-cp/solvers/jacop/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/jacop/opts
 
-# Install minisat
-RUN ( [ -d /solvers_exec ] || mkdir /solvers_exec ) && \
-	cd /solvers_exec && \
-	wget https://dtai.cs.kuleuven.be/krr/files/software/minisatid/minisatid-3.11.0-Linux.tar.gz && \
-	gzip -d minisatid-3.11.0-Linux.tar.gz && \
-	tar -xvf minisatid-3.11.0-Linux.tar && \
-	mv minisatid-3.11.0-Linux minisatid && \
-	rm minisatid-3.11.0-Linux.tar && \
-	mv /sunny-cp/docker_solvers/minisatid /sunny-cp/solvers
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
+# Install minisatid
+COPY --from=jacopomauro/minisatid:v3.11.0 /tool/minisatid /tool/minisatid
+RUN mkdir -p /tool/sunny-cp/solvers/minisatid && \
+    mkdir -p /tool/sunny-cp/solvers/minisatid/mzn-lib && \
+    ln -s /tool/minisatid/fzn-minisatid /tool/sunny-cp/solvers/minisatid/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = ''" > /tool/sunny-cp/solvers/minisatid/opts
+ENV LD_LIBRARY_PATH "$LD_LIBRARY_PATH:/tool/minisatid/lib"
+
 
 # Install haifacsp
 # not available anymore online
@@ -122,9 +98,13 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 #ENV PATH $PATH:/solvers_exec/mistral/fz
 
 # install the added solver in sunny-cp
-RUN cd /sunny-cp && \
+
+# expose port 9001 for the sunny-cp server
+EXPOSE 9001
+
+RUN cd /tool/sunny-cp && \
   bash install.sh
-WORKDIR /sunny-cp
+WORKDIR /tool/sunny-cp
 CMD ["python","/sunny-cp/src/sunny_server.py"]
 
 

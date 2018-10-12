@@ -1,33 +1,40 @@
-include "all_different.mzn";
+%
+%  Main authors:
+%     Guido Tack <tack@gecode.org>
+%
+%  Copyright:
+%     Guido Tack, 2007
+%
+%  This file is part of Gecode, the generic constraint
+%  development environment:
+%     http://www.gecode.org
+%
+%  Permission is hereby granted, free of charge, to any person obtaining
+%  a copy of this software and associated documentation files (the
+%  "Software"), to deal in the Software without restriction, including
+%  without limitation the rights to use, copy, modify, merge, publish,
+%  distribute, sublicense, and/or sell copies of the Software, and to
+%  permit persons to whom the Software is furnished to do so, subject to
+%  the following conditions:
+%
+%  The above copyright notice and this permission notice shall be
+%  included in all copies or substantial portions of the Software.
+%
+%  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+%  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+%  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+%  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+%  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+%  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+%
+%
 
-/** @group globals
-  Constrains the elements of \a x to define a circuit where \a x[\p i] = \p j means
-  that \p j is the successor of \p i. 
-*/
+predicate gecode_circuit(int: offset, array[int] of var int: x);
 
-predicate circuit(array[int] of var int: x) = 
-    % XXX [AS] It seems so that the decompositionis performing better than the
-    % global propagator.
-    % TODO Extensive performance tests should be conducted
-    let { bool: use_global = false } in
-    if use_global then
-        chuffed_circuit(x, min(index_set(x)))
-    else
-        circuit_decomp(x)
-    endif;
-
-predicate circuit_decomp(array[int] of var int: x) = 
-    let { set of int: S = index_set(x),
-          int: l = min(S),
-	  int: n = card(S),
-	  array[S] of var 1..n: order
-        } in
-    alldifferent(x) /\	
-    alldifferent(order) /\
-    forall(i in S)(x[i] != i) /\ 
-    order[l] = 1 /\
-    forall(i in S)(order[i] != n -> order[x[i]] = order[i] + 1) /\
-    forall(i in S)(order[i] == n -> x[i] = l );
-
-predicate chuffed_circuit(array[int] of var int: x, int: index_offset);
-        
+predicate circuit(array[int] of var int: x) =
+  if min(index_set(x)) >= 0 then
+    gecode_circuit(min(index_set(x)),x)
+  else
+    gecode_circuit(0,[x[i]-min(index_set(x)) | i in index_set(x)])
+  endif;
