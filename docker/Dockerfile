@@ -79,25 +79,31 @@ ENV LD_LIBRARY_PATH "$LD_LIBRARY_PATH:/tool/minisatid/lib"
 
 
 # Install haifacsp
-# not available anymore online
-#RUN cd /solvers_exec && \
-#	wget --no-check-certificate http://ie.technion.ac.il/~ofers/HCSP/hcsp-1.3.0-x86_64.tar.xz && \
-#	tar -xJf hcsp-1.3.0-x86_64.tar.xz && \
-#	mv hcsp-1.3.0-x86_64 haifacsp && \
-#	rm hcsp-1.3.0-x86_64.tar.xz && \
-#	mv /sunny-cp/docker_solvers/haifacsp /sunny-cp/solvers
+COPY --from=jacopomauro/haifacsp:v1.3.0 /tool/haifacsp /tool/haifacsp
+RUN mkdir -p /tool/sunny-cp/solvers/haifacsp && \
+    ln -s /tool/haifacsp/mzn-lib /tool/sunny-cp/solvers/haifacsp/mzn-lib && \
+    ln -s /tool/haifacsp/fzn-haifacsp /tool/sunny-cp/solvers/haifacsp/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/haifacsp/opts
 
-# Mistral
+
+# Install yuck
+COPY --from=jacopomauro/yuck:v20180303 /tool/yuck /tool/yuck
+RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
+    ln -s /tool/yuck/mzn-lib /tool/sunny-cp/solvers/yuck/mzn-lib && \
+    ln -s /tool/yuck/fzn-yuck /tool/sunny-cp/solvers/yuck/fzn-exec && \
+    echo "all_opt = '-a'\n\
+free_opt  = '-f'" > /tool/sunny-cp/solvers/yuck/opts
+
+# Install mistral
 # Compiles but does not print output on zebra instance and other instances
-#RUN cd /solvers_exec && \
-#	git clone --depth 1 --recursive https://github.com/ehebrard/Mistral-2.0.git && \
-#	mv Mistral-2.0 mistral  && \
-#	cd mistral && \
-#	make && \
-#	mv /sunny-cp/docker_solvers/mistral /sunny-cp/solvers
-#ENV PATH $PATH:/solvers_exec/mistral/fz
+#COPY --from=jacopomauro/mistral /tool/mistral /tool/mistral
+#RUN mkdir -p /tool/sunny-cp/solvers/mistral && \
+#    ln -s /tool/mistral/mzn-lib /tool/sunny-cp/solvers/mistral/mzn-lib && \
+#    ln -s /tool/mistral/fzn-mistral /tool/sunny-cp/solvers/mistral/fzn-exec && \
+#    echo "all_opt = '-a'\n\
+#free_opt  = '-f'" > /tool/sunny-cp/solvers/mistral/opts
 
-# install the added solver in sunny-cp
 
 # expose port 9001 for the sunny-cp server
 EXPOSE 9001
