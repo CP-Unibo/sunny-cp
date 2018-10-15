@@ -7,10 +7,10 @@ Constraint (Satisfaction/Optimization) Problem defined in the MiniZinc language.
 It essentially implements the SUNNY algorithm described in [1][2][3] and extends
 its sequential version [4] that attended the MiniZinc Challenge 2014 [6].
 sunny-cp is built on top of state-of-the-art constraint solvers, including:
-Choco, Chuffed, CPX, G12/LazyFD, G12/FD, G12/Gurobi, G12/MIP, Gecode, HaifaCSP,
-JaCoP, iZplus, MinisatID, Mistral, Opturion, OR-Tools, Picat. These solvers are 
+Choco, Chuffed, HaifaCSP,
+JaCoP, MinisatID, OR-Tools, Picat. These solvers are 
 not included by default in sunny-cp, except for those already included in the 
-MiniZinc bundle (i.e., Chuffed, G12/FD, G12/LazyFD, G12/MIP, and Gecode).
+MiniZinc bundle (i.e., Chuffed and Gecode).
 However, sunny-cp provides utilities for adding new solvers to the portfolio and
 for customizing their settings. Moreover, sunny-cp enables to use more solvers 
 via Docker (see below).
@@ -159,24 +159,18 @@ SUNNY-CP and its solvers can be found in the Dockerfile in the docker folder.
 ## Solvers
 
 By default, sunny-cp uses the solvers contained in the MiniZinc bundle, that is:
-* G12/CBC
-* G12/LazyFD
-* G12/FD
-* G12/MIP
 * [Gecode](http://www.gecode.org/)
 * [Chuffed](https://github.com/geoffchu/chuffed)
+* [OSICBS](http://www.minizinc.org/doc-2.2.1/en/modelling2.html)
 
 It is however possible to use, via Docker, the following solvers:
-* [OR-Tools](https://code.google.com/p/or-tools/) (version v6.4.4495)
+* [OR-Tools](https://code.google.com/p/or-tools/) (version v6.9.1)
 * [Choco](http://choco-solver.org/) (version 4.0.4)
-* [Picat](http://picat-lang.org/) CP (version 2.3)
 * [Picat](http://picat-lang.org/) SAT (version 2.3)
 * [JaCoP](http://jacop.osolpro.com/) (version 4.4)
 * [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
-<!---
-* [HaifaCSP](http://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
-HaifaCSP is not available anymore online
---->
+* [HaifaCSP](https://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
+* [Yuck](https://github.com/informarte/yuck) (version 20180303)
 
 Once a solver is installed on your machine, it is easy to add it to 
 the portfolio and to customize its settings. For more details, see the README 
@@ -186,7 +180,7 @@ Note that sunny-cp does not guarantee that its constituent solvers are bug free.
 However, the user can check the soundness of a solution with the command line 
 option `--check-solvers`.
 In particular we recommend the usage of this option for haifacsp and minisatid
-which installed version are bugged.
+(they current versions are indeed bugged).
 
 ## Features
 
@@ -233,7 +227,7 @@ Previous versions of SUNNY-CP supported solvers that are currently not included
 in the docker image due to compilation problems
 or the fact that are not publicly available/free. The old solvers that are not provided
 with the current default configuration are:
-* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not compile)
+* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not print any output)
 * [G12/Gurobi](http://www.gurobi.com/) (not free)
 * [iZplus](http://www.constraint.org/ja/izc_download.html) (not publicly available)
 * [Opturion](http://www.opturion.com) (not free)
