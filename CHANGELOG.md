@@ -1,6 +1,6 @@
 ## sunny-cp CHANGELOG
 
-####
+#### Version 2.2.1
 
 Major Changes:
 * Upgrade MiniZinc version to 2.2.1
