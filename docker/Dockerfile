@@ -111,7 +111,7 @@ EXPOSE 9001
 RUN cd /tool/sunny-cp && \
   bash install.sh
 WORKDIR /tool/sunny-cp
-CMD ["python","/sunny-cp/src/sunny_server.py"]
+CMD ["python","/tool/sunny-cp/src/sunny_server.py"]
 
 
 
