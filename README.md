@@ -122,7 +122,7 @@ you can manually install sunny-cp on Linux operating systems.
 Some of the main requirements for its installation are:
 
 + [Python](https://www.python.org/) (version >= 2)
-+ [MiniZinc](http://www.minizinc.org/) (version >= 2.7.1)
++ [MiniZinc](http://www.minizinc.org/) (version >= 2.1.7)
 + [mzn2feat](https://github.com/CP-Unibo/mzn2feat) (version >= 1.2.1)
 + [psutil](https://pypi.python.org/pypi/psutil) (version >= 2)
 + [click](http://click.pocoo.org/) (version >= 6)
