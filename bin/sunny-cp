@@ -348,7 +348,7 @@ def check_solution(solver, problem, solution, bound):
   outfile.close()
 
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
-  cmd = 'mzn2fzn --no-output-ozn -I ' + eval(solver).mznlib + ' ' + tmp_mzn \
+  cmd = 'minizinc --compile --no-output-ozn -I ' + eval(solver).mznlib + ' ' + tmp_mzn \
       + ' ' + problem.dzn_path + ' -o ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()

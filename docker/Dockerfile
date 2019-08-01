@@ -16,7 +16,8 @@ RUN apt-get update && \
 	click
 
 # minizinc + gecode + chuffed
-COPY --from=jacopomauro/minizinc:v2.2.1 /tool/MiniZincIDE /tool/MiniZincIDE
+#COPY --from=jacopomauro/minizinc:v2.2.1 /tool/MiniZincIDE /tool/MiniZincIDE
+COPY --from=jacopomauro/minizinc /tool/MiniZincIDE /tool/MiniZincIDE
 ENV PATH "$PATH:/tool/MiniZincIDE/bin"
 ENV LD_LIBRARY_PATH "$LD_LIBRARY_PATH:/tool/MiniZincIDE/lib"
 
@@ -30,9 +31,10 @@ ENV PATH /tool/mzn2feat/bin:$PATH
 
 # install sunny-cp (basic one with only minizinc solvers)
 RUN cd /tool && \
-  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git && \
-  cd sunny-cp && \
-  bash install.sh
+  git clone --depth=1 https://github.com/CP-Unibo/sunny-cp.git
+#    && \
+#   cd sunny-cp && \
+#   bash install.sh
 ENV PATH /tool/sunny-cp/bin:$PATH
 
 # or-tools
@@ -45,7 +47,8 @@ free_opt  = '-f'" > /tool/sunny-cp/solvers/ortools/opts
 
 
 # Install choco
-COPY --from=jacopomauro/choco:v4.0.4 /tool/choco /tool/choco
+#COPY --from=jacopomauro/choco:v4.0.4 /tool/choco /tool/choco
+COPY --from=jacopomauro/choco:latest /tool/choco /tool/choco
 RUN mkdir -p /tool/sunny-cp/solvers/choco && \
     ln -s /tool/choco/mzn-lib /tool/sunny-cp/solvers/choco/mzn-lib && \
     ln -s /tool/choco/fzn-choco /tool/sunny-cp/solvers/choco/fzn-exec && \
@@ -53,7 +56,8 @@ RUN mkdir -p /tool/sunny-cp/solvers/choco && \
 free_opt  = '-f'" > /tool/sunny-cp/solvers/choco/opts
 
 # Install picat
-COPY --from=jacopomauro/picat:v2.5 /tool/picat /tool/picat
+#COPY --from=jacopomauro/picat:v2.5 /tool/picat /tool/picat
+COPY --from=jacopomauro/picat:latest /tool/picat /tool/picat
 RUN mkdir -p /tool/sunny-cp/solvers/picat && \
     ln -s /tool/picat/mzn-lib /tool/sunny-cp/solvers/picat/mzn-lib && \
     ln -s /tool/picat/fzn-picat /tool/sunny-cp/solvers/picat/fzn-exec && \
@@ -61,7 +65,8 @@ RUN mkdir -p /tool/sunny-cp/solvers/picat && \
 free_opt  = '-f'" > /tool/sunny-cp/solvers/picat/opts
 
 # Install jacop
-COPY --from=jacopomauro/jacop:v4.4.0 /tool/jacop /tool/jacop
+#COPY --from=jacopomauro/jacop:v4.4.0 /tool/jacop /tool/jacop
+COPY --from=jacopomauro/jacop:latest /tool/jacop /tool/jacop
 RUN mkdir -p /tool/sunny-cp/solvers/jacop && \
     ln -s /tool/jacop/mzn-lib /tool/sunny-cp/solvers/jacop/mzn-lib && \
     ln -s /tool/jacop/fzn-jacop /tool/sunny-cp/solvers/jacop/fzn-exec && \
@@ -88,7 +93,8 @@ free_opt  = '-f'" > /tool/sunny-cp/solvers/haifacsp/opts
 
 
 # Install yuck
-COPY --from=jacopomauro/yuck:v20180303 /tool/yuck /tool/yuck
+#COPY --from=jacopomauro/yuck:v20180303 /tool/yuck /tool/yuck
+COPY --from=jacopomauro/yuck /tool/yuck /tool/yuck
 RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
     ln -s /tool/yuck/mzn-lib /tool/sunny-cp/solvers/yuck/mzn-lib && \
     ln -s /tool/yuck/fzn-yuck /tool/sunny-cp/solvers/yuck/fzn-exec && \
@@ -108,8 +114,8 @@ free_opt  = '-f'" > /tool/sunny-cp/solvers/yuck/opts
 # expose port 9001 for the sunny-cp server
 EXPOSE 9001
 
-RUN cd /tool/sunny-cp && \
-  bash install.sh
+# RUN cd /tool/sunny-cp && \
+#   bash install.sh
 WORKDIR /tool/sunny-cp
 CMD ["python","/tool/sunny-cp/src/sunny_server.py"]
 

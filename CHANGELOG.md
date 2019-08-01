@@ -1,5 +1,14 @@
 ## sunny-cp CHANGELOG
 
+#### Version 2.3
+
+Major Changes:
+* Upgrade MiniZinc version 2.3 (not compatible with lower versions)
+
+Minor bugs and changes:
+* Update choco, jacop, yuck version used
+
+
 #### Version 2.2.1
 
 Major Changes:
