@@ -1,49 +1,68 @@
-%
-%  Main authors:
-%     Guido Tack <tack@gecode.org>
-%     Mikael lagerkvist <lagerkvist@gecode.org>
-%
-%  Copyright:
-%     Guido Tack, 2007
-%     Mikael Lagerkvist, 2009
-%
-%  This file is part of Gecode, the generic constraint
-%  development environment:
-%     http://www.gecode.org
-%
-%  Permission is hereby granted, free of charge, to any person obtaining
-%  a copy of this software and associated documentation files (the
-%  "Software"), to deal in the Software without restriction, including
-%  without limitation the rights to use, copy, modify, merge, publish,
-%  distribute, sublicense, and/or sell copies of the Software, and to
-%  permit persons to whom the Software is furnished to do so, subject to
-%  the following conditions:
-%
-%  The above copyright notice and this permission notice shall be
-%  included in all copies or substantial portions of the Software.
-%
-%  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-%  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-%  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-%  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-%  LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-%  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-%  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-%
-%
+%-----------------------------------------------------------------------------%
+% Requires that a set of tasks given by start times 's', durations 'd', and
+% resource requirements 'r', never require more than a global resource bound
+% 'b' at any one time.
+% Assumptions:
+% - forall i, d[i] >= 0 and r[i] >= 0
+%-----------------------------------------------------------------------------%
 
 predicate cumulative(array[int] of var int: s,
                      array[int] of var int: d,
                      array[int] of var int: r, var int: b) =
-    assert(index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
+    assert(
+        index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
         "cumulative: the 3 array arguments must have identical index sets",
-        assert(lb_array(d) >= 0 /\ lb_array(r) >= 0,
-            "cumulative: durations and resource usages must be non-negative",
-             cumulatives(s, d, r, b)
-        )
+        forall(i in index_set(d))(d[i] >= 0 /\ r[i] >= 0)
+	/\  if is_fixed(d) /\ is_fixed(r) /\ is_fixed(b) then
+		    chuffed_cumulative(s, fix(d), fix(r), fix(b))
+	    else
+		    chuffed_cumulative_vars(s, d, r, b)
+	    endif
     );
 
-% Specialized cumulatives propagator is only for fixed bounds
-predicate cumulatives(array[int] of var int: s,
-                      array[int] of var int: d,
-                      array[int] of var int: r, var int: b);
+
+predicate cumulative_cal(array[int] of var int: s,
+                     array[int] of var int: d,
+                     array[int] of var int: r, var int: b,
+                     array[int,int] of int: cal,
+                     array[int] of int: tc, int: rho, int: resCal) =
+    let {
+        int: index1 = card(index_set_1of2(cal)),
+        int: index2 = card(index_set_2of2(cal)),
+        set of int: times = 0..index2-1
+    } in
+    assert(
+       index_set(s) == index_set(d) /\ index_set(s) == index_set(r),
+       "cumulative: the 3 array arguments must have identical index sets",
+            chuffed_cumulative_cal(s, d, r, b, index1, index2, cal, tc, rho, resCal)
+    
+ %   forall( t in times ) (
+  %  b >= sum( i in index_set(s) ) (
+ %   bool2int( s[i] <= t /\ t < s[i] + d[i] ) * (cal[tc[i],t+1] + (1 - cal[tc[i],t+1]) * rho)* r[i] 
+ %   )
+);
+
+	% Global cumulative propagator
+	%
+predicate chuffed_cumulative(array[int] of var int: s, array[int] of int: d,
+	array[int] of int: r, int: b);
+
+predicate chuffed_cumulative_vars(array[int] of var int: s, array[int] of var int: d,
+	array[int] of var int: r, var int: b);
+
+predicate chuffed_cumulative_cal(array[int] of var int: s, array[int] of var int: d,
+	array[int] of var int: r, var int: b, int: index1, int: index2, array[int,int] of int: cal, array[int] of int: tc, int: rho, int: resCal);
+
+%------------------------------------------------------------------------------
+% Options for the cumulative constraint
+%   Annotate any cumulative predicate to override Chuffed's defaults for
+%   the cumulative propagator.
+% 
+%   - tt_filt: TimeTable filtering
+%   - ttef_check: TimeTable-EdgeFinding consistency check
+%   - ttef_filt: TimeTable-EdgeFinding filtering
+
+annotation tt_filt(bool: on_or_off);
+annotation ttef_check(bool: on_or_off);
+annotation ttef_filt(bool: on_or_off);
+annotation name(string: s);

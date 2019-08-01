@@ -5,6 +5,10 @@
 %  Copyright:
 %     Guido Tack, 2007
 %
+%  Last modified:
+%     $Date: 2009-11-09 22:08:26 +0100 (Mon, 09 Nov 2009) $ by $Author: tack $
+%     $Revision: 10067 $
+%
 %  This file is part of Gecode, the generic constraint
 %  development environment:
 %     http://www.gecode.org
@@ -30,62 +34,65 @@
 %
 %
 
+include "nosets.mzn";
+
 % Sums over Boolean variables
-predicate bool_lin_eq(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
-predicate bool_lin_ne(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
-predicate bool_lin_le(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
-predicate bool_lin_lt(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
-predicate bool_lin_ge(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
-predicate bool_lin_gt(array[int] of int: a, array[int] of var bool: x,
-                      var int: c);
+predicate bool_lin_eq(array[int] of int: x, array[int] of var bool: b, var int: c) =
+  sum(i in index_set(x)) (x[i]*b[i])=c;
 
-predicate bool_sum_eq(array[int] of var bool: x, var int: c) =
-    bool_lin_eq([1 | i in index_set(x)],x,c);
-predicate bool_sum_ne(array[int] of var bool: x, var int: c) =
-    bool_lin_ne([1 | i in index_set(x)],x,c);
-predicate bool_sum_le(array[int] of var bool: x, var int: c) =
-    bool_lin_le([1 | i in index_set(x)],x,c);
-predicate bool_sum_lt(array[int] of var bool: x, var int: c) =
-    bool_lin_lt([1 | i in index_set(x)],x,c);
-predicate bool_sum_ge(array[int] of var bool: x, var int: c) =
-    bool_lin_ge([1 | i in index_set(x)],x,c);
-predicate bool_sum_gt(array[int] of var bool: x, var int: c) =
-    bool_lin_gt([1 | i in index_set(x)],x,c);
+%predicate bool_lin_eq(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
+%predicate bool_lin_ne(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
+%predicate bool_lin_le(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
+%predicate bool_lin_lt(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
+%predicate bool_lin_ge(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
+%predicate bool_lin_gt(array[int] of int: a, array[int] of var bool: x,
+%                      var int: c);
 
-predicate float_sinh(var float: a, var float: b) =
-    b == (exp(a)-exp(-a))/2.0;
+predicate bool_sum_eq(array[int] of var bool: x, var int: c); %=
+%    bool_lin_eq([1 | i in index_set(x)],x,c);
+predicate bool_sum_ne(array[int] of var bool: x, var int: c); %=
+%    bool_lin_ne([1 | i in index_set(x)],x,c);
+predicate bool_sum_le(array[int] of var bool: x, var int: c); %=
+%    bool_lin_le([1 | i in index_set(x)],x,c);
+predicate bool_sum_lt(array[int] of var bool: x, var int: c); %=
+%    bool_lin_lt([1 | i in index_set(x)],x,c);
+predicate bool_sum_ge(array[int] of var bool: x, var int: c); %=
+%    bool_lin_ge([1 | i in index_set(x)],x,c);
+predicate bool_sum_gt(array[int] of var bool: x, var int: c); %=
+%    bool_lin_gt([1 | i in index_set(x)],x,c);
 
-predicate float_cosh(var float: a, var float: b) =
-    b == (exp(a)+exp(-a))/2.0;
+predicate array_bool_xor(array[int] of var bool: bs) =
+    let { int: bs_lower = min(index_set(bs)),
+          int: bs_upper = max(index_set(bs)),
+          int: n = length(bs)
+    } in
+        if n == 1 then bs[bs_lower] else
+        if n == 2 then bs[bs_lower] xor bs[bs_upper] else
+        if n == 3 then bs[bs_lower] = (bs[bs_lower + 1] = bs[bs_upper])
+        else
+            let { int: cs_lower = bs_lower + 1,
+                  int: cs_upper = bs_upper - 1,
+                  array [cs_lower..cs_upper] of var bool: cs
+            } in
+                forall(i in cs_lower..cs_upper-1)(
+                    cs[i+1] = bs[i+1] xor cs[i]
+                )
+                /\ (cs[cs_lower] = bs[bs_lower] xor bs[bs_lower + 1])
+                /\ (bs[bs_upper] xor cs[cs_upper])
+        endif endif endif;
 
-predicate float_tanh(var float: a, var float: b) =
-    let { var float: e2a = exp(2.0*a) } in
-    b == (e2a-1.0)/(e2a+1.0);
+predicate int_mod(var int: x, var int: y, var int: z) =
+  x=(x div y)*y+z;
 
-predicate float_ne_reif(var float: a, var float: b, var bool: c) =
-    not c <-> a==b;
+predicate int_eq_imp(var int: a, var int: b, var bool: r);
+predicate int_ne_imp(var int: a, var int: b, var bool: r);
+predicate int_ge_imp(var int: a, var int: b, var bool: r);
+predicate int_gt_imp(var int: a, var int: b, var bool: r);
+predicate int_le_imp(var int: a, var int: b, var bool: r);
+predicate int_lt_imp(var int: a, var int: b, var bool: r);
 
-predicate array_float_element(var int: b, array[int] of float: as, var float: c) =
-    b in index_set(as) /\
-    forall(d in index_set(as))( b = d -> as[d] = c );
-
-predicate array_var_float_element(var int: b, array[int] of var float: as, var float: c) =
-    b in index_set(as) /\
-    forall(d in index_set(as))( b = d -> as[d] = c );
-
-predicate gecode_int_pow(var int: x, int: y, var int: z);
-
-predicate int_pow(var int: x, var int: y, var int: z) =
-    if is_fixed(y) then gecode_int_pow(x,fix(y),z)
-    else let {
-        array[lb(y)..ub(y)] of var int: pow_x = array1d(lb(y)..ub(y),
-          [if y=i then x else 0 endif | i in lb(y)..ub(y)]);
-        array[lb(y)..ub(y)] of var int: pow_table = array1d(lb(y)..ub(y),
-          [pow(pow_x[i],i) | i in lb(y)..ub(y)]);
-    } in z=pow_table[y]
-    endif;

@@ -1,8 +1,10 @@
 %
 %  Main authors:
+%     Christian Schulte <schulte@gecode.org>
 %     Guido Tack <tack@gecode.org>
 %
 %  Copyright:
+%     Christian Schulte, 2018
 %     Guido Tack, 2007
 %
 %  This file is part of Gecode, the generic constraint
@@ -30,10 +32,31 @@
 %
 %
 
-predicate gecode_table_bool(array[int] of var bool: x, array[int, int] of bool: t);
+predicate gecode_table_bool(array[int] of var bool: x,
+                            array[int] of int: t);
 
-predicate table_bool(array[int] of var bool: x, array[int, int] of bool: t) =
+predicate gecode_table_bool_reif(array[int] of var bool: x,
+                                 array[int] of int: t, var bool: b);
+
+predicate gecode_table_bool_imp(array[int] of var bool: x,
+                                array[int] of int: t, var bool: b);
+
+predicate table_bool(array[int] of var bool: x, array[int, int] of int: t) =
     assert (index_set_2of2(t) == index_set(x),
         "The second dimension of the table must equal the number of variables "
             ++ "in the first argument",
-        gecode_table_bool(x,t));
+        gecode_table_bool(x,array1d(t)));
+
+predicate table_bool_reif(array[int] of var bool: x, array[int, int] of int: t,
+                          var bool: b) =
+    assert (index_set_2of2(t) == index_set(x),
+        "The second dimension of the table must equal the number of variables "
+            ++ "in the first argument",
+        gecode_table_bool_reif(x,array1d(t),b));
+
+predicate table_bool_imp(array[int] of var bool: x, array[int, int] of int: t,
+                         var bool: b) =
+    assert (index_set_2of2(t) == index_set(x),
+        "The second dimension of the table must equal the number of variables "
+            ++ "in the first argument",
+        gecode_table_bool_imp(x,array1d(t),b));
