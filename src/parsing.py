@@ -49,7 +49,7 @@ Portfolio Options
     default backup solver is chuffed.
   --mzn
     Use just the solvers of MiniZinc bundle, by using chuffed as backup solver.
-    This is equivalent to "-P chuffed,gecode,g12lazyfd,g12mip,g12fd -b chuffed".
+    This is equivalent to "-P chuffed,gecode -b chuffed".
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. For more
     details, see the README file in kb folder
@@ -359,7 +359,7 @@ def parse_arguments(args):
     elif o == '--keep':
       keep = True
     elif o == '--mzn':
-      pfolio = ['chuffed', 'gecode', 'g12lazyfd', 'g12mip', 'g12fd']
+      pfolio = ['chuffed', 'gecode']
       backup = 'chuffed'
     elif o == '--check-solvers':
       s = a.split(',')
