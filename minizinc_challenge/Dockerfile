@@ -27,7 +27,7 @@ ENV PATH /tool/mzn2feat/bin:$PATH
 ENV PATH /tool/sunny-cp/bin:$PATH
 
 # env variable for minisat
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/tools/minisatid/lib
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/tool/minisatid/lib
 
 # update ortools (from Debian to Ubuntu 16.04 version)
 # note: latest version does not work since globals are differentiated from cp and sat modality
@@ -42,13 +42,13 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/tools/minisatid/lib
 # to add new solver copy all its directories in the right place
 # COPY ... ...
 
-RUN cd /tools/sunny-cp && \
+RUN cd /tool/sunny-cp && \
     git pull && \
     bash install.sh
 
 # update the mzn-exec scripts
-RUN cp /tools/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
-    cp /tools/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
+RUN cp /tool/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
+    cp /tool/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
 
 
 
