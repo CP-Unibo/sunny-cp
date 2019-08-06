@@ -1,0 +1,3 @@
+#!/bin/sh
+
+minizinc --solver org.minizinc.mzn-fzn --compile "$@"

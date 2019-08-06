@@ -1,5 +1,5 @@
 #! /bin/sh
 TMP=$(mktemp)
-minizinc --compile -G gecode "$@" -O $TMP.ozn
+mzn2fzn -G gecode "$@" -O $TMP.ozn
 sunny-cp "$@" | solns2out $TMP.ozn
 rm ${TMP}

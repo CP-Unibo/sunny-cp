@@ -35,7 +35,7 @@ for solver in solvers:
   pfolio_file.write(
     solver + ".fzn_exec = '" + solvers_path + solver + "/fzn-exec'\n"
   )
-  cmd = 'minizinc --compile -I ' + solvers_path + solver + '/mzn-lib ' + solvers_path \
+  cmd = 'mzn2fzn -I ' + solvers_path + solver + '/mzn-lib ' + solvers_path \
       + 'constraint.mzn --output-to-stdout --no-output-ozn'
   proc = psutil.Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   out, err = proc.communicate()
