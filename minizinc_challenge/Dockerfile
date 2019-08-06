@@ -20,15 +20,14 @@ RUN pip install \
 	psutil \
 	click
 
-# install feature extractor
-COPY --from=jacopomauro/sunny-cp /mzn2feat /mzn2feat
-ENV MZN2FEAT_HOME /mzn2feat
-ENV PATH /mzn2feat/bin:$PATH
+# install feature extractor, sunny and basic solvers
+COPY --from=jacopomauro/sunny-cp /tools /tools
+ENV MZN2FEAT_HOME /tool/mzn2feat
+ENV PATH /tool/mzn2feat/bin:$PATH
+ENV PATH /tool/sunny-cp/bin:$PATH
 
-# install basic sunny-cp
-ENV PATH /sunny-cp/bin:$PATH
-COPY --from=jacopomauro/sunny-cp /sunny-cp /sunny-cp
-COPY --from=jacopomauro/sunny-cp /solvers_exec /solvers_exec
+# env variable for minisat
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 
 # update ortools (from Debian to Ubuntu 16.04 version)
 # note: latest version does not work since globals are differentiated from cp and sat modality
@@ -39,8 +38,6 @@ COPY --from=jacopomauro/sunny-cp /solvers_exec /solvers_exec
 # 	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
 # 	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools
 
-# env variable for minisat
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 
 # to add new solver copy all its directories in the right place
 # COPY ... ...
@@ -50,8 +47,8 @@ RUN cd /sunny-cp && \
     bash install.sh
 
 # update the mzn-exec scripts
-RUN cp /sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
-    cp /sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
+RUN cp /tools/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
+    cp /tools/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
 
 
 
