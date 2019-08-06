@@ -1,11 +1,14 @@
-FROM minizinc/mznc2018:1.0
-MAINTAINER Jacopo Mauro
+FROM minizinc/mznc2019:1.0
+MAINTAINER Jacopo Mauro & Tong Liu
 
 # Install packages
 RUN apt-get update && \
   apt-get install -y \
     python-dev \
     python-pip \
+    # for gecode
+    libgl1 \
+    # for choco and jacop
     openjdk-8-jre-headless \
     wget \
     nano && \
@@ -22,9 +25,9 @@ ENV MZN2FEAT_HOME /mzn2feat
 ENV PATH /mzn2feat/bin:$PATH
 
 # install basic sunny-cp
+ENV PATH /sunny-cp/bin:$PATH
 COPY --from=jacopomauro/sunny-cp /sunny-cp /sunny-cp
 COPY --from=jacopomauro/sunny-cp /solvers_exec /solvers_exec
-ENV PATH /sunny-cp/bin:$PATH
 
 # update ortools (from Debian to Ubuntu 16.04 version)
 # note: latest version does not work since globals are differentiated from cp and sat modality
