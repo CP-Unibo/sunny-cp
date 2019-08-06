@@ -44,14 +44,13 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 # to add new solver copy all its directories in the right place
 # COPY ... ...
 
-# update the mzn-exec scripts
-RUN echo $'#!/bin/bash \n\
-sunny-cp -f "$@" \n' > /minizinc/mzn-exec-par && \
-echo $'#!/bin/bash \n\
-sunny-cp -f "$@" \n' > /minizinc/mzn-exec-free
-
 RUN cd /sunny-cp && \
     bash install.sh
+
+# update the mzn-exec scripts
+RUN cp /sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
+    cp /sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
+
 
 
 
