@@ -47,8 +47,7 @@ RUN cd /tool/sunny-cp && \
     bash install.sh
 
 # update the mzn-exec scripts
-RUN cp /tool/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-par && \
-    cp /tool/sunny-cp/minizinc_challenge/basic.sh /minizinc/mzn-exec-free
+RUN cp /tool/sunny-cp/minizinc_challenge/basic.sh /entry_data/exec
 
 
 

@@ -20,6 +20,9 @@ do
     -f)
         # ignore -f. Set by default
         ;;
+    -G)
+        # ignore -G option
+        ;;
     *.mzn)
         MZN=$1
         PARAM="$PARAM $1"
@@ -39,8 +42,8 @@ done
 minizinc --compile -G gecode $MZN $DZN -O $TMP.ozn --fzn $TMP.fzn
 
 # run sunny-cp
+# -p 8 -- should be given in input. We assume p = 8
 sunny-cp \
- #-p 8 -- should be given in input. We assume p = 8
  --cop-a -f -T 1200 \
  -P picat,choco,ortools,gecode,jacop,yuck \
  -s picat,10,choco,10,ortools,10,gecode,10,jacop,10,yuck,10 \
