@@ -21,7 +21,7 @@ RUN pip install \
 	click
 
 # install feature extractor, sunny and basic solvers
-COPY --from=jacopomauro/sunny-cp /tools /tools
+COPY --from=jacopomauro/sunny-cp /tool /tool
 ENV MZN2FEAT_HOME /tool/mzn2feat
 ENV PATH /tool/mzn2feat/bin:$PATH
 ENV PATH /tool/sunny-cp/bin:$PATH
