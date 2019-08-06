@@ -11,6 +11,7 @@ RUN apt-get update && \
     # for choco and jacop
     openjdk-8-jre-headless \
     wget \
+    git \
     nano && \
   rm -rf /var/lib/apt/lists/*
 
@@ -31,12 +32,12 @@ COPY --from=jacopomauro/sunny-cp /solvers_exec /solvers_exec
 
 # update ortools (from Debian to Ubuntu 16.04 version)
 # note: latest version does not work since globals are differentiated from cp and sat modality
-RUN cd /solvers_exec && \
-    rm -rf ortools && \
-	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools
+# RUN cd /solvers_exec && \
+#     rm -rf ortools && \
+# 	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+# 	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+# 	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
+# 	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools
 
 # env variable for minisat
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
@@ -45,6 +46,7 @@ ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/solvers_exec/minisatid/lib
 # COPY ... ...
 
 RUN cd /sunny-cp && \
+    git pull && \
     bash install.sh
 
 # update the mzn-exec scripts
