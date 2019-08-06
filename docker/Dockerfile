@@ -29,11 +29,11 @@ ENV MZN2FEAT_HOME /tool/mzn2feat
 ENV PATH /tool/mzn2feat/bin:$PATH
 
 # install sunny-cp (basic one with only minizinc solvers)
+ENV PATH /tool/sunny-cp/bin:$PATH
 RUN cd /tool && \
   git clone --depth=1 -b minizinc2.3 https://github.com/CP-Unibo/sunny-cp.git && \
   cd sunny-cp && \
   bash install.sh
-ENV PATH /tool/sunny-cp/bin:$PATH
 
 # or-tools
 COPY --from=jacopomauro/or-tools /tool/or-tools /tool/ortools
