@@ -29,16 +29,6 @@ ENV PATH /tool/sunny-cp/bin:$PATH
 # env variable for minisat
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/tool/minisatid/lib
 
-# update ortools (from Debian to Ubuntu 16.04 version)
-# note: latest version does not work since globals are differentiated from cp and sat modality
-# RUN cd /solvers_exec && \
-#     rm -rf ortools && \
-# 	wget https://github.com/google/or-tools/releases/download/v6.4/or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-# 	tar xvfz or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-# 	rm or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495.tar.gz && \
-# 	mv or-tools_flatzinc_Ubuntu-16.04-64bit_v6.4.4495 ortools
-
-
 # to add new solver copy all its directories in the right place
 # COPY ... ...
 
@@ -47,7 +37,14 @@ RUN cd /tool/sunny-cp && \
     bash install.sh
 
 # update the mzn-exec scripts
-RUN cp /tool/sunny-cp/minizinc_challenge/basic.sh /entry_data/exec
+RUN cp /tool/sunny-cp/minizinc_challenge/basic.sh /entry_data/exec && \
+    echo "#!/bin/bash                              "  >  /minizinc/mzn-exec-par && \
+    echo "/entry_data/exec \"\$@\"                 "  >> /minizinc/mzn-exec-par && \
+    chmod a+x /minizinc/mzn-exec-par && \
+    cp /minizinc/mzn-exec-par /minizinc/mzn-exec-free
+
+
+
 
 
 
