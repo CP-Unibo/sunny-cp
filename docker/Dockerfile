@@ -66,7 +66,7 @@ RUN mkdir -p /tool/sunny-cp/solvers/jacop && \
     ln -s /tool/jacop/mzn-lib /tool/sunny-cp/solvers/jacop/mzn-lib && \
     ln -s /tool/jacop/fzn-jacop /tool/sunny-cp/solvers/jacop/fzn-exec && \
     echo "all_opt = '-a'\n\
-free_opt  = '-f'" > /tool/sunny-cp/solvers/jacop/opts
+free_opt  = ''" > /tool/sunny-cp/solvers/jacop/opts
 
 # Install minisatid
 COPY --from=jacopomauro/minisatid:v3.11.0 /tool/minisatid /tool/minisatid
