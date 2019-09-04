@@ -92,8 +92,8 @@ COPY --from=jacopomauro/yuck /tool/yuck /tool/yuck
 RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
     ln -s /tool/yuck/mzn-lib /tool/sunny-cp/solvers/yuck/mzn-lib && \
     ln -s /tool/yuck/fzn-yuck /tool/sunny-cp/solvers/yuck/fzn-exec && \
-    echo "all_opt = '-a'\n\
-free_opt  = '-f'" > /tool/sunny-cp/solvers/yuck/opts
+    echo "all_opt = ''\n\
+free_opt  = ''" > /tool/sunny-cp/solvers/yuck/opts
 
 # Install mistral
 # Compiles but does not print output on zebra instance and other instances
