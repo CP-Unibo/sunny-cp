@@ -84,7 +84,7 @@ RUN mkdir -p /tool/sunny-cp/solvers/haifacsp && \
     ln -s /tool/haifacsp/mzn-lib /tool/sunny-cp/solvers/haifacsp/mzn-lib && \
     ln -s /tool/haifacsp/fzn-haifacsp /tool/sunny-cp/solvers/haifacsp/fzn-exec && \
     echo "all_opt = '-a'\n\
-free_opt  = '-f'" > /tool/sunny-cp/solvers/haifacsp/opts
+free_opt  = ''" > /tool/sunny-cp/solvers/haifacsp/opts
 
 
 # Install yuck
