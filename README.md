@@ -2,14 +2,13 @@
 
 SUNNY-CP: a Parallel CP Portfolio Solver
 
-sunny-cp [5] is a parallel parallel portfolio solver that allows to solve a
+sunny-cp [5] is a parallel portfolio solver that allows one to solve a
 Constraint (Satisfaction/Optimization) Problem defined in the MiniZinc language.
 It essentially implements the SUNNY algorithm described in [1][2][3] and extends
 its sequential version [4].
 
 sunny-cp is built on top of state-of-the-art constraint solvers, including:
-Choco, Chuffed, HaifaCSP,
-JaCoP, MinisatID, OR-Tools, Picat, Chuffed, and Gecode.
+Choco, Chuffed, HaifaCSP, JaCoP, MinisatID, OR-Tools, Picat, Chuffed, and Gecode.
 
 In a nutshell, sunny-cp relies on two sequential steps:
 
@@ -20,7 +19,7 @@ In a nutshell, sunny-cp relies on two sequential steps:
      the predicted solvers, selected by means of SUNNY algorithm.
 
 sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
-and 2017, and the silver medal in the 2018 and 2019 ones [6].
+and 2017, and the silver medal in 2018 and 2019 [6].
 
 ## Contents of this git repository
 

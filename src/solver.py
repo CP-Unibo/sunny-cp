@@ -112,12 +112,11 @@ class RunningSolver:
     self.num_restarts  = 0
     self.max_restarts = max_restarts
     if solve == 'min':
-      self.obj_value = float('+inf')
+      self.best_val = float('+inf')
     elif solve == 'max':
-      self.obj_value = float('-inf')
+      self.best_val = float('-inf')
     if self.solver.free_opt:
       self.switch_search = switch
- 
 
   def name(self):
     """
