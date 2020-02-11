@@ -197,10 +197,11 @@ to the default image of sunny-cp to contact us.
 
 ## Authors
 
-sunny-cp is developed by Roberto Amadini (University of Melbourne) and Jacopo
-Mauro (University of Oslo). For any question or information, please contact us:
-* roberto.amadini at unimelb.edu.au
-* mauro.jacopo  at gmail.com
+sunny-cp is developed by Roberto Amadini (University of Bologna) and 
+Jacopo Mauro (University of Southern Denmark). For any question or information, 
+please contact us:
+roberto.amadini at unibo.it
+mauro.jacopo at gmail.com
 
 ## Acknowledgement
 
