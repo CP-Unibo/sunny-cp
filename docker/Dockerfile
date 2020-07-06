@@ -68,6 +68,17 @@ RUN mkdir -p /tool/sunny-cp/solvers/jacop && \
     echo "all_opt = '-a'\n\
 free_opt  = ''" > /tool/sunny-cp/solvers/jacop/opts
 
+# Install yuck
+COPY --from=jacopomauro/yuck /tool/yuck /tool/yuck
+RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
+    ln -s /tool/yuck/mzn-lib /tool/sunny-cp/solvers/yuck/mzn-lib && \
+    ln -s /tool/yuck/fzn-yuck /tool/sunny-cp/solvers/yuck/fzn-exec && \
+    echo "all_opt = ''\n\
+free_opt  = ''" > /tool/sunny-cp/solvers/yuck/opts
+
+### Not updated solvers but kept because still working
+### haifacsp should be checked
+
 # Install minisatid
 COPY --from=jacopomauro/minisatid:v3.11.0 /tool/minisatid /tool/minisatid
 RUN mkdir -p /tool/sunny-cp/solvers/minisatid && \
@@ -85,25 +96,6 @@ RUN mkdir -p /tool/sunny-cp/solvers/haifacsp && \
     ln -s /tool/haifacsp/fzn-haifacsp /tool/sunny-cp/solvers/haifacsp/fzn-exec && \
     echo "all_opt = '-a'\n\
 free_opt  = ''" > /tool/sunny-cp/solvers/haifacsp/opts
-
-
-# Install yuck
-COPY --from=jacopomauro/yuck /tool/yuck /tool/yuck
-RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
-    ln -s /tool/yuck/mzn-lib /tool/sunny-cp/solvers/yuck/mzn-lib && \
-    ln -s /tool/yuck/fzn-yuck /tool/sunny-cp/solvers/yuck/fzn-exec && \
-    echo "all_opt = ''\n\
-free_opt  = ''" > /tool/sunny-cp/solvers/yuck/opts
-
-# Install mistral
-# Compiles but does not print output on zebra instance and other instances
-#COPY --from=jacopomauro/mistral /tool/mistral /tool/mistral
-#RUN mkdir -p /tool/sunny-cp/solvers/mistral && \
-#    ln -s /tool/mistral/mzn-lib /tool/sunny-cp/solvers/mistral/mzn-lib && \
-#    ln -s /tool/mistral/fzn-mistral /tool/sunny-cp/solvers/mistral/fzn-exec && \
-#    echo "all_opt = '-a'\n\
-#free_opt  = '-f'" > /tool/sunny-cp/solvers/mistral/opts
-
 
 # expose port 9001 for the sunny-cp server
 EXPOSE 9001
