@@ -38,7 +38,7 @@ RUN cd /tool && \
 # or-tools
 COPY --from=jacopomauro/or-tools /tool/or-tools /tool/ortools
 RUN mkdir -p /tool/sunny-cp/solvers/ortools && \
-    ln -s /tool/ortools/ortools/flatzinc/mznlib_sat /tool/sunny-cp/solvers/ortools/mzn-lib && \
+    ln -s /tool/ortools/ortools/flatzinc/mznlib /tool/sunny-cp/solvers/ortools/mzn-lib && \
     ln -s /tool/ortools/bin/fzn-or-tools /tool/sunny-cp/solvers/ortools/fzn-exec && \
     echo "all_opt = '-a'\n\
 free_opt  = '-f'" > /tool/sunny-cp/solvers/ortools/opts
