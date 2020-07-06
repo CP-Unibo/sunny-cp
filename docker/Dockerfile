@@ -77,7 +77,7 @@ RUN mkdir -p /tool/sunny-cp/solvers/yuck && \
 free_opt  = ''" > /tool/sunny-cp/solvers/yuck/opts
 
 ### Not updated solvers but kept because still working
-### haifacsp should be checked
+### haifacsp solutions should be checked
 
 # Install minisatid
 COPY --from=jacopomauro/minisatid:v3.11.0 /tool/minisatid /tool/minisatid
