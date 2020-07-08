@@ -44,8 +44,8 @@ minizinc --compile -G gecode $MZN $DZN -O $TMP.ozn --fzn $TMP.fzn
 # run sunny-cp
 sunny-cp \
  -p 8 --cop-a -f -T 1200 \
- -P picat,izplus,choco,ortools,gecode,cplex,yuck,chuffed \
- -s picat,10,izplus,10,choco,10,ortools,10,gecode,10,cplex,10,yuck,10,chuffed,10 \
+ -P picat,izplus,sicstus,ortools,gecode,cplex,yuck,chuffed \
+ -s picat,10,chuffed,10,izplus,10,sicstus,10,ortools,10,gecode,10,cplex,10,yuck,10 \
  $PARAM | solns2out $TMP.ozn
 
 rm ${TMP}
