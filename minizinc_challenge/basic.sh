@@ -45,8 +45,9 @@ minizinc --compile -G gecode $MZN $DZN -O $TMP.ozn --fzn $TMP.fzn
 # -p 8 -- should be given in input. We assume p = 8
 sunny-cp \
  --cop-a -f -T 1200 \
- -P picat,choco,ortools,gecode,jacop,yuck \
- -s picat,10,choco,10,ortools,10,gecode,10,jacop,10,yuck,10 \
+ -P picat,chuffed,choco,ortools,gecode,jacop,yuck,haifacsp \
+ -s picat,10,chuffed,10,choco,10,ortools,10,gecode,10,jacop,10,yuck,10,haifacsp,10 \
+ --check-solvers haifacsp,gecode
  $PARAM | solns2out $TMP.ozn
- #--check-solvers mistral,gecode,opturion,gecode "$@"
+
 rm ${TMP}
