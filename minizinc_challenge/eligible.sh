@@ -46,7 +46,6 @@ sunny-cp \
  -p 8 --cop-a -f -T 1200 \
  -P picat,izplus,sicstus,ortools,gecode,cplex,jacop,yuck \
  -s picat,10,izplus,10,sicstus,10,ortools,10,gecode,10,jacop,10,yuck,10,cplex,10 \
-# --check-solvers haifacsp,gecode \
  $PARAM | solns2out $TMP.ozn
 
 rm ${TMP}
