@@ -94,5 +94,5 @@ export SUNNY_HOME=$PWD
 cd $SUNNY_HOME
 
 echo "--- Everything went well!"
-echo "To complete sunny-cp installation just append $PWD/bin"
-echo "to the PATH environment variable."
+echo "To complete sunny-cp installation just append $PWD/bin to the PATH" \
+     "environment variable."

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+minizinc --solver coin-bc "$@"
