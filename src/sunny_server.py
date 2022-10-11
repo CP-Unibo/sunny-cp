@@ -1,12 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 A simple HTTP server to call sunny-cp.
 Examples for sending requests:
     curl -F "--help=" http://localhost:9001
     curl -F "-P=gecode" "mzn=@<FILE>" http://localhost:9001
 """
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import urlparse
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
 import logging
 import cgi
 import tempfile
@@ -31,7 +31,7 @@ class MyServer(BaseHTTPRequestHandler):
         Handle GET requests.
         '''
         logging.debug('GET %s' % (self.path))
-        if urlparse.urlparse(self.path).path == "/solvers":
+        if urllib.parse.urlparse(self.path).path == "/solvers":
             self._set_headers()
             solvers_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),os.pardir,"solvers")
             solvers = [name for name in os.listdir(solvers_path) if os.path.isdir(os.path.join(solvers_path, name))]
@@ -58,18 +58,18 @@ class MyServer(BaseHTTPRequestHandler):
             postvars = cgi.parse_multipart(self.rfile, pdict)
         elif ctype == 'application/x-www-form-urlencoded':
             length = int(self.headers['content-length'])
-            postvars = urlparse.parse_qs(self.rfile.read(length))
+            postvars = urllib.parse.parse_qs(self.rfile.read(length))
         else:
             postvars = {}
 
         # query_values = urlparse.parse_qs(urlparse.urlparse(self.path).query)
 
-        logging.debug('Operation %s' % urlparse.urlparse(self.path).path)
+        logging.debug('Operation %s' % urllib.parse.urlparse(self.path).path)
         # logging.debug('Parameters %s' % unicode(query_values))
         # logging.debug('Post data %s' % unicode(postvars))
 
-        if urlparse.urlparse(self.path).path == "/process" or urlparse.urlparse(self.path).path == "/get_features":
-            timeout = unicode(TIMEOUT)
+        if urllib.parse.urlparse(self.path).path == "/process" or urllib.parse.urlparse(self.path).path == "/get_features":
+            timeout = str(TIMEOUT)
             mzn = []
             dzn = []
             extra_param = []
@@ -104,7 +104,7 @@ class MyServer(BaseHTTPRequestHandler):
                         extra_param.append(i)
                         extra_param.append(postvars[i][0])
 
-            if urlparse.urlparse(self.path).path == "/process":
+            if urllib.parse.urlparse(self.path).path == "/process":
                 cmd = ["timeout", timeout, "sunny-cp"] + extra_param
                 cmd += mzn
                 cmd += dzn
@@ -150,7 +150,7 @@ class MyServer(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=MyServer, port=9001):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print 'Starting httpd...'
+    print('Starting httpd...')
     httpd.serve_forever()
 
 @click.command()

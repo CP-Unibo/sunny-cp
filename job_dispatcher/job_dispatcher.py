@@ -16,14 +16,14 @@ import requests
 import sqlite3
 import os
 import hashlib
-import Queue
+import queue
 from threading import Thread
 import sys
 import time
 
 import click
 
-QUEUE = Queue.Queue()
+QUEUE = queue.Queue()
 MZN_ID = 0
 DZN_ID = 1
 SOL_ID = 2
@@ -220,7 +220,7 @@ def parse_solver_output(output):
                 result["time"] = float(line[len("% Search completed at time: "):])
         return result
     except ValueError as e:
-        return {"error": unicode(e)}
+        return {"error": str(e)}
 
 
 def worker(thread_num,database_file,timeout,url,hostname):
@@ -285,7 +285,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                                            item[MZN_ID],
                                            item[DZN_ID] if item[DZN_ID] else "",
                                            goal,
-                                           unicode(feature_vector),
+                                           str(feature_vector),
                                            datetime.datetime.now()))
                         connection.commit()
                     else:
@@ -295,7 +295,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                     # try to solve the problem remotely
                     files = {'mzn': open(item[MZN_ID], 'rb'),
                              '-P': item[SOL_ID],
-                             '-T': unicode(timeout)}
+                             '-T': str(timeout)}
                     if item[DZN_ID]:
                         files['dzn'] = open(item[DZN_ID], 'rb')
                     if goal != "sat":
@@ -347,7 +347,7 @@ def worker(thread_num,database_file,timeout,url,hostname):
                 time.sleep(SLEEP_TIME_AFTER_ERROR)
             finally:
                 QUEUE.task_done()
-        except Queue.Empty:
+        except queue.Empty:
             # Handle empty queue here
             break
 
@@ -532,9 +532,9 @@ def generate_kb_files(
             result["val"] = "nan"
             if result["solutions"]:
                 if instance_type[id] == "min":
-                    result["val"] = unicode(min(result["solutions"].values()))
+                    result["val"] = str(min(result["solutions"].values()))
                 elif instance_type[id] == "max":
-                    result["val"] = unicode(max(result["solutions"].values()))
+                    result["val"] = str(max(result["solutions"].values()))
 
             # discard the results where result is unknown
             if result["result"] == "unk":

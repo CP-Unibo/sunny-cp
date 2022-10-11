@@ -51,18 +51,18 @@ def main(args):
     opts, args = getopt.getopt(
       args, 'ht:p:s:a:f:', ['help', 'no-scale', 'no-const', 'no-check']
     )
-  except getopt.error, msg:
-    print msg
-    print >> sys.stderr, 'For help use --help'
+  except getopt.error as msg:
+    print(msg)
+    print('For help use --help', file=sys.stderr)
     sys.exit(2)
 
   if len(args) != 3:
     for o, a in opts:
       if o in ('-h', '--help'):
-        print __doc__
+        print(__doc__)
         sys.exit(0)
-    print >> sys.stderr, 'Error! Wrong number of arguments.'
-    print >> sys.stderr, 'For help use --help'
+    print('Error! Wrong number of arguments.', file=sys.stderr)
+    print('For help use --help', file=sys.stderr)
     sys.exit(2)
 
   kb_name = args[0]
@@ -84,38 +84,38 @@ def main(args):
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
-      print __doc__
+      print(__doc__)
       return
     elif o == '-t':
       timeout = int(a)
       if timeout <= 0:
-        print >> sys.stderr, 'Error! Timeout',timeout,'is non positive.'
+        print('Error! Timeout',timeout,'is non positive.', file=sys.stderr)
         sys.exit(2)
     elif o == '-p':
       path = a
       if not os.path.exists(a):
-        print >> sys.stderr, 'Error! Path',path,'does not exists.'
+        print('Error! Path',path,'does not exists.', file=sys.stderr)
         sys.exit(2)
     elif o == '-f':
       l, u = a.split(',')
       lb_feat = float(l)
       ub_feat = float(u)
       if lb_feat >= ub_feat:
-        print >> sys.stderr, 'Error! Bound',l,'not greater than',u
+        print('Error! Bound',l,'not greater than',u, file=sys.stderr)
         sys.exit(2)
     elif o == '-s':
       l, u = a.split(',')
       lb_score = float(l)
       ub_score = float(u)
       if not (0 <= lb_score < ub_score <= 1):
-        print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
+        print('Error! Must be 0 <=',l,'<',u,'<= 1', file=sys.stderr)
         sys.exit(2)
     elif o == '-a':
       l, u = a.split(',')
       lb_area = float(l)
       ub_area = float(u)
       if not (0 <= lb_area < ub_area <= 1):
-        print >> sys.stderr, 'Error! Must be 0 <=',l,'<',u,'<= 1'
+        print('Error! Must be 0 <=',l,'<',u,'<= 1', file=sys.stderr)
         sys.exit(2)
     elif o == '--no-scale':
       scale = False
@@ -126,8 +126,8 @@ def main(args):
 
   kb_path = path + '/' + kb_name
   if os.path.exists(kb_path):
-    print >> sys.stderr, 'Error! Folder',kb_path,'already exists! Choose ',
-    print >> sys.stderr, 'another name or location for the knowledge base!'
+    print('Error! Folder',kb_path,'already exists! Choose ', end=' ', file=sys.stderr)
+    print('another name or location for the knowledge base!', file=sys.stderr)
     sys.exit(2)
 
   try:
@@ -145,10 +145,10 @@ def main(args):
     if os.path.exists(kb_path):
       from shutil import rmtree
       rmtree(kb_path)
-    print 'Knowledge base',kb_name,'not created'
+    print('Knowledge base',kb_name,'not created')
     sys.exit(1)
 
-  print 'Knowledge base',kb_name,'created in',path
+  print('Knowledge base',kb_name,'created in',path)
 
 if __name__ == '__main__':
   main(sys.argv[1:])

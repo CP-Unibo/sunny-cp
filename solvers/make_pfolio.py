@@ -24,9 +24,9 @@ preamble = "'''\nThis module contains an object of class Solver for each "     \
 pfolio_file.write(preamble)
 
 solvers_path = SUNNY_HOME + '/solvers/'
-solvers = os.walk(solvers_path).next()[1]
+solvers = os.walk(solvers_path).__next__()[1]
 for solver in solvers:
-  print 'Adding solver',solver
+  print('Adding solver',solver)
   pfolio_file.write(solver + ' = Solver()\n')
   pfolio_file.write(solver + ".name = '" + solver + "'\n")
   pfolio_file.write(
@@ -40,10 +40,10 @@ for solver in solvers:
   proc = psutil.Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   out, err = proc.communicate()
   if proc.returncode != 0:
-    print err
-    print 'Error! Solver',solver,'not installed'
+    print(err)
+    print('Error! Solver',solver,'not installed')
     sys.exit(1)
-  for line in out.split(';\n'):
+  for line in out.decode('utf8').split(';\n'):
     # FIXME: For MiniZinc versions >= 2.1.6
     intro = 'X_INTRODUCED_0_ = '
     # FIXME: For MiniZinc versions <= 2.1.5
