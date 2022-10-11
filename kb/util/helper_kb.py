@@ -13,7 +13,7 @@ def compute_infos(
   """
   Computes the runtime information for the CSP/COP knowledge bases.
   """
-  print 'Processing runtime infos...'
+  print('Processing runtime infos...')
   reader = csv.reader(open(info_file, 'r'), delimiter = '|')
   kb_csp = {}
   kb_cop = {}
@@ -29,7 +29,7 @@ def compute_infos(
     info = row[3]
     time = float(row[4])
     val = float(row[5])
-    values = dict((float(t), v) for (t, v) in eval(row[6]).items())
+    values = dict((float(t), v) for (t, v) in list(eval(row[6]).items()))
 
     if check:
       check_invariant(
@@ -46,11 +46,11 @@ def compute_infos(
         inst,
         solv
       )
-      last_val = [v for (t, v) in values.items() if t == max(values.keys())]
+      last_val = [v for (t, v) in list(values.items()) if t == max(values.keys())]
       check_invariant(
         't_i < T AND v_k = val AND (values = {} <==> val = nan)',
         True,
-        not [t for t in values.keys() if t > timeout] and \
+        not [t for t in list(values.keys()) if t > timeout] and \
         (not last_val or last_val[0] == val)           and \
         (not values or val == val) and (values or val != val),
         inst,
@@ -58,7 +58,7 @@ def compute_infos(
       )
 
     if goal != 'sat':
-      if inst not in kb_cop.keys():
+      if inst not in list(kb_cop.keys()):
         kb_cop[inst] = {}
         min_val[inst] = float('+inf')
         max_val[inst] = float('-inf')
@@ -73,20 +73,20 @@ def compute_infos(
         if val > max_val[inst]:
           max_val[inst] = val
       if values:
-        vals = values.values()
+        vals = list(values.values())
         if min(vals) < min_values[inst]:
           min_values[inst] = min(vals)
         if max(vals) > max_values[inst]:
           max_values[inst] = max(vals)
     else:
-      if inst not in kb_csp.keys():
+      if inst not in list(kb_csp.keys()):
         kb_csp[inst] = {}
       kb_csp[inst][solv] = {'info': info, 'time': time}
 
   if kb_cop:
-    print 'Computing solving score and area...'
-    for inst, item in kb_cop.items():
-      for solver in item.keys():
+    print('Computing solving score and area...')
+    for inst, item in list(kb_cop.items()):
+      for solver in list(item.keys()):
         values = item[solver]['values']
         info   = item[solver]['info']
         goal   = item[solver]['goal']
@@ -113,7 +113,7 @@ def check_invariant(inv, a, b, inst, solv):
   Checks if the property inv: a <==> b holds for instance inst and solver solv.
   """
   if (a and not b) or (b and not a):
-    print 'Error! Invariant',inv,'violated by solver',solv,'on instance',inst
+    print('Error! Invariant',inv,'violated by solver',solv,'on instance',inst)
     raise Exception('Violated invariant.')
 
 def get_score(info, val, lb, ub, min_val, max_val, goal, check):
@@ -145,7 +145,7 @@ def get_area(
   if info in ['uns', 'unb']:
     return time
   scaled_vals = sorted([
-    (t, scale(v, lb, ub, min_val, max_val, goal)) for (t, v) in values.items()
+    (t, scale(v, lb, ub, min_val, max_val, goal)) for (t, v) in list(values.items())
   ])
   n = len(scaled_vals) - 1
   a = scaled_vals[0][0]
@@ -174,10 +174,10 @@ def scale(val, lb, ub, min_val, max_val, goal):
   return s
 
 def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
-  print 'Processing features...'
+  print('Processing features...')
   reader = csv.reader(open(feat_file, 'r'), delimiter = '|')
   os.mkdir(kb_path)
-  print 'Created the knowledge base folder:',kb_path
+  print('Created the knowledge base folder:',kb_path)
   csp_writer = csv.writer(
     open(kb_path + '/' + kb_name  + '_csp', 'w'), delimiter = '|'
   )
@@ -187,8 +187,8 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
   features = {}
   lims_csp = {}
   lims_cop = {}
-  insts_csp = kb_csp.keys()
-  insts_cop = kb_cop.keys()
+  insts_csp = list(kb_csp.keys())
+  insts_cop = list(kb_cop.keys())
   for row in reader:
     inst = row[0]
     feat_vector = eval(row[1])
@@ -219,7 +219,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
     features[inst] = feat_vector
 
   if scale or const:
-    for (inst, feat_vector) in features.items():
+    for (inst, feat_vector) in list(features.items()):
       new_feat_vector = []
       if inst in insts_csp:
         info = kb_csp[inst]
@@ -251,17 +251,17 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
       kb_row = [inst, new_feat_vector, info]
       writer.writerow(kb_row)
   else:
-    print 'Features processed!'
+    print('Features processed!')
     return
 
   for i in ['csp', 'cop']:
     lim_file = kb_path + '/' + kb_name + '_lims_' + i
     with open(lim_file, 'w') as outfile:
       json.dump(eval('lims_' + i), outfile)
-  print 'Features processed,',
+  print('Features processed,', end=' ')
   if const and scale:
-    print 'scaled all values, and removed constant features!'
+    print('scaled all values, and removed constant features!')
   elif const:
-    print 'and removed constant features!'
+    print('and removed constant features!')
   else:
-    print 'and scaled all values!'
+    print('and scaled all values!')

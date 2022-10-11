@@ -20,7 +20,7 @@ def get_neighbours(feat_vector, k, kb):
   for row in reader:
     n += 1
     inst = row[0]
-    d = euclidean_distance(feat_vector, map(float, row[1][1 : -1].split(',')))
+    d = euclidean_distance(feat_vector, list(map(float, row[1][1 : -1].split(','))))
     distances.append((d, inst))
     infos[inst] = row[2]
   sorted_dist = distances.sort(key = lambda x : x[0])
@@ -49,7 +49,7 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
   for solver in pfolio:
     solved[solver] = set([])
     times[solver]  = 0.0
-  for inst, item in neighbours.items():
+  for inst, item in list(neighbours.items()):
     item = eval(item)
     for solver in pfolio:
       time = item[solver]['time']
@@ -92,12 +92,12 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
   tot_time = sum(schedule.values())
   # Allocate to the backup solver the (eventual) remaining time.
   if round(tot_time) < timeout:
-    if backup in schedule.keys():
+    if backup in list(schedule.keys()):
       schedule[backup] += timeout - tot_time
     else:
       schedule[backup]  = timeout - tot_time
   sorted_schedule = sorted(
-    schedule.items(),
+    list(schedule.items()),
     key = lambda x: times[x[0]]
   )
   assert(round(sum(t for (s, t) in sorted_schedule)) <= timeout)
@@ -116,7 +116,7 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
     scores[solver] = []
     times[solver] = 0.0
     areas[solver] = 0.0
-  for inst, item in neighbours.items():
+  for inst, item in list(neighbours.items()):
     item = eval(item)
     for solver in pfolio:
       scores[solver].append(item[solver]['score'])
@@ -137,10 +137,10 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
       # get the (j + 1)-th subset of cardinality i
       sub_pfolio = get_subset(j, i, pfolio)
       port_scores = dict([
-        (s, l) for s, l in scores.items() if s in sub_pfolio
+        (s, l) for s, l in list(scores.items()) if s in sub_pfolio
       ])
       for h in range(0, k):
-        score += max([inst[h] for inst in port_scores.values()])
+        score += max([inst[h] for inst in list(port_scores.values())])
       time = sum([times[solver] for solver in sub_pfolio])
       area = sum([areas[solver] for solver in sub_pfolio])
       if score >  max_score or \
@@ -164,12 +164,12 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
     schedule[solver] = timeout / n * ns
   tot_time = sum(schedule.values())
   if round(tot_time) < timeout:
-    if backup in schedule.keys():
+    if backup in list(schedule.keys()):
       schedule[backup] += timeout - tot_time
     else:
       schedule[backup]  = timeout - tot_time
   sorted_schedule = sorted(
-    [(s, t) for (s, t) in schedule.items()],
+    [(s, t) for (s, t) in list(schedule.items())],
     key = lambda x: times[x[0]]
   )
   return sorted_schedule
@@ -181,7 +181,7 @@ def parallelize(seq_sched, cores, timeout):
   assert len(seq_sched) > cores
   sort_sched = sorted(seq_sched, key = lambda x: x[1], reverse = True)
   par_sched = [(s, float('+inf')) for (s, _) in sort_sched[:cores - 1]]
-  seq_sched = [x for x in seq_sched if x[0] not in dict(par_sched).keys()]
+  seq_sched = [x for x in seq_sched if x[0] not in list(dict(par_sched).keys())]
   seq_time = sum(t for (_, t) in seq_sched)
   for (s, t) in seq_sched:
     par_sched.append((s, t * timeout / seq_time))

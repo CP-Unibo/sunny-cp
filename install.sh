@@ -13,7 +13,7 @@ then
 fi
 echo 'OK!'
 
-psv=`python -c "import psutil ; print psutil.__version__[0]"` 2>/dev/null
+psv=`python -c "import psutil ; print (psutil.__version__[0])"` 2>/dev/null
 if 
   [ -z $psv ]
 then

@@ -183,7 +183,7 @@ def parse_arguments(args):
   """
 
   # Get the arguments and parse the input model to get solve information.
-  pfolio = [k for k, v in globals().items() if isinstance(v, Solver)]
+  pfolio = [k for k, v in list(globals().items()) if isinstance(v, Solver)]
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
 
@@ -220,13 +220,13 @@ def parse_arguments(args):
   # Arguments parsing.
   for o, a in opts:
     if o in ('-h', '--help'):
-      print __doc__
+      print(__doc__)
       sys.exit(0)
     elif o == '-P':
       pfolio = a.split(',')
       if not pfolio:
-        print >> sys.stderr, 'Error! Empty portfolio '
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Empty portfolio ', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
     elif o == '-A':
       solvers = a.split(',')
@@ -237,7 +237,7 @@ def parse_arguments(args):
     elif o == '-p':
       n = int(a)
       if n < 1:
-        print >> sys.stderr, 'Warning: -p parameter set to 1.'
+        print('Warning: -p parameter set to 1.', file=sys.stderr)
         cores = 1
       else:
         cores = n
@@ -246,21 +246,21 @@ def parse_arguments(args):
     elif o == '-k':
       k = int(a)
       if k < 0:
-        print >> sys.stderr, 'Error! Negative value ' + a + ' for k value.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Negative value ' + a + ' for k value.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
     elif o == '-T':
       timeout = float(a)
       if timeout<= 0:
-        print >> sys.stderr, 'Error! Non-positive value ' + a + ' for timeout.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Non-positive value ' + a + ' for timeout.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
     elif o == '-b':
       backup = a
     elif o == '-K':
       if not os.path.exists(a):
-        print >> sys.stderr, 'Error! Directory ' + a + ' not exists.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Directory ' + a + ' not exists.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
       name = [token for token in a.split('/') if token][-1]
       if a[-1] != '/':
@@ -274,12 +274,12 @@ def parse_arguments(args):
       kb = path + name + '_' + pb
       lims = path + name + '_lims_' + pb
       if not os.path.exists(kb):
-        print >> sys.stderr, 'Error! File ' + kb + ' not exists.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! File ' + kb + ' not exists.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
       if not os.path.exists(lims):
-        print >> sys.stderr, 'Error! File ' + lims + ' not exists.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! File ' + lims + ' not exists.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
     elif o == '-s':
       s = a.split(',')
@@ -287,14 +287,14 @@ def parse_arguments(args):
         solver = s[2 * i]
         time = float(s[2 * i + 1])
         if time < 0:
-          print >> sys.stderr, 'Error! Not acceptable negative time'
-          print >> sys.stderr, 'For help use --help'
+          print('Error! Not acceptable negative time', file=sys.stderr)
+          print('For help use --help', file=sys.stderr)
           sys.exit(2)
         static.append((solver, time))
     elif o == '-d':
       if not os.path.exists(a):
-        print >> sys.stderr, 'Error! Directory ' + a + ' not exists.'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Directory ' + a + ' not exists.', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
       name = [token for token in a.split('/') if token][-1]
       if a[-1] == '/':
@@ -316,45 +316,45 @@ def parse_arguments(args):
         solver = o[14:]
         solver_options[solver]['options'] += ' ' + a
       else:
-        for item in solver_options.values():
+        for item in list(solver_options.values()):
           item['options'] += ' ' + a
     elif o.startswith('--wait-time'):
       wait_time = float(a)
       if wait_time < 0:
-        print >> sys.stderr, 'Error! Not acceptable negative time'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Not acceptable negative time', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
       if len(o) > 11:
         solver = o[12:]
         solver_options[solver]['wait_time'] = wait_time
       else:
-        for item in solver_options.values():
+        for item in list(solver_options.values()):
           item['wait_time'] = wait_time
     elif o.startswith('--restart-time'):
       rest_time = float(a)
       if rest_time < 0:
-        print >> sys.stderr, 'Error! Not acceptable negative time'
-        print >> sys.stderr, 'For help use --help'
+        print('Error! Not acceptable negative time', file=sys.stderr)
+        print('For help use --help', file=sys.stderr)
         sys.exit(2)
       if len(o) > 14:
         solver = o[15:]
         solver_options[solver]['restart_time'] = rest_time
       else:
-        for item in solver_options.values():
+        for item in list(solver_options.values()):
           item['restart_time'] = rest_time
     elif o.startswith('--switch-search'):
       if len(o) > 15:
         solver = o[16:]
         solver_options[solver]['switch_search'] = True
       else:
-        for item in solver_options.values():
+        for item in list(solver_options.values()):
           item['switch_search'] = True
     elif o.startswith('--max-restarts'):
       if len(o) > 14:
         solver = o[15:]
         solver_options[solver]['max_restarts'] = int(a)
       else:
-        for item in solver_options.values():
+        for item in list(solver_options.values()):
           item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
@@ -367,8 +367,8 @@ def parse_arguments(args):
         unt = s[2 * i]
         tru = s[2 * i + 1]
         if unt == tru:
-          print >> sys.stderr, 'Error! A solver is either trusted or untrusted!'
-          print >> sys.stderr, 'For help use --help'
+          print('Error! A solver is either trusted or untrusted!', file=sys.stderr)
+          print('For help use --help', file=sys.stderr)
           sys.exit(2)
         check[unt] = tru
     elif o.startswith('--csp-') and solve == 'sat' or \
@@ -411,30 +411,29 @@ def get_args(args, pfolio):
     opts, args = getopt.getopt(
       args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
     )
-  except getopt.error, msg:
-    print msg
-    print >> sys.stderr, 'For help use --help'
+  except getopt.error as msg:
+    print(msg)
+    print('For help use --help', file=sys.stderr)
     sys.exit(2)
 
   if len(args) == 0:
     for o, a in opts:
       if o in ('-h', '--help'):
-        print __doc__
+        print(__doc__)
         sys.exit(0)
-    print >> sys.stderr, 'Error! No arguments given.'
-    print >> sys.stderr, 'For help use --help'
+    print('Error! No arguments given.', file=sys.stderr)
+    print('For help use --help', file=sys.stderr)
     sys.exit(2)
   mzn = args[0]
   if not mzn.endswith('.mzn'):
-    print >> sys.stderr, 'Error! MiniZinc input model must have .mzn extension.'
-    print >> sys.stderr, 'For help use --help'
+    print('Error! MiniZinc input model must have .mzn extension.', file=sys.stderr)
+    print('For help use --help', file=sys.stderr)
     sys.exit(2)
   if len(args) > 1:
     dzn = args[1]
     if not dzn.endswith('.dzn'):
-      print >> sys.stderr, \
-      'Error! MiniZinc input data must have .dzn extension.'
-      print >> sys.stderr, 'For help use --help'
+      print('Error! MiniZinc input data must have .dzn extension.', file=sys.stderr)
+      print('For help use --help', file=sys.stderr)
       sys.exit(2)
   return mzn, dzn, opts
 

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 sunny-cp executable module.
 '''
@@ -45,7 +45,7 @@ def handler(signum = None, frame = None):
   """
   Handles termination signals.
   """
-  print >> sys.stderr, '% Signal handler called with signal',signum
+  print('% Signal handler called with signal',signum, file=sys.stderr)
   clean()
   sys.stdout.close()
   sys.exit(signum)
@@ -102,9 +102,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
     if mem_limit < 100:
       mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
       if sum(mems.values()) > mem_limit:
-        solver = max(mems.items(), key = lambda x: x[1])[0]
-        print '% Warning! sunny-cp exceeded the maximum allowed memory'
-        print '% Killing solver',solver.name()
+        solver = max(list(mems.items()), key = lambda x: x[1])[0]
+        print('% Warning! sunny-cp exceeded the maximum allowed memory')
+        print('% Killing solver',solver.name())
         send_signal_solver(signal.SIGKILL, solver)
         RUNNING_SOLVERS.remove(solver)
         continue
@@ -144,15 +144,15 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
           solver.num_restarts += 1
           send_signal_solver(signal.SIGKILL, solver)
           RUNNING_SOLVERS.remove(solver)
-          print '% Restarting',solver.name()
+          print('% Restarting',solver.name())
           solver.timeout = max(
             solver.timeout - (time.time() - solver.start_time), 0
           )
           run_solver(solver, problem)
           continue
         else:
-          print '%',solver.name(),'reached the maximum number of restarts!'
-          print '% Killing solver',solver.name()
+          print('%',solver.name(),'reached the maximum number of restarts!')
+          print('% Killing solver',solver.name())
           send_signal_solver(signal.SIGKILL, solver)
           RUNNING_SOLVERS.remove(solver)
           continue
@@ -193,23 +193,23 @@ def presolve(
     time.sleep(SLEEP_TIME)
 
     if not neigh_computed and len(RUNNING_SOLVERS) < cores:
-      print '% Extracting features...'
+      print('% Extracting features...')
       feat_vector = extractor.extract_features([problem, lims])
       if feat_vector:
         neighbours = get_neighbours(feat_vector, k, kb)
         if k <= 0:
           k = len(neighbours)
-        print '% Computed the',k,'nearest neighbors of the problem'
+        print('% Computed the',k,'nearest neighbors of the problem')
       else:
-        print '% Features extraction failed!'
+        print('% Features extraction failed!')
       neigh_computed = True
 
     if mem_limit < 100:
       mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
       if sum(mems.values()) > mem_limit:
-        solver = max(mems.items(), key = lambda x: x[1])[0]
-        print '% Warning! sunny-cp exceeded the maximum allowed memory'
-        print '% Killing solver',solver.name()
+        solver = max(list(mems.items()), key = lambda x: x[1])[0]
+        print('% Warning! sunny-cp exceeded the maximum allowed memory')
+        print('% Killing solver',solver.name())
         send_signal_solver(signal.SIGKILL, solver)
         RUNNING_SOLVERS.remove(solver)
         continue
@@ -251,15 +251,15 @@ def presolve(
           solver.num_restarts += 1
           send_signal_solver(signal.SIGKILL, solver)
           RUNNING_SOLVERS.remove(solver)
-          print '% Restarting',solver.name()
+          print('% Restarting',solver.name())
           solver.timeout = max(
             solver.timeout - (time.time() - solver.start_time), 0
           )
           run_solver(solver, problem)
           continue
         else:
-          print '%',solver.name(),'reached the maximum number of restarts!'
-          print '% Killing solver',solver.name()
+          print('%',solver.name(),'reached the maximum number of restarts!')
+          print('% Killing solver',solver.name())
           send_signal_solver(signal.SIGKILL, solver)
           RUNNING_SOLVERS.remove(solver)
           continue
@@ -278,7 +278,7 @@ def run_solver(solver, problem):
     resume_solver(susp_solver, solver.timeout)
     return
   if solver.status == 'ready':
-    print '% Starting',solver.name(),'for',str(solver.timeout),'seconds'
+    print('% Starting',solver.name(),'for',str(solver.timeout),'seconds')
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
@@ -292,22 +292,22 @@ def run_solver(solver, problem):
     problem.bound_better_than(solver.obj_value):
       # Starts the solver with a better bound.
       bound = problem.best_bound
-      print '% Injecting value',bound,'to',solver.name(),'FlatZinc model'
+      print('% Injecting value',bound,'to',solver.name(),'FlatZinc model')
       solver.inject_bound(bound)
 
     if solver.switch_search:
       opts = solver.fzn_options.split()
       if solver.solver.free_opt in opts:
-        print '% Switching',solver.name(),'search strategy from free to fixed!'
+        print('% Switching',solver.name(),'search strategy from free to fixed!')
         opts.remove(solver.solver.free_opt)
         solver.fzn_options = ' '.join(opts) + ' '
       elif solver.solver.free_opt:
-        print '% Switching',solver.name(),'search strategy from fixed to free!'
+        print('% Switching',solver.name(),'search strategy from fixed to free!')
         solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
 
   else:
-    print '% Unknown status',solver.status
+    print('% Unknown status',solver.status)
     assert False
 
   if solver.status == 'flatzinc':
@@ -375,92 +375,92 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
   """
   Processes the output of a solver.
   """
-  if solver.name() in check.keys():
+  if solver.name() in list(check.keys()):
     trusted_solver = check[solver.name()]
   else:
     trusted_solver = None
-  for line in lines.split('\n'):
+  for line in lines.decode('utf8').split('\n'):
     if line == '----------':
       if problem.isCSP():
-        print '%',solver.name(),'found a solution'
+        print('%',solver.name(),'found a solution')
         if trusted_solver:
-          print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+          print('% Checking',solver.name(),'solution with',trusted_solver,'...')
           if check_solution(
-            trusted_solver, problem, solver.solution.items(), solver.obj_value
+            trusted_solver, problem, list(solver.solution.items()), solver.obj_value
           ):
-            print '% Success!'
+            print('% Success!')
           else:
-            print '% Failed! Killing solver',solver.name()
+            print('% Failed! Killing solver',solver.name())
             send_signal_solver(signal.SIGKILL, solver)
             solver_terminated(solver, problem, schedule)
             return
-        for (var, val) in solver.solution.items():
-          print var + ' = ' + val + ';'
-        print line
+        for (var, val) in list(solver.solution.items()):
+          print(var + ' = ' + val + ';')
+        print(line)
         if not all_opt:
-          print '% Search completed by',solver.name()
-          print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
+          print('% Search completed by',solver.name())
+          print('% Search completed at time: ' + str(time.time() - STARTING_TIME))
           clean()
           sys.exit(0)
       elif problem.bound_worse_than(solver.obj_value):
         # The objective value found is the best so far.
-        print '%',solver.name(),'found a new, better solution'
+        print('%',solver.name(),'found a new, better solution')
         if trusted_solver:
-          print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+          print('% Checking',solver.name(),'solution with',trusted_solver,'...')
           if check_solution(
-            trusted_solver, problem, solver.solution.items(), solver.obj_value
+            trusted_solver, problem, list(solver.solution.items()), solver.obj_value
           ):
-            print '% Success!'
+            print('% Success!')
           else:
-            print '% Failed! Killing solver',solver.name()
+            print('% Failed! Killing solver',solver.name())
             send_signal_solver(signal.SIGKILL, solver)
             solver_terminated(solver, problem, schedule)
             return False
         problem.best_bound = solver.obj_value
-        print '% Current Best Bound: ' + str(solver.obj_value)
-        print '% Current Solution Time: ' + str(time.time() - STARTING_TIME)
+        print('% Current Best Bound: ' + str(solver.obj_value))
+        print('% Current Solution Time: ' + str(time.time() - STARTING_TIME))
         if all_opt:
-          for (var, val) in solver.solution.items():
+          for (var, val) in list(solver.solution.items()):
             if var != solver.obj_var or solver.output_var:
-              print var + ' = ' + val + ';'
-          print line
+              print(var + ' = ' + val + ';')
+          print(line)
           solver.solution = {}
         problem.best_solver = solver.name()
       solver.solution_time = time.time()
     elif line == '==========' or line == '=====UNSATISFIABLE=====':
       if trusted_solver:
         if not all_opt and problem.bound_worse_than(solver.obj_value):
-          print '% Checking',solver.name(),'solution with',trusted_solver,'...'
+          print('% Checking',solver.name(),'solution with',trusted_solver,'...')
           if check_solution(
-            trusted_solver, problem, solver.solution.items(), solver.obj_value
+            trusted_solver, problem, list(solver.solution.items()), solver.obj_value
           ):
-            print '% Success!'
-            for (var, val) in solver.solution.items():
+            print('% Success!')
+            for (var, val) in list(solver.solution.items()):
               if var != solver.obj_var or solver.output_var:
-                print var + ' = ' + val + ';'
-            print '----------'
+                print(var + ' = ' + val + ';')
+            print('----------')
             if problem.isCSP():
-              print '% Search completed by',solver.name()
-              print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
+              print('% Search completed by',solver.name())
+              print('% Search completed at time: ' + str(time.time() - STARTING_TIME))
               clean()
               sys.exit(0)
           else:
-            print 'Failed! Killing solver',solver
+            print('Failed! Killing solver',solver)
             send_signal_solver(signal.SIGKILL, solver)
             solver_terminated(solver, problem, schedule)
             return False
         return True
       if not problem.has_bound():
-        print line
+        print(line)
       else:
         if not all_opt:
-          for (var, val) in solver.solution.items():
+          for (var, val) in list(solver.solution.items()):
             if var != solver.obj_var or solver.output_var:
-              print var + ' = ' + val + ';'
-          print '----------'
-        print '=========='
-      print '% Search completed by',solver.name()
-      print '% Search completed at time: ' + str(time.time() - STARTING_TIME)
+              print(var + ' = ' + val + ';')
+          print('----------')
+        print('==========')
+      print('% Search completed by',solver.name())
+      print('% Search completed at time: ' + str(time.time() - STARTING_TIME))
       clean()
       sys.exit(0)
     elif ' = ' in line:
@@ -482,13 +482,13 @@ def solver_terminated(solver, problem, schedule):
     RUNNING_SOLVERS.remove(solver)
   if solver.status == 'mzn2fzn':
     if solver.process.returncode == 0:
-      print '% MiniZinc model converted by ' + solver.name() + '.',
+      print('% MiniZinc model converted by ' + solver.name() + '.', end=' ')
       timeout = max(solver.timeout - (time.time() - solver.start_time), 0)
-      print 'Starting the FlatZinc execution for',str(timeout),'seconds'
+      print('Starting the FlatZinc execution for',str(timeout),'seconds')
       solver.timeout = timeout
       run_solver(solver, problem)
     else:
-      print '% Error! MiniZinc model not converted by',solver.name()
+      print('% Error! MiniZinc model not converted by',solver.name())
       # Launch a new solver if any.
       for s in schedule + SUSP_SOLVERS:
         if s.name() == solver.name():
@@ -507,7 +507,7 @@ def solver_terminated(solver, problem, schedule):
   else:
     if solver.process.returncode not in [None, 0]:
       # Premature termination of solver execution.
-      print '% Solver',solver.name(),'failed prematurely'
+      print('% Solver',solver.name(),'failed prematurely')
       for s in schedule + SUSP_SOLVERS:
         if s.name() == solver.name():
           schedule.remove(s)
@@ -529,7 +529,7 @@ def solver_timeout(solver, problem, schedule):
   Handles the timeout of a solver process, possibly launching a new solver.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-  print '% Timeout expired for',solver.name()
+  print('% Timeout expired for',solver.name())
   if schedule:
     new_solver = schedule.pop(0)
     if new_solver.timeout == 0:
@@ -537,10 +537,10 @@ def solver_timeout(solver, problem, schedule):
       # another core). This happens at time t >= T, where T is the timeout T of
       # the SUNNY algorithm.
       if len(RUNNING_SOLVERS) == 1:
-        print '% Solver not interrupted: it is the only running solver'
+        print('% Solver not interrupted: it is the only running solver')
         solver.timeout = float("+inf")
       elif solver.name() == problem.best_solver:
-        print '% Solver not interrupted: it is the best one so far'
+        print('% Solver not interrupted: it is the best one so far')
         solver.timeout = float("+inf")
       else:
         send_signal_solver(signal.SIGKILL, solver)
@@ -561,7 +561,7 @@ def solver_timeout(solver, problem, schedule):
         suspend_solver(solver)
         run_solver(new_solver, problem)
       else:
-        print '% Solver',solver.name(),'not interrupted: it has to run again.'
+        print('% Solver',solver.name(),'not interrupted: it has to run again.')
   else:
     suspend_solver(solver)
 
@@ -570,7 +570,7 @@ def suspend_solver(solver):
   Suspends a solver that reached its timeout.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-  print '% Suspending solver',solver.name()
+  print('% Suspending solver',solver.name())
   send_signal_solver(signal.SIGSTOP, solver)
   SUSP_SOLVERS.append(solver)
   RUNNING_SOLVERS.remove(solver)
@@ -580,7 +580,7 @@ def resume_solver(solver, timeout):
   Resumes a solver, and run it for timeout seconds.
   """
   global RUNNING_SOLVERS
-  print '% Resuming solver',solver.name(),'for',str(timeout),'seconds'
+  print('% Resuming solver',solver.name(),'for',str(timeout),'seconds')
   solver.timeout = timeout
   send_signal_solver(signal.SIGCONT, solver)
   solver.start_time = time.time()
@@ -623,26 +623,26 @@ def main(args):
       static, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
 
-    print '%%%%% Pre-solving %%%%%'
+    print('%%%%% Pre-solving %%%%%')
     if cores >= len(pfolio):
       # If the number of specified cores exceeds the portfolio size, then no
       # prediction is needed: we simply allocate a core per solver.
-      print '% Features extraction not needed!'
+      print('% Features extraction not needed!')
       extractor = None
       lims = None
     neighbours, static_time, black_list = presolve(
       static, problem, cores, mem_limit, all_opt, check, extractor, k, kb, lims
     )
 
-    print '%%%%% Solving %%%%%'
+    print('%%%%% Solving %%%%%')
     pfolio = [s for s in pfolio if s not in black_list]
     if not neighbours or len(pfolio) <= cores:
       if len(pfolio) <= cores:
-        print '% Portfolio size <= No. of cores: no prediction needed!'
-      print '% Switching to backup solver(s)'
+        print('% Portfolio size <= No. of cores: no prediction needed!')
+      print('% Switching to backup solver(s)')
       par_sched = [(s, float('+inf')) for s in pfolio[:cores]]
     else:
-      print '% Computing solvers schedule...'
+      print('% Computing solvers schedule...')
       timeout -= round(static_time)
       if backup not in pfolio:
         backup = pfolio[0]
@@ -652,28 +652,28 @@ def main(args):
         seq_sched = sunny_csp(neighbours, k, timeout, pfolio, backup, cores)
       else:
         seq_sched = sunny_cop(neighbours, k, timeout, pfolio, backup, cores)
-      print '% SUNNY sequential schedule:',seq_sched
+      print('% SUNNY sequential schedule:',seq_sched)
       if len(seq_sched) <= cores:
-        print '% Schedule size <= No. of cores! No re-scheduling needed!'
+        print('% Schedule size <= No. of cores! No re-scheduling needed!')
         par_sched = [(s, float('+inf')) for (s, t) in
           sorted(seq_sched, key = lambda x : x[0], reverse = True)
         ]
         not_sched = [
-          (s, float('+inf')) for s in pfolio if s not in dict(par_sched).keys()
+          (s, float('+inf')) for s in pfolio if s not in list(dict(par_sched).keys())
         ]
         par_sched += not_sched[:cores - len(seq_sched)]
       else:
-        print '% Parallelizing schedule on',cores,'cores'
+        print('% Parallelizing schedule on',cores,'cores')
         par_sched = parallelize(seq_sched, cores, timeout)
-    par_sched += [(s, 0) for s in pfolio if s not in dict(par_sched).keys()]
-    print '% SUNNY parallel schedule:',par_sched
+    par_sched += [(s, 0) for s in pfolio if s not in list(dict(par_sched).keys())]
+    print('% SUNNY parallel schedule:',par_sched)
     schedule = init_schedule(
       par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
     solve(schedule, problem, cores, mem_limit, all_opt, check)
 
   except Exception as e:
-    print >> sys.stderr, '% Unexpected Termination of sunny-cp.'
+    print('% Unexpected Termination of sunny-cp.', file=sys.stderr)
     clean()
     traceback.print_exc()
     sys.exit(1)
