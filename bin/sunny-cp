@@ -278,7 +278,7 @@ def run_solver(solver, problem):
     resume_solver(susp_solver, solver.timeout)
     return
   if solver.status == 'ready':
-    print('% Starting',solver.name(),'for',str(solver.timeout),'seconds')
+    print('% Starting',solver,'for',str(solver.timeout),'seconds')
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
@@ -338,14 +338,14 @@ def check_solution(solver, problem, solution, bound):
   outfile.close()
 
   tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
-  cmd = 'mzn2fzn --no-output-ozn -I ' + eval(solver).mznlib + ' ' + tmp_mzn \
+  cmd = 'minizinc -c --no-output-ozn --solver ' + solver + ' ' + tmp_mzn \
       + ' ' + problem.dzn_path + ' -o ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
   if 'model inconsistency detected' in err or not os.path.exists(tmp_fzn):
     return False
 
-  solv = eval(solver)
+  solv = DEF_PFOLIO[solver]
   inf = float('inf')
   rs = RunningSolver(
     solv, problem.solve, tmp_fzn, '', inf, inf, inf, False, inf
@@ -584,15 +584,13 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt):
   global TMP_FILES
   running_schedule = []
   for (s, t) in schedule:
-    so = eval(s)
+    so = DEF_PFOLIO[s]
     fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = options[s]['options']
-    if all_opt or solve != 'sat':
-      opts += ' ' + so.all_opt
+    opts = ' ' + so.all_opt if all_opt or solve != 'sat' else ''
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     mr = options[s]['max_restarts']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw, mr)
+    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, mr)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule

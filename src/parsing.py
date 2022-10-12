@@ -181,7 +181,6 @@ def parse_arguments(args):
   lb = DEF_LB
   ub = DEF_UB
   solver_options = dict((s, {
-    'options': DEF_OPTS,
     'wait_time': DEF_WAIT_TIME,
     'restart_time': DEF_RESTART_TIME,
     'max_restarts': DEF_RESTARTS

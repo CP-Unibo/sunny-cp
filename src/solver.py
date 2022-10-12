@@ -11,7 +11,7 @@ class Solver:
   """
   Solver is the abstraction of a solver instance.
   """
-  # Name of the solver, used as argunent for the --solver parameter of minizinc.
+  # Name of the solver, used as argument for the --solver parameter of minizinc.
   solver = ''
   # String representation of the solver, returned by __str__ method.
   name = ''
@@ -34,9 +34,9 @@ class RunningSolver:
   solver = None
 
   # Status of the solving process. It can be either:
-  #     'ready': solver is ready to execute the mzn2fzn conversion
-  #   'mzn2fzn': solver is running mzn2fzn converter
-  #  'flatzinc': solver is running the FlatZinc interpreter
+  #     'ready': solver is ready to convert a MiniZinc model
+  #   'mzn2fzn': solver is converting a MiniZinc model into a FlatZinc
+  #  'flatzinc': solver is solving the FlatZinc instance
   # Note that the status is preserved even when a solver process is suspended.
   status = ''
 
@@ -59,9 +59,6 @@ class RunningSolver:
   # Absolute path of the FlatZinc model on which solver is run.
   fzn_path = ''
 
-  # String of the options used by the FlatZinc interpreter of the solver.
-  fzn_options = ''
-
   # Dictionary (variable, value) of the best solution currently found by solver.
   solution = {}
 
@@ -81,11 +78,6 @@ class RunningSolver:
   # output_var is True iff the value of obj_var is annotated with "output_var".
   output_var = True
 
-  # Is switch is set, the search is switched from fixed search to free search
-  # (and viceversa) when solver is restarted. Of course, this holds just if the
-  # solver allows both free and fixed search.
-  switch_search = False
-
   # Number of times solver has been restarted.
   num_restarts = -1
 
@@ -97,10 +89,10 @@ class RunningSolver:
 
   def __init__(
     self, solver, solve, fzn_path, options, wait_time, restart_time, timeout,
-    switch, max_restarts
+    max_restarts
   ):
     self.status       = 'ready'
-    self.solver       = solver
+    self.solv_obj     = solver
     self.solve        = solve
     self.fzn_path     = fzn_path
     self.fzn_options  = options
@@ -113,14 +105,12 @@ class RunningSolver:
       self.best_val = float('+inf')
     elif solve == 'max':
       self.best_val = float('-inf')
-    if self.solver.free_opt:
-      self.switch_search = switch
 
   def name(self):
     """
     Returns the name of the running solver.
     """
-    return self.solver.name
+    return self.solv_obj['name']
 
   def mem_percent(self):
     """
@@ -139,17 +129,14 @@ class RunningSolver:
     Returns the command for converting a given MiniZinc model to FlatZinc by
     using solver-specific redefinitions.
     """
-    cmd = 'mzn2fzn --output-ozn-to-file ' + pb.ozn_path + ' -I '     \
-        + self.solver.mznlib + ' ' + pb.mzn_path + ' ' + pb.dzn_path \
-        + ' -o ' + self.fzn_path
-    return cmd.split()
+    return ['minizinc', '-c', '--output-ozn-to-file', pb.ozn_path, '--solver',
+      self.solv_obj['solver'], pb.mzn_path, pb.dzn_path, ' -o ', self.fzn_path]
 
   def flatzinc_cmd(self, pb):
     """
     Returns the command for executing the FlatZinc model.
     """
-    cmd = self.solver.fzn_exec + ' ' + self.fzn_options + ' ' + self.fzn_path
-    return cmd.split()
+    return ['minizinc', '--solvrer', self.solv_obj['solver'], self.fzn_path]
 
   def set_obj_var(self, problem, lb, ub):
     """
@@ -164,10 +151,10 @@ class RunningSolver:
           self.obj_var = tokens[-1].replace(';', '')
           cons = ''
           if lb > float('-inf'):
-            cons += self.solver.constraint.replace(
+            cons += self.solv_obj.constraint.replace(
               'RHS', self.obj_var).replace('LHS', str(lb - 1)) + ';\n'
           if ub < float('+inf'):
-            cons += self.solver.constraint.replace(
+            cons += self.solv_obj.constraint.replace(
               'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
           line = cons + line
         if tokens[0] == 'var' and self.obj_var in tokens \
@@ -184,10 +171,10 @@ class RunningSolver:
     Injects a new bound to the FlatZinc model.
     """
     if self.solve == 'min':
-      cons = self.solver.constraint.replace(
+      cons = self.solv_obj.constraint.replace(
         'LHS', self.obj_var).replace('RHS', str(bound))
     elif self.solve == 'max':
-      cons = self.solver.constraint.replace(
+      cons = self.solv_obj.constraint.replace(
         'RHS', self.obj_var).replace('LHS', str(bound))
     else:
       return
