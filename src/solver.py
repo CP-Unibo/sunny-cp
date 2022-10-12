@@ -59,6 +59,9 @@ class RunningSolver:
   # Absolute path of the FlatZinc model on which solver is run.
   fzn_path = ''
 
+  # Flag for printing all the solutions.
+  all_opt = ''
+
   # Dictionary (variable, value) of the best solution currently found by solver.
   solution = {}
 
@@ -88,23 +91,23 @@ class RunningSolver:
     pass
 
   def __init__(
-    self, solver, solve, fzn_path, options, wait_time, restart_time, timeout,
+    self, solver, solve, fzn_path, all_opt, wait_time, restart_time, timeout,
     max_restarts
   ):
     self.status       = 'ready'
-    self.solv_dict     = solver
+    self.solv_dict    = solver
     self.solve        = solve
     self.fzn_path     = fzn_path
-    self.fzn_options  = options
+    self.all_opt      = all_opt
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
     self.num_restarts  = 0
     self.max_restarts = max_restarts
     if solve == 'min':
-      self.best_val = float('+inf')
+      self.obj_value = float('+inf')
     elif solve == 'max':
-      self.best_val = float('-inf')
+      self.obj_value = float('-inf')
 
   def name(self):
     """
@@ -138,7 +141,7 @@ class RunningSolver:
     Returns the command for executing the FlatZinc model.
     """
     return ('minizinc --solver ' + self.solv_dict['solver'] + ' ' + \
-      self.fzn_path).split()
+      self.all_opt + ' ' + self.fzn_path).split()
 
   def set_obj_var(self, problem, lb, ub):
     """
@@ -153,10 +156,10 @@ class RunningSolver:
           self.obj_var = tokens[-1].replace(';', '')
           cons = ''
           if lb > float('-inf'):
-            cons += self.solv_dict.constraint.replace(
+            cons += self.solv_dict['constraint'].replace(
               'RHS', self.obj_var).replace('LHS', str(lb - 1)) + ';\n'
           if ub < float('+inf'):
-            cons += self.solv_dict.constraint.replace(
+            cons += self.solv_dict['constraint'].replace(
               'LHS', self.obj_var).replace('RHS', str(ub + 1)) + ';\n'
           line = cons + line
         if tokens[0] == 'var' and self.obj_var in tokens \
@@ -173,10 +176,10 @@ class RunningSolver:
     Injects a new bound to the FlatZinc model.
     """
     if self.solve == 'min':
-      cons = self.solv_dict.constraint.replace(
+      cons = self.solv_dict['constraint'].replace(
         'LHS', self.obj_var).replace('RHS', str(bound))
     elif self.solve == 'max':
-      cons = self.solv_dict.constraint.replace(
+      cons = self.solv_dict['constraint'].replace(
         'RHS', self.obj_var).replace('LHS', str(bound))
     else:
       return

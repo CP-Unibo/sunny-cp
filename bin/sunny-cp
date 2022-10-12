@@ -88,7 +88,6 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
   Runs (possibly in parallel on different cores) the solving phase.
   """
   global RUNNING_SOLVERS, SUSP_SOLVERS
-
   # Launch the solvers (if any).
   for _ in range(cores):
     if schedule:
@@ -370,7 +369,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
     trusted_solver = check[solver.name()]
   else:
     trusted_solver = None
-  for line in lines.decode('utf8').split('\n'):
+  for line in lines.decode().split('\n'):
     if line == '----------':
       if problem.isCSP():
         print('%',solver.name(),'found a solution')
@@ -410,7 +409,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
         problem.best_bound = solver.obj_value
         print('% Current Best Bound: ' + str(solver.obj_value))
         print('% Current Solution Time: ' + str(time.time() - STARTING_TIME))
-        if all_opt:
+        if solver.all_opt:
           for (var, val) in list(solver.solution.items()):
             if var != solver.obj_var or solver.output_var:
               print(var + ' = ' + val + ';')
@@ -587,11 +586,11 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt):
   for (s, t) in schedule:
     so = DEF_PFOLIO[s]
     fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = ' -a ' if all_opt or solve != 'sat' else ''
+    all_opt = ' -a ' if all_opt or solve != 'sat' else ''
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     mr = options[s]['max_restarts']
-    solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, mr)
+    solver = RunningSolver(so, solve, fzn_path, all_opt, wt, rt, t, mr)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
@@ -599,7 +598,7 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt):
 def main(args):
   global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND
   try:
-
+  
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
     solver_options, tmp_id, mem_limit, KEEP, all_opt, LOWER_BOUND, UPPER_BOUND,\
