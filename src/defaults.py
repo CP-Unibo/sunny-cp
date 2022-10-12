@@ -37,6 +37,8 @@ DEF_MEM_LIMIT = 100
 
 DEF_ALL = False
 
+DEF_FREE = False
+
 DEF_LB = float('-inf')
 
 DEF_UB = float('+inf')

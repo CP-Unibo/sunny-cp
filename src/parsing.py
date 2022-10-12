@@ -178,6 +178,7 @@ def parse_arguments(args):
   keep = DEF_KEEP
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
+  free_opt = DEF_FREE
   lb = DEF_LB
   ub = DEF_UB
   solver_options = dict((s, {
@@ -280,6 +281,8 @@ def parse_arguments(args):
       mem_limit = float(a)
     elif o == '-a':
       all_opt = True
+    elif o == '-f':
+      free_opt = True
     elif o == '-l' and solve != 'sat':
       lb = int(a)
     elif o == '-u' and solve != 'sat':
@@ -336,8 +339,9 @@ def parse_arguments(args):
 
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
   problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
-  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
-    cores, solver_options, tmp_id, mem_limit, keep, all_opt, lb, ub, check
+  return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
+      check
 
 def get_args(args, pfolio):
   """
@@ -353,15 +357,17 @@ def get_args(args, pfolio):
       o + '-' + s for o in long_options for s in pfolio
     ]
     long_options += ['check-solvers']
-    csp_opts = ['csp-' + o + '=' for o in options + long_options] + ['csp-a']
-    cop_opts = ['cop-' + o + '=' for o in options + long_options] + ['cop-a']
+    csp_opts = ['csp-' + o + '=' for o in options + long_options] \
+             + ['csp-a'] + ['csp-f']
+    cop_opts = ['cop-' + o + '=' for o in options + long_options] \
+             + ['cop-a'] + ['cop-f']
     long_options = [o + '=' for o in long_options]
     long_noval  = ['help', 'keep', 'mzn']
     long_noval += ['csp-' + o for o in long_noval]
     long_noval += ['cop-' + o for o in long_noval]
     long_options += long_noval + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'haT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
+      args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
     )
   except getopt.error as msg:
     print(msg)

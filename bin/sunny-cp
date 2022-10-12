@@ -577,7 +577,7 @@ def resume_solver(solver, timeout):
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
 
-def init_schedule(schedule, options, solve, tmp_id, all_opt):
+def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   """
   Initializes a schedule, making it ready to be executed.
   """
@@ -586,11 +586,12 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt):
   for (s, t) in schedule:
     so = DEF_PFOLIO[s]
     fzn_path = tmp_id + '.' + s + '.fzn'
-    all_opt = ' -a ' if all_opt or solve != 'sat' else ''
+    ao = ' -a ' if all_opt or solve != 'sat' else ''
+    fo = ' -f ' if free_opt else '' 
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     mr = options[s]['max_restarts']
-    solver = RunningSolver(so, solve, fzn_path, all_opt, wt, rt, t, mr)
+    solver = RunningSolver(so, solve, fzn_path, ao, fo, wt, rt, t, mr)
     running_schedule.append(solver)
     TMP_FILES.append(fzn_path)
   return running_schedule
@@ -601,11 +602,11 @@ def main(args):
   
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_id, mem_limit, KEEP, all_opt, LOWER_BOUND, UPPER_BOUND,\
-    check = parse_arguments(args)
+      solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
+        UPPER_BOUND, check = parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt
+      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
 
     print('%%%%% Pre-solving %%%%%')
@@ -653,7 +654,7 @@ def main(args):
     par_sched += [(s,0) for s in pfolio if s not in list(dict(par_sched).keys())]
     print('% SUNNY parallel schedule:',par_sched)
     schedule = init_schedule(
-      par_sched, solver_options, problem.solve, tmp_id, all_opt
+      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
     )
     solve(schedule, problem, cores, mem_limit, all_opt, check)
 

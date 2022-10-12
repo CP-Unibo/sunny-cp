@@ -61,6 +61,9 @@ class RunningSolver:
 
   # Flag for printing all the solutions.
   all_opt = ''
+  
+  # Flag for ignoring all the search annotations.
+  free_opt = ''
 
   # Dictionary (variable, value) of the best solution currently found by solver.
   solution = {}
@@ -91,14 +94,15 @@ class RunningSolver:
     pass
 
   def __init__(
-    self, solver, solve, fzn_path, all_opt, wait_time, restart_time, timeout,
-    max_restarts
+    self, solver, solve, fzn_path, all_opt, free_opt, wait_time, restart_time, 
+    timeout, max_restarts
   ):
     self.status       = 'ready'
     self.solv_dict    = solver
     self.solve        = solve
     self.fzn_path     = fzn_path
     self.all_opt      = all_opt
+    self.free_opt     = free_opt
     self.wait_time    = wait_time
     self.restart_time = restart_time
     self.timeout      = timeout
@@ -141,7 +145,7 @@ class RunningSolver:
     Returns the command for executing the FlatZinc model.
     """
     return ('minizinc --solver ' + self.solv_dict['solver'] + ' ' + \
-      self.all_opt + ' ' + self.fzn_path).split()
+      self.all_opt + ' ' + self.free_opt + ' ' + self.fzn_path).split()
 
   def set_obj_var(self, problem, lb, ub):
     """
