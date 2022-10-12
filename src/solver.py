@@ -129,7 +129,7 @@ class RunningSolver:
     Returns the command for converting a given MiniZinc model to FlatZinc by
     using solver-specific redefinitions.
     """
-    return ('minizinc -c --output-ozn-to-file '+ pb.ozn_path + '--solver' + \
+    return ('minizinc -c --output-ozn-to-file '+ pb.ozn_path + ' --solver ' + \
       self.solv_dict['solver'] + ' ' + pb.mzn_path + ' ' + pb.dzn_path + \
       ' -o ' + self.fzn_path).split()
 
