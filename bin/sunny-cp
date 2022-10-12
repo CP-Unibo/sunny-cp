@@ -198,7 +198,7 @@ def presolve(
         neighbours = get_neighbours(feat_vector, k, kb)
         if k <= 0:
           k = len(neighbours)
-        print('% Computed the',k,'nearest neighbors of the problem')
+        print('% Computed the ' + str(k) + '-nearest neighbors of the problem')
       else:
         print('% Features extraction failed!')
       neigh_computed = True
@@ -614,8 +614,13 @@ def main(args):
       # If the number of specified cores exceeds the portfolio size, then no
       # prediction is needed: we simply allocate a core per solver.
       print('% Features extraction not needed!')
+    elif extractor == 'mzn2feat':
+      extractor = mzn2feat
+    else:
+      print('% Unknown extractor!')
       extractor = None
       lims = None
+      
     neighbours, static_time, black_list = presolve(
       static, problem, cores, mem_limit, all_opt, check, extractor, k, kb, lims
     )

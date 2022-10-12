@@ -172,7 +172,7 @@ def parse_arguments(args):
   timeout= DEF_TOUT
   backup = DEF_BACKUP
   static = DEF_STATIC
-  extractor = eval(DEF_EXTRACTOR)
+  extractor = DEF_EXTRACTOR
   cores = DEF_CORES
   tmp_dir = DEF_TMP_DIR
   keep = DEF_KEEP
@@ -218,7 +218,7 @@ def parse_arguments(args):
       else:
         cores = n
     elif o == '-e':
-      extractor = eval(a)
+      extractor = a
     elif o == '-k':
       k = int(a)
       if k < 0:

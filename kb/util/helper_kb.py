@@ -3,6 +3,7 @@ Helper functions for creating a knowledge base.
 '''
 
 import os
+import ast
 import csv
 import sys
 import json
@@ -29,7 +30,7 @@ def compute_infos(
     info = row[3]
     time = float(row[4])
     val = float(row[5])
-    values = dict((float(t), v) for (t, v) in list(eval(row[6]).items()))
+    values = dict((float(t), v) for (t, v) in list(ast.literal_eval(row[6]).items()))
 
     if check:
       check_invariant(
@@ -191,7 +192,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
   insts_cop = list(kb_cop.keys())
   for row in reader:
     inst = row[0]
-    feat_vector = eval(row[1])
+    feat_vector = ast.literal_eval(row[1])
     if inst in insts_csp:
       writer = csp_writer
       info = kb_csp[inst]
@@ -257,7 +258,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
   for i in ['csp', 'cop']:
     lim_file = kb_path + '/' + kb_name + '_lims_' + i
     with open(lim_file, 'w') as outfile:
-      json.dump(eval('lims_' + i), outfile)
+      json.dump(ast.literal_eval('lims_' + i), outfile)
   print('Features processed,', end=' ')
   if const and scale:
     print('scaled all values, and removed constant features!')

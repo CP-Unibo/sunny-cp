@@ -3,6 +3,7 @@ Module for computing and parallelizing the solvers schedule of SUNNY algorithm.
 '''
 
 import csv
+import ast
 from math import sqrt
 from combinations import *
 
@@ -50,7 +51,7 @@ def sunny_csp(neighbours, k, timeout, pfolio, backup, min_size):
     solved[solver] = set([])
     times[solver]  = 0.0
   for inst, item in list(neighbours.items()):
-    item = eval(item)
+    item = ast.literal_eval(item)
     for solver in pfolio:
       time = item[solver]['time']
       if time < timeout:
@@ -117,7 +118,7 @@ def sunny_cop(neighbours, k, timeout, pfolio, backup, min_size):
     times[solver] = 0.0
     areas[solver] = 0.0
   for inst, item in list(neighbours.items()):
-    item = eval(item)
+    item = ast.literal_eval(item)
     for solver in pfolio:
       scores[solver].append(item[solver]['score'])
       times[solver] += item[solver]['time']

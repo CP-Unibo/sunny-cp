@@ -38,9 +38,10 @@ class mzn2feat:
     """
     mzn_path = problem.mzn_path
     dzn_path = problem.dzn_path
-    cmd = 'mzn2feat -i ' + mzn_path
+    cmd = 'mzn2feat -i ' + mzn_path    
     if dzn_path:
       cmd += ' -d ' + dzn_path
+#    print(cmd)
     proc = psutil.Popen(cmd.split(), stdout = PIPE)
     (out, err) = proc.communicate()
     # Failure in features extraction.
