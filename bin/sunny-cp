@@ -278,7 +278,7 @@ def run_solver(solver, problem):
     resume_solver(susp_solver, solver.timeout)
     return
   if solver.status == 'ready':
-    print('% Starting',solver,'for',str(solver.timeout),'seconds')
+    print('% Starting',solver.solv_dict['name'],'for',str(solver.timeout),'seconds')
     cmd = solver.mzn2fzn_cmd(problem)
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
