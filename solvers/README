@@ -1,59 +1,55 @@
-sunny-cp provides utilities for adding new solvers to its portfolio and for 
-customizing their settings. Note that the sunny-cp/docker directory already
-contains the binaries and the solver redefitions of a number of freely available 
-solvers.
-
-Let us suppose that we want to install a solver called <SOLVER> and that 
-<SUNNY_HOME> is the root folder of sunny-cp. The suggested procedure *before 
-installing sunny-cp* is to:
-
- 1. create a corresponding folder: <SUNNY_HOME>/solvers/<SOLVER>
+sunny-cp provide utilities to add new solvers to its portfolio, provided that 
+each specified solver is already usable via the MiniZinc command line (for more 
+information, please see [1]). That is, a solver called <SOLVER> can be part of
+sunny-cp portfolio if it can compile a MiniZinc model with the command:
+   
+  minizinc -c --solver <SOLVER> <model>.mzn [<data>.mzn]
   
- 2. create a folder <SUNNY_HOME>/solvers/<SOLVER>/mzn-lib which contains the 
-    solver-specific redefinitions of the MiniZinc global constraints
-    (also a symbolic link to another folder is fine)
-    
- 3. create an executable file <SUNNY_HOME>/solvers/<SOLVER>/fzn-exec which 
-    invokes the command used by <SOLVER> to execute its FlatZinc interpreter
-    (also a symbolic link to another executable is fine)
-    
- 4. create a text file <SUNNY_HOME>/solvers/<SOLVER>/opts which contains two    
-    lines of the form:
-      all_opt = '<OPTION>'
-      free_opt = '<OPTION>'
-    where:
-      all_opt:  is the solver-specific option for printing all the solutions 
-                (for CSPs only) or all the sub-optimal solutions (for COPs only)
-      free_opt: is the solver-specific option for the free search (i.e., for 
-                ignore the search annotations)
-    Note that OPTION can also be empty; e.g., if a solver always ignores the 
-    search annotations then just set free_opt = ''
-    
- 4. run the <SUNNY_HOME>/install.sh script for checking <SOLVER> installation
-  
-If this procedure succeeds, the following code will be added to the file 
-<SUNNY_HOME>/src/pfolio_solvers.py:
+and it can solve a FlatZinc instance with the command:
 
-  <SOLVER> = Solver()
-  <SOLVER>.name = '<SOLVER>'
-  <SOLVER>.mznlib = '<SUNNY_HOME>/solvers/<SOLVER>/mzn-lib'
-  <SOLVER>.fzn_exec = '<SUNNY_HOME>/solvers/<SOLVER>/fzn-exec'
-  <SOLVER>.constraint = <SOLVER> redefinition of the constraint LHS < RHS
-  <SOLVER>.all_opt = <SOLVER> option string for printing all the solutions
-  <SOLVER>.free_opt = <SOLVER> option string for free search
-  
-In this way, <SOLVER> object becomes part of the sources and usable by sunny-cp 
-for the <SOLVER> execution. Note that once <SOLVER> is installed, it is however 
-possible to modify its settings by manipulating the corresponding parameters in 
-<SUNNY_HOME>/src/pfolio_solvers.py
+  minizinc --solver <SOLVER> <instance>.fzn
 
-Note that now there is no more a default portfolio: when not better specified, 
-the default portfolio consists of the solvers defined in the sunny-cp/solvers 
-directory. Actually, sunny-cp already comes with the folders corresponding to 
-the built-in solvers of MiniZinc 2.0, namely: g12cbc, g12fd, and g12lazyfd.
-Moreover, a (new) solver can be added, modified, or removed even after the 
-sunny-cp installation: it is enough to follow the above steps 1-3 and then run 
-the python script <SUNNY_HOME>/solvers/make_pfolio.py in place of step 4 (for 
-avoiding the recompilation of all the other sources). All the solvers must have 
-unique names and that every sub-folder of <SUNNY_HOME>/solvers is supposed to 
-contain one and only one solver.
+Let us suppose that we want to add a new solver called <SOLVER>. The first step 
+is to define a file named <SOLVER>.solv in this folder. This file is a json file
+of the form:
+
+{
+  'versions': [
+    {
+      'id': '<...>'
+      'name': '<...>'
+      'conv_opts': '<...>'
+      'solv_opts': '<...>'
+    },
+    {
+      'id': '<...>'
+      'name': '<...>'
+      'conv_opts': '<...>'
+      'solv_opts': '<...>'
+    },
+    ...
+  ]
+}
+
+containing a list of n >= 1 different versions of <SOLVER>. Each version must: 
+- have a unique identifier (the 'id' field)
+- specify a symbolic name for that version (the 'name' field)
+- specify the command line options for the MiniZinc/FlatZinc conversion (the 
+  'conv_opts' field) and the FlatZinc execution (the 'solv_opts' field). If no 
+  specific option is required, just set these fields to the empty string ''.
+In this way, one can include in the portfolio different versions of the same 
+solver without defining one .solv file per version.
+
+Once the .solv files are defined, run make_pfolio.py to (re-)generate the file 
+pfolio_solvers.py.
+
+Note that make_pfolio.py is already invoked when installing sunny-cp via the
+script install.sh, so there is no need to run it again if we are not adding any 
+new solver to the default portfolio.
+
+
+References
+==========
+
+1. https://www.minizinc.org/doc-2.5.5/en/command_line.html#adding-solvers)
+

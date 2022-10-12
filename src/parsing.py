@@ -1,22 +1,21 @@
 '''
 sunny-cp: a parallel CP portfolio solver.
 
-sunny-cp is a parallel portfolio solver able to solve a Constraint Satisfaction/
-Optimization Problem defined in MiniZinc language by using the SUNNY algorithm.
-In a nutshell, it relies on two sequential steps:
+sunny-cp is a parallel portfolio solver able to solve constraint satisfaction/
+pptimization problems defined in MiniZinc language by using the SUNNY algorithm.
+In a nutshell, it relies on two steps:
 
-  1. PRE-SOLVING: consists in the parallel execution of a (possibly empty)
-                  static schedule and the feature extraction;
+  1. PRE-SOLVING: the parallel execution of a (possibly empty) static schedule 
+                  and the feature extraction;
 
-  2. SOLVING: consists in the parallel execution of a number of predicted
-              solvers, (possibly) selected by means of SUNNY algorithm
-
+  2. SOLVING: the parallel execution of a number of predicted solvers, 
+              (possibly) selected by means of SUNNY algorithm
 
 USAGE: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn]
 
 WARNING: the order in [OPTIONS] matters! For instance, by typing the command:
          sunny-cp -p 1 -p 2 <MODEL.mzn> [DATA.dzn] the option -p will be set to
-         the value 2, since the the option -p 1 will be overwritten by -p 2.
+         value 2, since option -p 1 will be overwritten by -p 2.
 
 
 Portfolio Options
@@ -47,9 +46,6 @@ Portfolio Options
     Set the backup solver of the portfolio. If the backup solver is not in the
     specified portfolio, the first solver of the portfolio is selected. The
     default backup solver is chuffed.
-  --mzn
-    Use just the solvers of MiniZinc bundle, by using chuffed as backup solver.
-    This is equivalent to "-P chuffed,gecode -b chuffed".
   -K <PATH>
     Absolute path of the folder which contains the knowledge base. For more
     details, see the README file in kb folder
@@ -66,8 +62,6 @@ Portfolio Options
   -a
     Prints to standard output all the solutions of the problem  (for CSPs only).
     or all the sub-optimal solutions until the optimum is found (for COPs only).
-  -f
-    Free search: ignore any search annotation on the solve item.
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number
     of CPUs in the system
@@ -109,14 +103,6 @@ Solvers Options
     *** NOTE ***: This option, unset by default, only works with MiniZinc 2.x.
     While UNT_i must be different from TRU_i, it is however possible to have
     UNT_i = UNT_j or TRU_i = TRU_j for some distinct indexes i, j in {1, ..., k}
-  --fzn-options "<OPTIONS>"
-    Allows to run each solver of the portfolio on its specific FlatZinc model by
-    using the options specified in <OPTIONS> string. No checks are performed on
-    that string. This setting does not overwrite the current options string, but
-    just append <OPTIONS> to it. By default, the options string is empty.
-  --fzn-options-<SOLVER_NAME> "<OPTIONS>"
-    As above, with the difference that <OPTIONS> are set only for <SOLVER_NAME>
-    and not for all the solvers of the portfolio.
   --wait-time <TIME>
     Don't stop a running solver if it has produced a solution in the last <TIME>
     seconds. By default, <TIME> is 2 seconds. Also the constant +inf is allowed
@@ -129,13 +115,6 @@ Solvers Options
   --restart-time-<SOLVER> <TIME>
     Restart <SOLVER> if its best solution is obsolete and it has not produced a
     solution in the last <TIME> seconds
-  --switch-search
-    Allows to switch the search from fixed search to free search (and viceversa)
-    when solvers are restarted. Of course, this holds just for the solvers that
-    allow both free and fixed search. This option in unset by default.
-  --switch-search-<SOLVER_NAME>
-    As above, with the difference that search is switched only for <SOLVER_NAME>
-    and not for all the solvers of the portfolio.
   --max-restarts <MAX>
     Sets the maximum number of times a solver can be restarted. After <MAX>
     restarts, the solver is killed rather than being restarted for the
@@ -199,14 +178,12 @@ def parse_arguments(args):
   keep = DEF_KEEP
   mem_limit = DEF_MEM_LIMIT
   all_opt = DEF_ALL
-  free_opt = DEF_FREE
   lb = DEF_LB
   ub = DEF_UB
   solver_options = dict((s, {
     'options': DEF_OPTS,
     'wait_time': DEF_WAIT_TIME,
     'restart_time': DEF_RESTART_TIME,
-    'switch_search': DEF_SWITCH,
     'max_restarts': DEF_RESTARTS
   }) for s in pfolio)
   if solve == 'sat':
@@ -305,19 +282,10 @@ def parse_arguments(args):
       mem_limit = float(a)
     elif o == '-a':
       all_opt = True
-    elif o == '-f':
-      free_opt = True
     elif o == '-l' and solve != 'sat':
       lb = int(a)
     elif o == '-u' and solve != 'sat':
       ub = int(a)
-    elif o.startswith('--fzn-options'):
-      if len(o) > 13:
-        solver = o[14:]
-        solver_options[solver]['options'] += ' ' + a
-      else:
-        for item in list(solver_options.values()):
-          item['options'] += ' ' + a
     elif o.startswith('--wait-time'):
       wait_time = float(a)
       if wait_time < 0:
@@ -342,13 +310,6 @@ def parse_arguments(args):
       else:
         for item in list(solver_options.values()):
           item['restart_time'] = rest_time
-    elif o.startswith('--switch-search'):
-      if len(o) > 15:
-        solver = o[16:]
-        solver_options[solver]['switch_search'] = True
-      else:
-        for item in list(solver_options.values()):
-          item['switch_search'] = True
     elif o.startswith('--max-restarts'):
       if len(o) > 14:
         solver = o[15:]
@@ -381,8 +342,7 @@ def parse_arguments(args):
   tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
   problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
   return problem, k, timeout, pfolio, backup, kb, lims, static, extractor,     \
-    cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, lb, ub, \
-      check
+    cores, solver_options, tmp_id, mem_limit, keep, all_opt, lb, ub, check
 
 def get_args(args, pfolio):
   """
@@ -398,18 +358,14 @@ def get_args(args, pfolio):
       o + '-' + s for o in long_options for s in pfolio
     ]
     long_options += ['check-solvers']
-    csp_opts = ['csp-' + o + '=' for o in options + long_options]
-    cop_opts = ['cop-' + o + '=' for o in options + long_options]
-    csp_opts += ['csp-a', 'csp-f']
-    cop_opts += ['cop-a', 'cop-f']
+    csp_opts = ['csp-' + o + '=' for o in options + long_options] + ['csp-a']
+    cop_opts = ['cop-' + o + '=' for o in options + long_options] + ['cop-a']
     long_options = [o + '=' for o in long_options]
-    long_noval  = ['switch-search', 'help', 'keep', 'mzn']
-    long_noval += ['switch-search-' + s for s in pfolio]
     long_noval += ['csp-' + o for o in long_noval]
     long_noval += ['cop-' + o for o in long_noval]
     long_options += long_noval + csp_opts + cop_opts
     opts, args = getopt.getopt(
-      args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
+      args, 'haT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
     )
   except getopt.error as msg:
     print(msg)

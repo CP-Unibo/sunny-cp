@@ -9,27 +9,25 @@ import psutil
 
 class Solver:
   """
-  Solver is the abstraction of a constituent solver of the portfolio.
+  Solver is the abstraction of a solver instance.
   """
-
-  # Solver name. It must be an unique identifier.
+  # Name of the solver, used as argunent for the --solver parameter of minizinc.
+  solver = ''
+  # String representation of the solver, returned by __str__ method.
   name = ''
-  # Absolute path of the folder containing solver-specific redefinitions.
-  mznlib = ''
-  # Absolute path of the command used for executing a FlatZinc model.
-  fzn_exec = ''
-  # Solver-specific FlatZinc translation of the MiniZinc constraint "LHS < RHS".
-  constraint = ''
-  # Solver-specific option for printing all the solutions (for CSPs only) or all
-  # the sub-optimal solutions (for COPs only).
-  all_opt = ''
-  # Solver-specific option for free search (i.e., to ignore search annotations).
-  free_opt = ''
+  # String of additional options for solving the FlatZinc instance.
+  solv_opts = ''
+  # String of additional options for the conversion MiniZinc->FlatZinc.
+  conv_opts = ''
+  
+  def __str__(self):
+    return self.name
+  
+  
 
 class RunningSolver:
   """
-  RunningSolver is the abstraction of a constituent solver running on a given
-  FlatZinc model.
+  RunningSolver models a solver running on a given FlatZinc instance.
   """
 
   # Object of class Solver, identifying the running solver.

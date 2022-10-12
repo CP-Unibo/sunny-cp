@@ -294,16 +294,6 @@ def run_solver(solver, problem):
       bound = problem.best_bound
       print('% Injecting value',bound,'to',solver.name(),'FlatZinc model')
       solver.inject_bound(bound)
-
-    if solver.switch_search:
-      opts = solver.fzn_options.split()
-      if solver.solver.free_opt in opts:
-        print('% Switching',solver.name(),'search strategy from free to fixed!')
-        opts.remove(solver.solver.free_opt)
-        solver.fzn_options = ' '.join(opts) + ' '
-      elif solver.solver.free_opt:
-        print('% Switching',solver.name(),'search strategy from fixed to free!')
-        solver.fzn_options += ' ' + solver.solver.free_opt + ' '
     cmd = solver.flatzinc_cmd(problem)
 
   else:
@@ -587,7 +577,7 @@ def resume_solver(solver, timeout):
   solver.solution_time = time.time()
   RUNNING_SOLVERS.append(solver)
 
-def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
+def init_schedule(schedule, options, solve, tmp_id, all_opt):
   """
   Initializes a schedule, making it ready to be executed.
   """
@@ -599,11 +589,8 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
     opts = options[s]['options']
     if all_opt or solve != 'sat':
       opts += ' ' + so.all_opt
-    if free_opt:
-      opts += ' ' + so.free_opt
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
-    sw = options[s]['switch_search']
     mr = options[s]['max_restarts']
     solver = RunningSolver(so, solve, fzn_path, opts, wt, rt, t, sw, mr)
     running_schedule.append(solver)
@@ -616,11 +603,11 @@ def main(args):
 
     # Input arguments parsing and initialization.
     problem, k, timeout, pfolio, backup, kb, lims, static, extractor, cores, \
-    solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, LOWER_BOUND, \
-    UPPER_BOUND, check = parse_arguments(args)
+    solver_options, tmp_id, mem_limit, KEEP, all_opt, LOWER_BOUND, UPPER_BOUND,\
+    check = parse_arguments(args)
     TMP_FILES = [problem.ozn_path]
     static  = init_schedule(
-      static, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      static, solver_options, problem.solve, tmp_id, all_opt
     )
 
     print('%%%%% Pre-solving %%%%%')
@@ -668,7 +655,7 @@ def main(args):
     par_sched += [(s, 0) for s in pfolio if s not in list(dict(par_sched).keys())]
     print('% SUNNY parallel schedule:',par_sched)
     schedule = init_schedule(
-      par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
+      par_sched, solver_options, problem.solve, tmp_id, all_opt
     )
     solve(schedule, problem, cores, mem_limit, all_opt, check)
 

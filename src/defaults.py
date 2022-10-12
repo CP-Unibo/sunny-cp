@@ -11,12 +11,6 @@ DEF_K = -1
 
 DEF_TOUT = 1200
 
-DEF_PFOLIO = []
-pfolio_solvers = open(SUNNY_HOME + '/src/pfolio_solvers.py')
-for row in pfolio_solvers:
-  if ' = Solver()' in row:
-    DEF_PFOLIO.append(row.split(' = ')[0])
-
 DEF_BACKUP = 'chuffed'
 
 DEF_STATIC = []
@@ -41,13 +35,7 @@ DEF_RESTART_TIME = 5
 
 DEF_MEM_LIMIT = 100
 
-DEF_OPTS = ''
-
 DEF_ALL = False
-
-DEF_FREE = False
-
-DEF_SWITCH = False
 
 DEF_LB = float('-inf')
 
