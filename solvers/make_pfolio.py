@@ -44,7 +44,7 @@ for solver_file in solver_files:
     print(err)
     print('Error! Solver',solver,'not installed')
     sys.exit(1)
-  for line in out.decode('utf8').split(';\n'):
+  for line in out.decode().split(';\n'):
     intro = 'X_INTRODUCED_0_ = '
     idx = line.find(intro)
     if idx >= 0:

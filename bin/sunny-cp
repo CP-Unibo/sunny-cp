@@ -280,7 +280,6 @@ def run_solver(solver, problem):
   if solver.status == 'ready':
     print('% Starting',solver.solv_dict['name'],'for',str(solver.timeout),'seconds')
     cmd = solver.mzn2fzn_cmd(problem)
-    print(' '.join(cmd))
     solver.status = 'mzn2fzn'
   elif solver.status == 'mzn2fzn':
     if problem.isCOP() and not solver.obj_var:
@@ -356,6 +355,7 @@ def check_solution(solver, problem, solution, bound):
   cmd = solv.fzn_exec + ' ' + tmp_fzn
   proc = Popen(cmd.split(), stdout = PIPE, stderr = PIPE)
   (out, err) = proc.communicate()
+  out = out.decode()
   if '=====UNSATISFIABLE=====' in out or '=====UNBOUNDED=====' in out:
     return False
 
@@ -587,7 +587,7 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt):
   for (s, t) in schedule:
     so = DEF_PFOLIO[s]
     fzn_path = tmp_id + '.' + s + '.fzn'
-    opts = ' ' + so.all_opt if all_opt or solve != 'sat' else ''
+    opts = ' -a ' if all_opt or solve != 'sat' else ''
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     mr = options[s]['max_restarts']

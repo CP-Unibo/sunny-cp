@@ -16,7 +16,7 @@ echo '' > $ERRORS
 
 for m in `ls *.mzn | grep -v model`
 do
-  echo "Solving $m....."
+  echo "Solving $m:   minizinc -c $m --output-ozn-to-file $OZN -o $FZN"
   minizinc -c $m --output-ozn-to-file $OZN -o $FZN
   cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m"
   timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m 1>$OUT 2>$ERR

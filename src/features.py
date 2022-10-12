@@ -46,7 +46,7 @@ class mzn2feat:
     # Failure in features extraction.
     if proc.returncode != 0:
       return []
-    features = out.split(",")
+    features = out.decode().split(",")
     feat_vector = [
       float(features[i]) for i in range(0, len(features))
     ]
