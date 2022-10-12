@@ -162,7 +162,7 @@ def parse_arguments(args):
   """
 
   # Get the arguments and parse the input model to get solve information.
-  pfolio = [k for k, v in list(globals().items()) if isinstance(v, Solver)]
+  pfolio = DEF_PFOLIO.keys()
   mzn, dzn, opts = get_args(args, pfolio)
   solve = get_solve(mzn)
 
@@ -192,7 +192,6 @@ def parse_arguments(args):
   else:
     kb = DEF_KB_COP
     lims = DEF_LIMS_COP
-  pfolio = DEF_PFOLIO
 
   # Arguments parsing.
   for o, a in opts:
@@ -319,9 +318,6 @@ def parse_arguments(args):
           item['max_restarts'] = int(a)
     elif o == '--keep':
       keep = True
-    elif o == '--mzn':
-      pfolio = ['chuffed', 'gecode']
-      backup = 'chuffed'
     elif o == '--check-solvers':
       s = a.split(',')
       for i in range(0, len(s) / 2):
@@ -361,6 +357,7 @@ def get_args(args, pfolio):
     csp_opts = ['csp-' + o + '=' for o in options + long_options] + ['csp-a']
     cop_opts = ['cop-' + o + '=' for o in options + long_options] + ['cop-a']
     long_options = [o + '=' for o in long_options]
+    long_noval  = ['help', 'keep', 'mzn']
     long_noval += ['csp-' + o for o in long_noval]
     long_noval += ['cop-' + o for o in long_noval]
     long_options += long_noval + csp_opts + cop_opts

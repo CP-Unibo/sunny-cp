@@ -652,7 +652,7 @@ def main(args):
       else:
         print('% Parallelizing schedule on',cores,'cores')
         par_sched = parallelize(seq_sched, cores, timeout)
-    par_sched += [(s, 0) for s in pfolio if s not in list(dict(par_sched).keys())]
+    par_sched += [(s,0) for s in pfolio if s not in list(dict(par_sched).keys())]
     print('% SUNNY parallel schedule:',par_sched)
     schedule = init_schedule(
       par_sched, solver_options, problem.solve, tmp_id, all_opt
