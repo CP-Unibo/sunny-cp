@@ -1,0 +1,10 @@
+{
+  "versions": [
+    {
+      "id": "chuffed",
+      "name": "Chuffed",
+      "conv_opts": "",
+      "solv_opts": ""
+    }
+  ]
+}

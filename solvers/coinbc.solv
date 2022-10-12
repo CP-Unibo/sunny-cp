@@ -1,0 +1,10 @@
+{
+  "versions": [
+    {
+      "id": "coinbc",
+      "name": "COIN-BC",
+      "conv_opts": "",
+      "solv_opts": ""
+    }
+  ]
+}

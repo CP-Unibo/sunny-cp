@@ -1,0 +1,10 @@
+{
+  "versions": [
+    {
+      "id": "gecode",
+      "name": "Gecode",
+      "conv_opts": "",
+      "solv_opts": ""
+    }
+  ]
+}
