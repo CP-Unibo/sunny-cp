@@ -2,7 +2,7 @@
 # Minimal installation file for sunny-cp.
 
 echo -n 'Testing Python installation...'
-which python 1>/dev/null
+which python3 1>/dev/null
 ret=$?
 if 
   [ $ret -ne 0 ]
@@ -13,7 +13,7 @@ then
 fi
 echo 'OK!'
 
-psv=`python -c "import psutil ; print (psutil.__version__[0])"` 2>/dev/null
+psv=`python3 -c "import psutil ; print (psutil.__version__[0])"` 2>/dev/null
 if 
   [ -z $psv ]
 then
@@ -28,7 +28,7 @@ then
   exit 1
 fi
 
-psv=`python -c "import click"`
+psv=`python3 -c "import click"`
 ret=$?
 if 
   [ $ret -ne 0 ]
@@ -63,7 +63,7 @@ fi
 echo 'OK!'
 
 echo 'Adding solvers to the portfolio...'
-python solvers/make_pfolio.py
+python3 solvers/make_pfolio.py
 ret=$?
 if
   [ $ret -ne 0 ]
@@ -77,7 +77,7 @@ echo 'Compiling python sources...'
 for f in `find src -name *.py` `find kb -name *.py` ./bin/sunny-cp
 do
   echo -n 'Compiling '$f'...'
-  python $f --help 1>/dev/null
+  python3 $f --help 1>/dev/null
   ret=$?
   if 
     [ $ret -ne 0 ]
