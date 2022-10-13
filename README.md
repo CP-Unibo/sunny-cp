@@ -1,77 +1,94 @@
-# SUNNY-CP 2.2
+# SUNNY-CP: a CP Portfolio Solver
 
-SUNNY-CP: a Parallel CP Portfolio Solver
+SUNNY-CP [5] is a parallel portfolio solver that allows one to solve constraint 
+satisfaction/optimization problems defined in the MiniZinc language [6].
+It implements the SUNNY algorithm described in [1][2][3] and extends its 
+sequential version [4].
 
-sunny-cp [5] is a parallel portfolio solver that allows one to solve a
-Constraint (Satisfaction/Optimization) Problem defined in the MiniZinc language.
-It essentially implements the SUNNY algorithm described in [1][2][3] and extends
-its sequential version [4].
+SUNNY-CP can use any CP solver supporting the MiniZinc language (more precisely,
+interpreting the FlatZinc language). In a nutshell, it relies on two steps:
 
-sunny-cp is built on top of state-of-the-art constraint solvers, including:
-Choco, Chuffed, HaifaCSP, JaCoP, MinisatID, OR-Tools, Picat, Chuffed, and Gecode.
+  1. PRE-SOLVING: the (parallel) execution of a (maybe empty) static schedule, 
+     and the neighborhood computation for the underlying k-NN algorithm;
 
-In a nutshell, sunny-cp relies on two sequential steps:
+  2. SOLVING: the (parallel) cooperative execution of the solvers' schedule 
+     returned  by the SUNNY algorithm.
 
-  1. PRE-SOLVING: consists in the parallel execution of a (maybe empty) static
-     schedule and the neighborhood computation of underlying k-NN algorithm;
-
-  2. SOLVING: consists in the parallel and cooperative execution of a number of
-     the predicted solvers, selected by means of SUNNY algorithm.
-
-sunny-cp won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
+SUNNY-CP won the gold medal in the open track of MiniZinc Challenges 2015, 2016,
 and 2017, and the silver medal in 2018 and 2019 [6].
 
-## Contents of this git repository
+## Contents
 
-+ bin     contains the executables of sunny-cp
-+ kb      contains the utilities for the knowledge base of sunny-cp
-+ src     contains the sources of sunny-cp
-+ solvers contains the utilities for the constituent solvers of sunny-cp
-+ test    contains some MiniZinc examples for testing sunny-cp
-+ tmp     is aimed at containing the temporary files produced by sunny-cp
-+ docker	contains the dockerfile used to generate the image in the dockerhub
++ `bin`     contains the executables of SUNNY-CP
++ `kb`      contains the utilities for the knowledge base of SUNNY-CP
++ `src`     contains the sources of SUNNY-CP
++ `solvers` contains the utilities for the constituent solvers of SUNNY-CP
++ `test`    contains some MiniZinc examples for testing SUNNY-CP
++ `docker`	contains the dockerfile used to generate the image in the dockerhub
++ `tmp`     possibly contains the temporary files produced by SUNNY-CP
 
 ## Installation & Usage
 
-To install sunny-cp it is possible to use [Docker](https://www.docker.com) available for
-the majority of the operating systems.
+You can install SUNNY-CP on your local machine, or use it via [Docker](https://www.docker.com)
 
-It can then be used by command line or by simply sending a 
-post request to the server deployed by using docker. 
+### Local installation
 
-The Docker image is available in Docker Hub. To download its image 
-please run the following command.
+To install SUNNY-CP locally, you need to install first:
++ Python (version >= 3)
++ MiniZinc (version >= 2.6.4)
++ `mzn2feat` feature extractor, available at [https://github.com/CP-Unibo/mzn2feat](https://github.com/CP-Unibo/mzn2feat).
+
+Then, run the command `sunny-cp/install.sh`. This script performs pre-checks,
+compiles the Python sources and adds the default solvers to the portfolio of 
+SUNNY-CP. The default portfolio includes the following MiniZinc solvers:
++ Chuffed
++ COIN-BC
++ Gecode
+
+However, the user can specify its own portfolio, provided that each of its 
+solvers is installed in the MiniZinc bundle, that is, it can be run via the 
+`minizinc --solver <solver>` command. For more details on how to build a 
+user-defined portfolio, please see the README file in the `sunny-cp/solvers` 
+folder.
+
+After the installation, you can test SUNNY-CP by running the 
+`sunny-cp/test/examples/run_examples` script.
+
+### Docker installation
+
+To install SUNNY-CP via Docker, you need to download the Docker image available 
+in Docker Hub with the command:
 ```
 sudo docker pull jacopomauro/sunny-cp
 ```
 
-To execute sunny-cp from command line you can use the command
+To execute SUNNY-CP from command line you can use the command
 ```
 docker run --rm -i -t --entrypoint /bin/bash jacopomauro/sunny-cp
 ```
 
 You will get shell control inside the docker container and you can trigger
-sunny-cp by invoking the `sunny-cp` command (`sunny-cp --help` for getting
+SUNNY-CP by invoking the `SUNNY-CP` command (`SUNNY-CP --help` for getting
 information on its command line usage). 
 
-Note that sunny-cp will run inside the container. MiniZinc files can be
+Note that SUNNY-CP will run inside the container. MiniZinc files can be
 shared from the host computer to the Docker container by using Docker
 volumes (see 
 [https://docs.docker.com/storage/volumes/](https://docs.docker.com/storage/volumes/)
 for more information). For example, assuming that the MiniZinc file `test.mzn` to
-solve is in the folder `/host_dir`, to run sunny-cp on that MiniZinc model it is 
+solve is in the folder `/host_dir`, to run SUNNY-CP on that MiniZinc model it is 
 possible to first invoke the command 
 ```
 docker run --rm -it --entrypoint /bin/bash -v /host_dir:/cont_dir jacopomauro/sunny-cp
 ```
 and then, after getting the shell, run the command
 ```
-sunny-cp /cont_dir/test.mzn
+SUNNY-CP /cont_dir/test.mzn
 ```
 
-## Usage of sunny as a service
+### Usage of sunny as a service
 
-sunny-cp can be also used a service and access by using HTTP post requests.
+SUNNY-CP can be also used a service and access by using HTTP post requests.
 To deploy sunny's service run the following command.
 ```
 sudo docker run -d -p <PORT>:9001 --name sunny_cp_container jacopomauro/sunny-cp
@@ -83,12 +100,12 @@ to run the solver on it is possible to invoke it by a multipart post request as 
 ```
 curl -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
-This will run sunny-cp with the default parameters on the minizinc instance.
-If a `<DZN>` file is also needed, sunny-cp can be invoked as follows.
+This will run SUNNY-CP with the default parameters on the minizinc instance.
+If a `<DZN>` file is also needed, SUNNY-CP can be invoked as follows.
 ```
 curl -F "mzn=@<MZN>" -F "dzn=@<DZN>" http://localhost:<PORT>/process
 ```
-sunny-cp options can be passed by adding the string "option=value" as additional
+SUNNY-CP options can be passed by adding the string "option=value" as additional
 part of the request.
 
 For instance to solve the `<MZN>` using only the gecode solver (option `-P`)
@@ -96,18 +113,18 @@ the post request to perform is the following one.
 ```
 curl -F "-P=gecode" -F "mzn=@<MZN>" http://localhost:<PORT>/process
 ```
-To see the options supported by sunny-cp please run the following command.
+To see the options supported by SUNNY-CP please run the following command.
 ```
 curl -F "--help=" http://localhost:<PORT>/process
 ```
-To select sunny-cp flags (like `--help` above) it is possible to add the string
+To select SUNNY-CP flags (like `--help` above) it is possible to add the string
 "flag=". For example, the option `--mzn` is set with -F "--mzn=".
  
-Note that the post requests will return the output generated by sunny-cp at the
+Note that the post requests will return the output generated by SUNNY-CP at the
 end of its execution. In case partial solutions are need, sunny should be 
 accessed from the command line as explained above.
 Moreover, canceling the HTTP request will not
-automatically kill the execution of sunny-cp that will instead continue to execute 
+automatically kill the execution of SUNNY-CP that will instead continue to execute 
 the solver until a solution is found or the timeout has been reached.
  
 To understand what are the solvers installed you can use the following get request.
@@ -127,88 +144,42 @@ sudo docker stop sunny_cp_container
 sudo docker rm sunny_cp_container
 sudo docker rmi jacopomauro/sunny-cp
 ```
- 
-## Solvers
-
-By default, sunny-cp uses the solvers contained in the MiniZinc bundle, that is:
-* [Gecode](http://www.gecode.org/)
-* [Chuffed](https://github.com/geoffchu/chuffed)
-* [OSICBS](http://www.minizinc.org/doc-2.2.1/en/modelling2.html)
-
-It is however possible to use, via Docker, the following solvers:
-* [OR-Tools](https://code.google.com/p/or-tools/) (version v6.9.1)
-* [Choco](http://choco-solver.org/) (version 4.0.4)
-* [Picat](http://picat-lang.org/) SAT (version 2.3)
-* [JaCoP](http://jacop.osolpro.com/) (version 4.4)
-* [MinisatID](http://dtai.cs.kuleuven.be/krr/software/minisatid) (version 3.11.0)
-* [HaifaCSP](https://strichman.net.technion.ac.il/haifacsp/) (version 1.3.0)
-* [Yuck](https://github.com/informarte/yuck) (version 20180303)
-
-Once a solver is installed on your machine, it is easy to add it to 
-the portfolio and to customize its settings. For more details, see the README 
-file in the /solvers folder and the sunny-cp usage.
-
-Note that sunny-cp does not guarantee that its constituent solvers are bug free.
-However, the user can check the soundness of a solution with the command line 
-option `--check-solvers`.
-In particular we recommend the usage of this option for haifacsp and minisatid
-(they current versions are indeed bugged).
 
 ## Features
 
-During the presolving phase (in parallel with the static schedule execution) 
-sunny-cp extracts a feature vector of the problem in order to compute the 
-solvers schedule possibly run in the solving phase. By default, the feature 
-vector is extracted by mzn2feat tool available at
-[https://github.com/CP-Unibo/mzn2feat](https://github.com/CP-Unibo/mzn2feat).
+During the presolving phase, SUNNY-CP possibly extracts a feature vector 
+identifying the problem to solve. This is a necessary step for the *k*-nearest 
+neighbours algorithm on which the SUNNY approach relies on.
 
-When using docker this tool is already installed in the image. In case of local
-installation it needs otherwise to be installed manually following the 
-instruction in the README file of mzn2feat.
-
-Note that the user can define its 
-own extractor by implementing a corresponding class in src/features.py
+By default, the feature vector is extracted by the `mzn2feat` tool.
+However, the user can define its own extractor by implementing a corresponding 
+class in `sunny-cp/src/features.py`.
 
 ## Knowledge Base
 
-The SUNNY algorithm on which sunny-cp relies needs a knowledge base, that
-consists of a folder containing the information relevant for the schedule
-computation. For the time being the default knowlege base of SUNNY-CP is empty.
-However, the user has the possibility of defining a knowledge base to use.
-
-The sunny-cp/kb/mznc1215 folder contains a knowledge base consisting of 76 CSP 
-instances and 318 COP instances coming from the MiniZinc challenges 2012--2015.
-Moreover, the knowledge base mznc15 used in the MiniZinc Challenges 2016--2017 
-is also available. For more details, see the README file in /kb folder.
-
-## Additional info
-
-Previous versions of SUNNY-CP supported solvers that are currently not included
-in the docker image due to compilation problems
-or the fact that are not publicly available/free. The old solvers that are not provided
-with the current default configuration are:
-* [Mistral](http://homepages.laas.fr/ehebrard/mistral.html) (version does not print any output)
-* [G12/Gurobi](http://www.gurobi.com/) (not free)
-* [iZplus](http://www.constraint.org/ja/izc_download.html) (not publicly available)
-* [Opturion](http://www.opturion.com) (not free)
-
-We invite the developers interested in adding their solver
-to the default image of sunny-cp to contact us.
+The SUNNY algorithm needs a knowledge base, stored by SUNNY-CP in a folder 
+containing all the relevant information for the schedule computation.
+By default, the knowledge base of SUNNY-CP is empty. But the user can define its 
+own knowledge base. For more details, see the README file in the `sunny-cp/kb` folder.
 
 ## Authors
 
-sunny-cp is developed by Roberto Amadini (University of Bologna) and 
+SUNNY-CP is developed by Roberto Amadini (University of Bologna) and 
 Jacopo Mauro (University of Southern Denmark). For any question or information, 
 please contact us:
-roberto.amadini at unibo.it
-mauro.jacopo at gmail.com
++ roberto.amadini *at* unibo.it
++ mauro.jacopo *at* gmail.com
+
+Other contributors include:
++ Tong Liu, Meituan, Beijing, China
++ Mario Sabatini, University of Bologna
+
 
 ## Acknowledgement
 
 We would like to thank the staff of the former Optimization Research Group of 
 NICTA (National ICT of Australia) for granting us the computational resources 
-needed for building and testing sunny-cp. We also thank all the developers of 
-the constituent solvers without which sunny-cp scould not exists.
+needed for building and testing SUNNY-CP.
 
 ## References
 

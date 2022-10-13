@@ -62,6 +62,9 @@ Portfolio Options
   -a
     Prints to standard output all the solutions of the problem  (for CSPs only).
     or all the sub-optimal solutions until the optimum is found (for COPs only).
+  -f
+    Imposes the free search to all the running solvers, i.e., any search 
+    annotation will be ignored.
   -p <CORES>
     The number of cores to use in the solving process. By default, is the number
     of CPUs in the system
