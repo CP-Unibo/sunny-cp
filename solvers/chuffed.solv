@@ -5,6 +5,18 @@
       "name": "Chuffed",
       "conv_opts": "",
       "solv_opts": ""
+    },
+    {
+      "id": "chuffed_O2",
+      "name": "Chuffed-O2",
+      "conv_opts": " -O2 ",
+      "solv_opts": ""
+    },
+    {
+      "id": "chuffed_O3",
+      "name": "Chuffed-O3",
+      "conv_opts": " -O3 ",
+      "solv_opts": ""
     }
   ]
 }

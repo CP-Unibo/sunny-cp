@@ -170,9 +170,10 @@ please contact us:
 + roberto.amadini *at* unibo.it
 + mauro.jacopo *at* gmail.com
 
-Other contributors include:
-+ Tong Liu, Meituan, Beijing, China
-+ Mario Sabatini, University of Bologna
+Other contributors:
++ Tong Liu
++ Mario Sabatini
++ Sebastian Kosch
 
 
 ## Acknowledgement
