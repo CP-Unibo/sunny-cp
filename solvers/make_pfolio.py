@@ -34,24 +34,24 @@ for solver_file in solver_files:
       'conv_opts': solver['conv_opts'], 
       'solv_opts': solver['solv_opts']
     }
-  cmd = [
-    'minizinc', '-c', '--solver', solv, '--output-to-stdout', '--no-output-ozn',
-    solvers_path + 'constraint.mzn'
-  ]
-  proc = psutil.Popen(cmd, stdout = PIPE, stderr = PIPE)
-  out, err = proc.communicate()
-  if proc.returncode != 0:
-    print(err)
-    print('Error! Solver',solver,'not installed')
-    sys.exit(1)
-  for line in out.decode().split(';\n'):
-    intro = 'X_INTRODUCED_0_ = '
-    idx = line.find(intro)
-    if idx >= 0:
-      val = line[idx + len(intro):]
-    elif 'constraint' in line:
-      line = line.replace('X_INTRODUCED_0_', val)
-      constraint = DEF_PFOLIO[solver['id']]['constraint'] = line
-      break
+    cmd = [
+      'minizinc', '-c', '--solver', solv, '--output-to-stdout', '--no-output-ozn',
+      solvers_path + 'constraint.mzn'
+    ]
+    proc = psutil.Popen(cmd, stdout = PIPE, stderr = PIPE)
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+      print(err)
+      print('Error! Solver',solver,'not installed')
+      sys.exit(1)
+    for line in out.decode().split(';\n'):
+      intro = 'X_INTRODUCED_0_ = '
+      idx = line.find(intro)
+      if idx >= 0:
+        val = line[idx + len(intro):]
+      elif 'constraint' in line:
+        line = line.replace('X_INTRODUCED_0_', val)
+        constraint = DEF_PFOLIO[solver['id']]['constraint'] = line
+        break
 pfolio_file.write('DEF_PFOLIO = ' + str(DEF_PFOLIO))
 pfolio_file.write('\n\n')
