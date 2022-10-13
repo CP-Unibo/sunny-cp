@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 '''
 Module for creating a default portfolio by automatically generating the 
 src/pfolio_solvers.py file from the files .solv in this folder

@@ -136,16 +136,23 @@ class RunningSolver:
     Returns the command for converting a given MiniZinc model to FlatZinc by
     using solver-specific redefinitions.
     """
+#    print ('% minizinc -c --output-ozn-to-file '+ pb.ozn_path + ' --solver ' +\
+#      self.solv_dict['solver'] + ' ' + self.solv_dict['conv_opts'] + ' ' + \
+#      pb.mzn_path + ' ' + pb.dzn_path + ' -o ' + self.fzn_path)
     return ('minizinc -c --output-ozn-to-file '+ pb.ozn_path + ' --solver ' + \
-      self.solv_dict['solver'] + ' ' + pb.mzn_path + ' ' + pb.dzn_path + \
-      ' -o ' + self.fzn_path).split()
+      self.solv_dict['solver'] + ' ' + self.solv_dict['conv_opts'] + ' ' + \
+      pb.mzn_path + ' ' + pb.dzn_path + ' -o ' + self.fzn_path).split()
 
   def flatzinc_cmd(self, pb):
     """
     Returns the command for executing the FlatZinc model.
     """
+#    print ('% minizinc --solver ' + self.solv_dict['solver'] + ' ' + \
+#      self.solv_dict['solv_opts'] + ' ' + self.all_opt + ' ' + self.free_opt +\
+#        ' ' + self.fzn_path)
     return ('minizinc --solver ' + self.solv_dict['solver'] + ' ' + \
-      self.all_opt + ' ' + self.free_opt + ' ' + self.fzn_path).split()
+      self.solv_dict['solv_opts'] + ' ' + self.all_opt + ' ' + self.free_opt + \
+        ' ' + self.fzn_path).split()
 
   def set_obj_var(self, problem, lb, ub):
     """

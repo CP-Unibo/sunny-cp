@@ -586,8 +586,8 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
   for (s, t) in schedule:
     so = DEF_PFOLIO[s]
     fzn_path = tmp_id + '.' + s + '.fzn'
-    ao = ' -a ' if all_opt or solve != 'sat' else ''
-    fo = ' -f ' if free_opt else '' 
+    ao = '-a' if all_opt or solve != 'sat' else ''
+    fo = '-f' if free_opt else '' 
     wt = float(options[s]['wait_time'])
     rt = options[s]['restart_time']
     mr = options[s]['max_restarts']
