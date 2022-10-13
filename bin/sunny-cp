@@ -98,7 +98,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
   while RUNNING_SOLVERS:
     time.sleep(SLEEP_TIME)
 
-    if mem_limit < 100:
+    if len(RUNNING_SOLVERS) > 1 and mem_limit < 100:
       mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
       if sum(mems.values()) > mem_limit:
         solver = max(list(mems.items()), key = lambda x: x[1])[0]
@@ -203,7 +203,7 @@ def presolve(
         print('% Features extraction failed!')
       neigh_computed = True
 
-    if mem_limit < 100:
+    if len(RUNNING_SOLVERS) > 1 and mem_limit < 100:
       mems = dict((s, s.mem_percent()) for s in RUNNING_SOLVERS)
       if sum(mems.values()) > mem_limit:
         solver = max(list(mems.items()), key = lambda x: x[1])[0]

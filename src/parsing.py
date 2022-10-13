@@ -392,10 +392,6 @@ def get_args(args, pfolio):
     sys.exit(2)
   if len(args) > 1:
     dzn = args[1]
-    if not dzn.endswith('.dzn'):
-      print('Error! MiniZinc input data must have .dzn extension.', file=sys.stderr)
-      print('For help use --help', file=sys.stderr)
-      sys.exit(2)
   return mzn, dzn, opts
 
 def get_solve(mzn):
