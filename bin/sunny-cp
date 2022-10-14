@@ -13,16 +13,15 @@ import tempfile
 import traceback
 import multiprocessing
 from subprocess import PIPE, Popen
-
 SUNNY_HOME = os.path.realpath(__file__).split('/')[:-2]
 SUNNY_HOME = '/'.join(SUNNY_HOME)
 sys.path.append(SUNNY_HOME + '/src')
-from problem import *
-from parsing import *
-from solver import *
-from features import *
-from scheduling import *
 from pfolio_solvers import *
+from scheduling import *
+from features import *
+from solver import *
+from parsing import *
+from problem import *
 
 # List of the running solvers.
 RUNNING_SOLVERS = []
@@ -139,15 +138,15 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
 
             # Expired timeout: the solver has to be suspended.
             if time.time() - solver.start_time > solver.timeout \
-            and time.time() - solver.solution_time > solver.wait_time:
+                    and time.time() - solver.solution_time > solver.wait_time:
                 solver_timeout(solver, problem, schedule)
                 continue
 
             # Restart a solver if its solution is obsolete and its restart time
             # is actually expired.
             if solver.status == 'flatzinc' \
-            and problem.bound_better_than(solver.obj_value) \
-            and time.time() - solver.solution_time > solver.restart_time:
+                    and problem.bound_better_than(solver.obj_value) \
+                    and time.time() - solver.solution_time > solver.restart_time:
                 if solver.num_restarts < solver.max_restarts:
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
@@ -249,15 +248,15 @@ def presolve(
 
             # Expired timeout: the solver has to be suspended.
             if time.time() - solver.start_time > solver.timeout \
-            and time.time() - solver.solution_time > solver.wait_time:
+                    and time.time() - solver.solution_time > solver.wait_time:
                 solver_timeout(solver, problem, schedule)
                 continue
 
             # Restart a solver if its solution is obsolete and its restart time
             # is actually expired.
             if solver.status == 'flatzinc' \
-            and problem.bound_better_than(solver.obj_value) \
-            and time.time() - solver.solution_time > solver.restart_time:
+                    and problem.bound_better_than(solver.obj_value) \
+                    and time.time() - solver.solution_time > solver.restart_time:
                 if solver.num_restarts < solver.max_restarts:
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
@@ -640,8 +639,8 @@ def main(args):
     try:
         # Input arguments parsing and initialization.
         problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
-        cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
-        LOWER_BOUND, UPPER_BOUND, check = parse_arguments(args)
+            cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
+            LOWER_BOUND, UPPER_BOUND, check = parse_arguments(args)
         TMP_FILES = [problem.ozn_path]
         static = init_schedule(
             static, solver_options, problem.solve, tmp_id, all_opt, free_opt
