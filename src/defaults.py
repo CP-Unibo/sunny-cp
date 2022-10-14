@@ -15,8 +15,8 @@ DEF_BACKUP = 'chuffed'
 
 DEF_STATIC = []
 
-DEF_KB_CSP   = SUNNY_HOME + '/kb/empty/empty_csp'
-DEF_KB_COP   = SUNNY_HOME + '/kb/empty/empty_cop'
+DEF_KB_CSP = SUNNY_HOME + '/kb/empty/empty_csp'
+DEF_KB_COP = SUNNY_HOME + '/kb/empty/empty_cop'
 
 DEF_LIMS_CSP = SUNNY_HOME + '/kb/empty/empty_lims_csp'
 DEF_LIMS_COP = SUNNY_HOME + '/kb/empty/empty_lims_cop'
