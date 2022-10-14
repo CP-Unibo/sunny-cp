@@ -73,4 +73,4 @@ class Problem:
         self.ozn_path = ozn_path
         assert solve in ['sat', 'min', 'max']
         self.solve = solve
-        self.best_bound = float('+inf') if solver == 'min' else float('-inf')
+        self.best_bound = float('+inf') if solve == 'min' else float('-inf')
