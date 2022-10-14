@@ -33,8 +33,15 @@ class MyServer(BaseHTTPRequestHandler):
         logging.debug('GET %s' % (self.path))
         if urllib.parse.urlparse(self.path).path == "/solvers":
             self._set_headers()
-            solvers_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),os.pardir,"solvers")
-            solvers = [name for name in os.listdir(solvers_path) if os.path.isdir(os.path.join(solvers_path, name))]
+            solvers_path = os.path.join(
+                os.path.dirname(
+                    os.path.realpath(__file__)),
+                os.pardir,
+                "solvers")
+            solvers = [
+                name for name in os.listdir(solvers_path) if os.path.isdir(
+                    os.path.join(
+                        solvers_path, name))]
             self.wfile.write("{}\n".format(",".join(solvers)))
         else:
             self.send_response(400)
@@ -43,7 +50,7 @@ class MyServer(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         self._set_headers()
-        
+
     # def do_POST(self):
 
     def do_POST(self):
@@ -52,7 +59,8 @@ class MyServer(BaseHTTPRequestHandler):
         '''
         logging.debug('POST %s' % (self.path))
 
-        # CITATION: http://stackoverflow.com/questions/4233218/python-basehttprequesthandler-post-variables
+        # CITATION:
+        # http://stackoverflow.com/questions/4233218/python-basehttprequesthandler-post-variables
         ctype, pdict = cgi.parse_header(self.headers['content-type'])
         if ctype == 'multipart/form-data':
             postvars = cgi.parse_multipart(self.rfile, pdict)
@@ -68,7 +76,9 @@ class MyServer(BaseHTTPRequestHandler):
         # logging.debug('Parameters %s' % unicode(query_values))
         # logging.debug('Post data %s' % unicode(postvars))
 
-        if urllib.parse.urlparse(self.path).path == "/process" or urllib.parse.urlparse(self.path).path == "/get_features":
+        if urllib.parse.urlparse(
+                self.path).path == "/process" or urllib.parse.urlparse(
+                self.path).path == "/get_features":
             timeout = str(TIMEOUT)
             mzn = []
             dzn = []
@@ -77,7 +87,7 @@ class MyServer(BaseHTTPRequestHandler):
                 if i.startswith('mzn'):
                     logging.debug("Found mzn input file")
                     file_id, name = tempfile.mkstemp(suffix='.mzn', text=True)
-                    os. write(file_id,''.join(postvars[i]))
+                    os. write(file_id, ''.join(postvars[i]))
                     os.close(file_id)
                     mzn.append(name)
                 elif i.startswith('dzn'):
@@ -97,7 +107,9 @@ class MyServer(BaseHTTPRequestHandler):
                         logging.debug("Found flag %s" % i)
                         extra_param.append(i)
                     else:
-                        logging.debug("Found parameter %s with value %s" % (i,postvars[i]))
+                        logging.debug(
+                            "Found parameter %s with value %s" %
+                            (i, postvars[i]))
                         if i == "-T":
                             if "inf" not in postvars[i][0]:
                                 timeout = postvars[i][0]
@@ -111,17 +123,19 @@ class MyServer(BaseHTTPRequestHandler):
             else:
                 cmd = ["timeout", timeout, "mzn2feat"] + extra_param
                 for i in mzn:
-                    cmd += ["-i",i]
+                    cmd += ["-i", i]
                 for i in dzn:
-                    cmd += ["-d",i]
+                    cmd += ["-d", i]
 
             logging.debug('Running cmd {}'.format(cmd))
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                process = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = process.communicate()
                 if process.returncode != 0 and process.returncode != 124:
-                    logging.debug("The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
-                        process.returncode,out,err))
+                    logging.debug(
+                        "The command returned with return code {}. STDOUT <{}>. STDERR <{}>".format(
+                            process.returncode, out, err))
                     self.send_response(400)
                     self.send_header('Content-type', 'text/plain')
                     self.end_headers()
@@ -139,7 +153,7 @@ class MyServer(BaseHTTPRequestHandler):
                     if os.path.exists(i):
                         os.remove(i)
                 # stop process in case of errors
-                if process.poll() == None:
+                if process.poll() is None:
                     process.kill()
         else:
             self.send_response(400)
@@ -153,11 +167,13 @@ def run(server_class=HTTPServer, handler_class=MyServer, port=9001):
     print('Starting httpd...')
     httpd.serve_forever()
 
+
 @click.command()
 @click.option('--port', '-p', type=click.INT, default=9001,
               help='Port used by the server to wait for requests.')
 def main(port):
     run(port=port)
+
 
 if __name__ == "__main__":
     main()

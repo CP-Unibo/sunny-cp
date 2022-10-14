@@ -23,8 +23,8 @@ def get_neighbours(feat_vector, k, kb):
         n += 1
         inst = row[0]
         d = euclidean_distance(
-                feat_vector, list(map(float, row[1][1:-1].split(',')))
-            )
+            feat_vector, list(map(float, row[1][1:-1].split(',')))
+        )
         distances.append((d, inst))
         infos[inst] = row[2]
     sorted_dist = distances.sort(key=lambda x: x[0])
@@ -186,7 +186,7 @@ def parallelize(seq_sched, cores, timeout):
     sort_sched = sorted(seq_sched, key=lambda x: x[1], reverse=True)
     par_sched = [(s, float('+inf')) for (s, _) in sort_sched[:cores - 1]]
     seq_sched = [
-      x for x in seq_sched if x[0] not in list(dict(par_sched).keys())
+        x for x in seq_sched if x[0] not in list(dict(par_sched).keys())
     ]
     seq_time = sum(t for (_, t) in seq_sched)
     for (s, t) in seq_sched:
