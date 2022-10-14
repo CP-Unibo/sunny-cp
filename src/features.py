@@ -25,9 +25,7 @@ class mzn2feat:
         not_norm_vector = mzn2feat.extract(problem)
         if not not_norm_vector:
             return None
-        lims_file = args[1]
-
-        with open(lims_file, 'r') as infile:
+        with open(args[1], 'r') as infile:
             lims = json.load(infile)
         return mzn2feat.normalize(not_norm_vector, lims)
 
@@ -42,16 +40,12 @@ class mzn2feat:
         cmd = 'mzn2feat -i ' + mzn_path
         if dzn_path:
             cmd += ' -d ' + dzn_path
-#        print(cmd)
         proc = psutil.Popen(cmd.split(), stdout=PIPE)
         (out, err) = proc.communicate()
         # Failure in features extraction.
         if proc.returncode != 0:
             return []
-        features = out.decode().split(",")
-        feat_vector = [
-            float(features[i]) for i in range(0, len(features))
-        ]
+        feat_vector = [float(f) for f in out.decode().split(",")]
         return feat_vector
 
     @staticmethod
