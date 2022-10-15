@@ -64,26 +64,25 @@ sudo docker pull jacopomauro/sunny-cp
 
 To execute SUNNY-CP from command line you can use the command
 ```
-docker run --rm -i -t jacopomauro/sunny-cp
+sudo docker run --rm -i -t jacopomauro/sunny-cp
 ```
 
 You will get shell control inside the docker container and you can trigger
-SUNNY-CP by invoking the `SUNNY-CP` command (`SUNNY-CP --help` for getting
+SUNNY-CP by invoking the `sunny-cp` command (`sunny-cp --help` for getting
 information on its command line usage). 
 
 Note that SUNNY-CP will run inside the container. MiniZinc files can be
 shared from the host computer to the Docker container by using Docker
-volumes (see 
-[https://docs.docker.com/storage/volumes/](https://docs.docker.com/storage/volumes/)
-for more information). For example, assuming that the MiniZinc file `test.mzn` to
-solve is in the folder `/host_dir`, to run SUNNY-CP on that MiniZinc model it is 
-possible to first invoke the command 
+volumes (see [https://docs.docker.com/storage/volumes/](https://docs.docker.com/storage/volumes/)
+for more information). For example, assuming that the MiniZinc model `test.mzn` to
+solve is in the folder `/host_dir`, you can run SUNNY-CP by first invoking the 
+command 
 ```
-docker run --rm -it -v /host_dir:/cont_dir jacopomauro/sunny-cp
+sudo docker run --rm -it -v /host_dir:/cont_dir jacopomauro/sunny-cp
 ```
 and then, after getting the shell, run the command
 ```
-SUNNY-CP /cont_dir/test.mzn
+sunny-cp /cont_dir/test.mzn
 ```
 
 ## Features
