@@ -1,4 +1,4 @@
-Copyright 2015 Roberto Amadini <roberto.amadini@unimelb.edu.au>
+Copyright 2015 Roberto Amadini <roberto.amadini@unibo.it>
 Copyright 2015 Jacopo Mauro <mauro.jacopo@gmail.com>
 
    Licensed under the Apache License, Version 2.0 (the "License");
