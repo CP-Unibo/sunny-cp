@@ -10,7 +10,7 @@ respectively. Each of them has records of the form:
 ```
 where:
 + `inst`: is an unique identifier of the problem instance
-+ `feat`: is the feature vector `[f_1, ..., f_n]` of inst. All features must be 
++ `feat`: is the feature vector `f_1, ..., f_n` of inst. All features must be 
 numeric, inf or NaN values are not allowed
 + `info`: is a dictionary of the form `{s_1: I_1, ..., s_m: I_m}` where:
   + `s_1, ..., s_m`: are the solvers of the portfolio

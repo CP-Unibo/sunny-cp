@@ -202,7 +202,7 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
     insts_cop = list(kb_cop.keys())
     for row in reader:
         inst = row[0]
-        feat_vector = ast.literal_eval(row[1])
+        feat_vector = [float(x) for x in row[1].split(',')]
         if inst in insts_csp:
             writer = csp_writer
             info = kb_csp[inst]
@@ -265,10 +265,10 @@ def make_kb(kb_path, kb_name, feat_file, lb, ub, scale, const, kb_csp, kb_cop):
         print('Features processed!')
         return
 
-    for i in ['csp', 'cop']:
-        lim_file = kb_path + '/' + kb_name + '_lims_' + i
-        with open(lim_file, 'w') as outfile:
-            json.dump(ast.literal_eval('lims_' + i), outfile)
+    with open(kb_path + '/' + kb_name + '_lims_csp', 'w') as outfile:
+       json.dump(lims_csp, outfile)
+    with open(kb_path + '/' + kb_name + '_lims_cop', 'w') as outfile:
+       json.dump(lims_cop, outfile)
     print('Features processed,', end=' ')
     if const and scale:
         print('scaled all values, and removed constant features!')
