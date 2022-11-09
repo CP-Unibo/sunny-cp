@@ -136,7 +136,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                 solver_terminated(solver, problem, schedule)
                 continue
 
-            # Expired timeout: the solver has to be suspended.
+            # Expired timeout: the solver is killed.
             if time.time() - solver.start_time > solver.timeout \
                     and time.time() - solver.solution_time > solver.wait_time:
                 solver_timeout(solver, problem, schedule)
@@ -249,7 +249,7 @@ def presolve(
             # Expired timeout: the solver has to be suspended.
             if time.time() - solver.start_time > solver.timeout \
                     and time.time() - solver.solution_time > solver.wait_time:
-                solver_timeout(solver, problem, schedule)
+                solver_timeout(solver, problem, schedule, kill=False)
                 continue
 
             # Restart a solver if its solution is obsolete and its restart time
@@ -547,7 +547,7 @@ def solver_terminated(solver, problem, schedule):
             resume_solver(new_solver, new_timeout)
 
 
-def solver_timeout(solver, problem, schedule):
+def solver_timeout(solver, problem, schedule, kill=True):
     """
     Handles the timeout of a solver process, possibly launching a new solver.
     """
@@ -581,11 +581,18 @@ def solver_timeout(solver, problem, schedule):
                 SUSP_SOLVERS = []
         else:
             if new_solver.name() != solver.name():
-                suspend_solver(solver)
+                if kill:
+                    send_signal_solver(signal.SIGKILL, solver)
+                    RUNNING_SOLVERS.remove(solver)
+                else:
+                    suspend_solver(solver)
                 run_solver(new_solver, problem)
             else:
                 print('% Solver', solver.name(),
                       'not interrupted: it has to run again.')
+    elif kill:
+        send_signal_solver(signal.SIGKILL, solver)
+        RUNNING_SOLVERS.remove(solver)
     else:
         suspend_solver(solver)
 
