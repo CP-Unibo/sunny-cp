@@ -1,0 +1,10 @@
+{
+  "versions": [
+    {
+      "id": "highs",
+      "name": "HiGHS",
+      "conv_opts": "-O3",
+      "solv_opts": ""
+    }
+  ]
+}
