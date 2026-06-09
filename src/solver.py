@@ -138,18 +138,17 @@ class RunningSolver:
         Returns the command for converting a given MiniZinc model to FlatZinc
         by using solver-specific redefinitions.
         """
-        return ('minizinc -c --output-ozn-to-file ' + pb.ozn_path +
-                ' --solver ' + self.solv_dict['solver'] + ' ' +
-                self.solv_dict['conv_opts'] + ' ' + pb.mzn_path + ' ' +
-                pb.dzn_path + ' -o ' + self.fzn_path).split()
+        return (f'minizinc -c --output-ozn-to-file {pb.ozn_path} --solver ' + 
+                f"{self.solv_dict['solver']} {self.solv_dict['conv_opts']} " + 
+                f'{pb.mzn_path} {pb.dzn_path} -o {self.fzn_path}').split()
 
     def flatzinc_cmd(self, pb):
         """
         Returns the command for executing the FlatZinc model.
         """
-        return ('minizinc --solver ' + self.solv_dict['solver'] + ' ' +
-                self.solv_dict['solv_opts'] + ' ' + self.all_opt + ' ' +
-                self.free_opt + ' ' + self.fzn_path).split()
+        return (f"minizinc --solver {self.solv_dict['solver']} " +
+                f"{self.solv_dict['solv_opts']} {self.all_opt} {self.free_opt} " +
+                f'{self.fzn_path}').split() #| minizinc --ozn-file {pb.ozn_path}').split()
 
     def set_obj_var(self, problem, lb, ub):
         """

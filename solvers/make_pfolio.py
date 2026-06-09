@@ -28,8 +28,8 @@ for solver_file in solver_files:
     versions = json.load(open(solvers_path + solver_file))['versions']
     for solver in versions:
         print('Adding solver', solver['name'])
-        solv = solver_file[:solver_file.index('.solv')]
-        DEF_PFOLIO[solver['id']] = {
+        solv = solver['id']
+        DEF_PFOLIO[solver_file[:solver_file.index('.solv')]] = {
             'solver': solv,
             'name': solver['name'],
             'conv_opts': solver['conv_opts'],
@@ -52,7 +52,7 @@ for solver_file in solver_files:
                 val = line[idx + len(intro):]
             elif 'constraint' in line:
                 line = line.replace('X_INTRODUCED_0_', val)
-                constraint = DEF_PFOLIO[solver['id']]['constraint'] = line
+                constraint = DEF_PFOLIO[solver_file[:solver_file.index('.solv')]]['constraint'] = line
                 break
 pfolio_file.write('DEF_PFOLIO = ' + str(DEF_PFOLIO))
 pfolio_file.write('\n\n')

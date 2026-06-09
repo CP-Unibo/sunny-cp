@@ -254,7 +254,7 @@ def parse_arguments(args):
                 sys.exit(2)
         elif o == '-s':
             s = a.split(',')
-            for i in range(0, len(s) / 2):
+            for i in range(0, len(s) // 2):
                 solver = s[2 * i]
                 time = float(s[2 * i + 1])
                 if time < 0:
@@ -319,7 +319,7 @@ def parse_arguments(args):
             keep = True
         elif o == '--check-solvers':
             s = a.split(',')
-            for i in range(0, len(s) / 2):
+            for i in range(0, len(s) // 2):
                 unt = s[2 * i]
                 tru = s[2 * i + 1]
                 if unt == tru:

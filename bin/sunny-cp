@@ -137,16 +137,16 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                 continue
 
             # Expired timeout: the solver is killed.
-            if time.time() - solver.start_time > solver.timeout \
-                    and time.time() - solver.solution_time > solver.wait_time:
+            if  time.time() - solver.start_time > solver.timeout \
+            and time.time() - solver.solution_time > solver.wait_time:
                 solver_timeout(solver, problem, schedule)
                 continue
 
             # Restart a solver if its solution is obsolete and its restart time
             # is actually expired.
             if solver.status == 'flatzinc' \
-                    and problem.bound_better_than(solver.obj_value) \
-                    and time.time() - solver.solution_time > solver.restart_time:
+            and problem.bound_better_than(solver.obj_value) \
+            and time.time() - solver.solution_time > solver.restart_time:
                 if solver.num_restarts < solver.max_restarts:
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
@@ -439,7 +439,11 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                     print(line)
                     solver.solution = {}
                 problem.best_solver = solver.name()
+#            else:
+#                print(f'% {solver.name()} found sub-optimal solution with ' +
+#                      f'objective bound {solver.obj_value}')
             solver.solution_time = time.time()
+            
         elif line == '==========' or line == '=====UNSATISFIABLE=====':
             if trusted_solver:
                 if not all_opt and problem.bound_worse_than(solver.obj_value):
