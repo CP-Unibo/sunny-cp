@@ -159,6 +159,9 @@ class RunningSolver:
         lines = []
         with open(self.fzn_path, 'r') as infile:
             for line in reversed(infile.readlines()):
+                line = line.strip()
+                if not line or line.startswith('%'):
+                    continue
                 tokens = line.replace('::', ' ').replace(';', '').split()
                 if 'solve' in tokens:
                     self.obj_var = tokens[-1].replace(';', '')
@@ -176,7 +179,7 @@ class RunningSolver:
                    'output_var' not in tokens and '=' not in tokens:
                     self.output_var = False
                     line = line.replace(';', '') + ' :: output_var;\n'
-                lines.append(line)
+                lines.append(line + '\n')
             infile.close()
         with open(self.fzn_path, 'w') as outfile:
             outfile.writelines(reversed(lines))
@@ -197,7 +200,7 @@ class RunningSolver:
         with open(self.fzn_path, 'r') as infile:
             add = True
             for line in infile.readlines():
-                if add and 'constraint' in line.split():
+                if add and 'constraint' in line.split(';')[0]:
                     lines.append(cons + ';\n')
                     add = False
                 lines.append(line)

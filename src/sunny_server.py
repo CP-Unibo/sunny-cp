@@ -30,7 +30,7 @@ class MyServer(BaseHTTPRequestHandler):
         '''
         Handle GET requests.
         '''
-        logging.debug('GET %s' % (self.path))
+        logging.debug(f'GET {self.path}')
         if urllib.parse.urlparse(self.path).path == "/solvers":
             self._set_headers()
             solvers_path = os.path.join(
@@ -42,7 +42,7 @@ class MyServer(BaseHTTPRequestHandler):
                 name for name in os.listdir(solvers_path) if os.path.isdir(
                     os.path.join(
                         solvers_path, name))]
-            self.wfile.write("{}\n".format(",".join(solvers)))
+            self.wfile.write(f"{','.join(solvers)}\n")
         else:
             self.send_response(400)
             self.send_header('Content-type', 'text/plain')
@@ -57,7 +57,7 @@ class MyServer(BaseHTTPRequestHandler):
         '''
         Handle POST requests.
         '''
-        logging.debug('POST %s' % (self.path))
+        logging.debug(f'POST {self.path}')
 
         # CITATION:
         # http://stackoverflow.com/questions/4233218/python-basehttprequesthandler-post-variables
@@ -72,7 +72,7 @@ class MyServer(BaseHTTPRequestHandler):
 
         # query_values = urlparse.parse_qs(urlparse.urlparse(self.path).query)
 
-        logging.debug('Operation %s' % urllib.parse.urlparse(self.path).path)
+        logging.debug(f'Operation {urllib.parse.urlparse(self.path).path}')
         # logging.debug('Parameters %s' % unicode(query_values))
         # logging.debug('Post data %s' % unicode(postvars))
 
@@ -101,15 +101,14 @@ class MyServer(BaseHTTPRequestHandler):
                         self.send_response(400)
                         self.send_header('Content-type', 'text/plain')
                         self.end_headers()
-                        self.wfile.write("Parameter %s badly formatted" % i)
+                        self.wfile.write(f"Parameter {i} badly formatted")
                         return
                     if postvars[i][0] == "":
-                        logging.debug("Found flag %s" % i)
+                        logging.debug(f"Found flag {i}")
                         extra_param.append(i)
                     else:
                         logging.debug(
-                            "Found parameter %s with value %s" %
-                            (i, postvars[i]))
+                            f"Found parameter {i} with value {postvars[i]}")
                         if i == "-T":
                             if "inf" not in postvars[i][0]:
                                 timeout = postvars[i][0]
@@ -127,7 +126,7 @@ class MyServer(BaseHTTPRequestHandler):
                 for i in dzn:
                     cmd += ["-d", i]
 
-            logging.debug('Running cmd {}'.format(cmd))
+            logging.debug(f'Running cmd {cmd}')
             try:
                 process = subprocess.Popen(
                     cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
