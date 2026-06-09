@@ -1,0 +1,10 @@
+{
+  "versions": [
+    {
+      "id": "cp-sat",
+      "name": "ORTools CP-SAT",
+      "conv_opts": "",
+      "solv_opts": ""
+    }
+  ]
+}
