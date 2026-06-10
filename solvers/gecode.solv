@@ -1,10 +1,30 @@
 {
+  "tag": "gecode",
+  
   "versions": [
     {
       "id": "gecode",
       "name": "Gecode",
       "conv_opts": "",
       "solv_opts": ""
+    },
+    {
+      "id": "gecode-p2",
+      "name": "Gecode (-p 2)",
+      "conv_opts": "",
+      "solv_opts": "-p 2"
+    },
+    {
+      "id": "gecode-p3",
+      "name": "Gecode (-p 3)",
+      "conv_opts": "",
+      "solv_opts": "-p 3"
+    },
+    {
+      "id": "gecode-p4",
+      "name": "Gecode (-p 4)",
+      "conv_opts": "",
+      "solv_opts": "-p 4"
     }
   ]
 }

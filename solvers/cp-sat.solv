@@ -1,10 +1,60 @@
 {
+  "tag": "cp-sat",
+  
   "versions": [
     {
       "id": "cp-sat",
       "name": "ORTools CP-SAT",
       "conv_opts": "",
       "solv_opts": ""
+    },
+    {
+      "id": "cp-sat-p2",
+      "name": "ORTools CP-SAT (num_workers:2)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:2"
+    },
+    {
+      "id": "cp-sat-p3",
+      "name": "ORTools CP-SAT (num_workers:3)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:3"
+    },
+    {
+      "id": "cp-sat-p4",
+      "name": "ORTools CP-SAT (num_workers:4)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:4"
+    },
+    {
+      "id": "cp-sat-p5",
+      "name": "ORTools CP-SAT (num_workers:5)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:5"
+    },
+    {
+      "id": "cp-sat-p6",
+      "name": "ORTools CP-SAT (num_workers:6)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:6"
+    },
+    {
+      "id": "cp-sat-p7",
+      "name": "ORTools CP-SAT (num_workers:7)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:7"
+    },
+    {
+      "id": "cp-sat-p7",
+      "name": "ORTools CP-SAT (num_workers:7)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:7"
+    },
+    {
+      "id": "cp-sat-p8",
+      "name": "ORTools CP-SAT (num_workers:8)",
+      "conv_opts": "",
+      "solv_opts": "--params num_workers:8"
     }
   ]
 }

@@ -151,7 +151,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
-                    print('% Restarting', solver.name())
+                    print(f'% Restarting {solver.name()} after ' + \
+                          f'{time.time() - solver.solution_time}s inactivity'+ \
+                          f' (restart no. {solver.num_restarts})')
                     solver.timeout = max(
                         solver.timeout - (time.time() - solver.start_time), 0
                     )
@@ -163,6 +165,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     print('% Killing solver', solver.name())
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
+                    if len(RUNNING_SOLVERS) == 1:
+                        print(f'% {RUNNING_SOLVERS[0].name()} only survivor')
+                        # FIXME: Do something here?
                     continue
 
 
@@ -248,29 +253,30 @@ def presolve(
 
             # Expired timeout: the solver has to be suspended.
             if time.time() - solver.start_time > solver.timeout \
-                    and time.time() - solver.solution_time > solver.wait_time:
+            and time.time() - solver.solution_time > solver.wait_time:
                 solver_timeout(solver, problem, schedule, kill=False)
                 continue
 
             # Restart a solver if its solution is obsolete and its restart time
             # is actually expired.
             if solver.status == 'flatzinc' \
-                    and problem.bound_better_than(solver.obj_value) \
-                    and time.time() - solver.solution_time > solver.restart_time:
+            and problem.bound_better_than(solver.obj_value) \
+            and time.time() - solver.solution_time > solver.restart_time:
                 if solver.num_restarts < solver.max_restarts:
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
-                    print('% Restarting', solver.name())
+                    print(f'% Restarting {solver.name()} after ' + \
+                          f'{time.time() - solver.solution_time}s inactivity'+ \
+                          f' (restart no. {solver.num_restarts})')
                     solver.timeout = max(
                         solver.timeout - (time.time() - solver.start_time), 0
                     )
                     run_solver(solver, problem)
                     continue
                 else:
-                    print('%', solver.name(),
-                          'reached the maximum number of restarts!')
-                    print('% Killing solver', solver.name())
+                    print(f'% {solver.name()} reached maximum no. of restarts!')
+                    print(f'% Killing solver {solver.name()}')
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
                     continue
@@ -313,7 +319,6 @@ def run_solver(solver, problem):
     else:
         print('% Unknown status', solver.status)
         assert False
-
     if solver.status == 'flatzinc':
         solver.process = psutil.Popen(cmd, stdout=PIPE)
         # For non-blocking read.
@@ -722,6 +727,9 @@ def main(args):
         schedule = init_schedule(
             par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
         )
+        for s in SUSP_SOLVERS:
+            print(f'% Resetting no. of restarts for {s.name()}')
+            s.num_restarts = 0
         solve(schedule, problem, cores, mem_limit, all_opt, check)
 
     except Exception as e:
