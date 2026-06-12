@@ -158,9 +158,9 @@ def parse_arguments(args):
     """
 
     # Get the arguments and parse the input model to get solve information.
-    n = os.cpu_count()
+    n = os.cpu_count()    
+    mzn, dzn, opts = get_args(args)
     pfolio = DEF_PFOLIO
-    mzn, dzn, opts = get_args(args, pfolio)
     solve = get_solve(mzn)
 
     # Initialize variables with the default values.
@@ -344,7 +344,7 @@ def parse_arguments(args):
         lb, ub, check
 
 
-def get_args(args, pfolio):
+def get_args(args):
     """
     Get the input arguments.
     """
@@ -358,7 +358,7 @@ def get_args(args, pfolio):
             'fzn-options', 'wait-time', 'restart-time', 'max-restarts'
         ]
         long_options += [
-            o + '-' + s for o in long_options for s in pfolio
+            o + '-' + s for o in long_options for s in ALL_SOLVERS
         ]
         long_options += ['check-solvers']
         csp_opts = ['csp-' + o + '=' for o in options + long_options] + \

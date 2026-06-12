@@ -32,11 +32,12 @@ for solver_file in solver_files:
         print('Adding solver', solver['name'])
         version_id = solver['version_id']
         ALL_SOLVERS[version_id] = {
-            'solver_id': solver_id,
             'name': solver['name'],
+            'solver_id': solver_id,
+            'version_id': version_id,            
             'conv_opts': solver['conv_opts'],
             'solv_opts': solver['solv_opts'],
-            'parallel': solver['parallel']
+            'n_threads': solver['n_threads']
         }
         cmd = [
             'minizinc', '-c', '--solver', solver_id, '--output-to-stdout',

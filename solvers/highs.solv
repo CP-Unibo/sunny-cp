@@ -7,7 +7,7 @@
       "name": "HiGHS",
       "conv_opts": "-O3",
       "solv_opts": "",
-      "parallel": false
+      "n_threads": 1
     }
   ]
 }

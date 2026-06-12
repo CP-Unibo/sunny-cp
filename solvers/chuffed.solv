@@ -7,7 +7,7 @@
       "name": "Chuffed",
       "conv_opts": "",
       "solv_opts": "",
-      "parallel": false
+      "n_threads": 1
     }
   ]
 }

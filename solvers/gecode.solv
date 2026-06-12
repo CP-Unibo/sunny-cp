@@ -7,55 +7,55 @@
       "name": "Gecode",
       "conv_opts": "",
       "solv_opts": "",
-      "parallel": false
+      "n_threads": 1
     },
     {
       "version_id": "gecode-p2",
       "name": "Gecode (-p 2)",
       "conv_opts": "",
       "solv_opts": "-p 2",
-      "parallel": true
+      "n_threads": 2
     },
     {
       "version_id": "gecode-p3",
       "name": "Gecode (-p 3)",
       "conv_opts": "",
       "solv_opts": "-p 3",
-      "parallel": true
+      "n_threads": 3
     },
     {
       "version_id": "gecode-p4",
       "name": "Gecode (-p 4)",
       "conv_opts": "",
       "solv_opts": "-p 4",
-      "parallel": true
+      "n_threads": 4
     },
     {
       "version_id": "gecode-p5",
       "name": "Gecode (-p 5)",
       "conv_opts": "",
       "solv_opts": "-p 5",
-      "parallel": true
+      "n_threads": 5
     },
     {
       "version_id": "gecode-p6",
       "name": "Gecode (-p 6)",
       "conv_opts": "",
-      "solv_opts": "-p 7",
-      "parallel": true
+      "solv_opts": "-p 6",
+      "n_threads": 6
     },{
       "version_id": "gecode-p7",
       "name": "Gecode (-p 7)",
       "conv_opts": "",
       "solv_opts": "-p 7",
-      "parallel": true
+      "n_threads": 7
     },
     {
       "version_id": "gecode-p8",
       "name": "Gecode (-p 8)",
       "conv_opts": "",
       "solv_opts": "-p 8",
-      "parallel": true
+      "n_threads": 8
     }
   ]
 }
