@@ -1,12 +1,13 @@
 {
-  "tag": "chuffed",
+  "solver_id": "chuffed",
   
   "versions": [
     {
-      "id": "chuffed",
+      "version_id": "chuffed",
       "name": "Chuffed",
       "conv_opts": "",
-      "solv_opts": ""
+      "solv_opts": "",
+      "parallel": false
     }
   ]
 }

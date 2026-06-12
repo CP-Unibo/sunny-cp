@@ -23,22 +23,23 @@ solvers_path = SUNNY_HOME + '/solvers/'
 solver_files = [
     f for f in os.walk(solvers_path).__next__()[2] if f.endswith('.solv')
 ]
-DEF_PFOLIO = {}
+ALL_SOLVERS = {}
 for solver_file in solver_files:
     json_dict = json.load(open(solvers_path + solver_file))
     versions = json_dict['versions']
-    tag = json_dict['tag']
+    solver_id = json_dict['solver_id']
     for solver in versions:
         print('Adding solver', solver['name'])
-        solv_id = solver['id']
-        DEF_PFOLIO[solv_id] = {
-            'solver': tag,
+        version_id = solver['version_id']
+        ALL_SOLVERS[version_id] = {
+            'solver_id': solver_id,
             'name': solver['name'],
             'conv_opts': solver['conv_opts'],
-            'solv_opts': solver['solv_opts']
+            'solv_opts': solver['solv_opts'],
+            'parallel': solver['parallel']
         }
         cmd = [
-            'minizinc', '-c', '--solver', tag, '--output-to-stdout',
+            'minizinc', '-c', '--solver', solver_id, '--output-to-stdout',
             '--no-output-ozn', solvers_path + 'constraint.mzn'
         ]
         proc = psutil.Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -54,7 +55,7 @@ for solver_file in solver_files:
                 val = line[idx + len(intro):]
             elif 'constraint' in line:
                 line = line.replace('X_INTRODUCED_0_', val)
-                constraint = DEF_PFOLIO[solv_id]['constraint'] = line
+                constraint = ALL_SOLVERS[version_id]['constraint'] = line
                 break
-pfolio_file.write('DEF_PFOLIO = ' + str(DEF_PFOLIO))
+pfolio_file.write('ALL_SOLVERS = ' + str(ALL_SOLVERS))
 pfolio_file.write('\n\n')

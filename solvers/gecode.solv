@@ -1,30 +1,61 @@
 {
-  "tag": "gecode",
+  "solver_id": "gecode",
   
   "versions": [
     {
-      "id": "gecode",
+      "version_id": "gecode",
       "name": "Gecode",
       "conv_opts": "",
-      "solv_opts": ""
+      "solv_opts": "",
+      "parallel": false
     },
     {
-      "id": "gecode-p2",
+      "version_id": "gecode-p2",
       "name": "Gecode (-p 2)",
       "conv_opts": "",
-      "solv_opts": "-p 2"
+      "solv_opts": "-p 2",
+      "parallel": true
     },
     {
-      "id": "gecode-p3",
+      "version_id": "gecode-p3",
       "name": "Gecode (-p 3)",
       "conv_opts": "",
-      "solv_opts": "-p 3"
+      "solv_opts": "-p 3",
+      "parallel": true
     },
     {
-      "id": "gecode-p4",
+      "version_id": "gecode-p4",
       "name": "Gecode (-p 4)",
       "conv_opts": "",
-      "solv_opts": "-p 4"
+      "solv_opts": "-p 4",
+      "parallel": true
+    },
+    {
+      "version_id": "gecode-p5",
+      "name": "Gecode (-p 5)",
+      "conv_opts": "",
+      "solv_opts": "-p 5",
+      "parallel": true
+    },
+    {
+      "version_id": "gecode-p6",
+      "name": "Gecode (-p 6)",
+      "conv_opts": "",
+      "solv_opts": "-p 7",
+      "parallel": true
+    },{
+      "version_id": "gecode-p7",
+      "name": "Gecode (-p 7)",
+      "conv_opts": "",
+      "solv_opts": "-p 7",
+      "parallel": true
+    },
+    {
+      "version_id": "gecode-p8",
+      "name": "Gecode (-p 8)",
+      "conv_opts": "",
+      "solv_opts": "-p 8",
+      "parallel": true
     }
   ]
 }

@@ -1,60 +1,69 @@
 {
-  "tag": "cp-sat",
+  "solver_id": "cp-sat",
   
   "versions": [
     {
-      "id": "cp-sat",
+      "version_id": "cp-sat",
       "name": "ORTools CP-SAT",
       "conv_opts": "",
-      "solv_opts": ""
+      "solv_opts": "",
+      "parallel": false
     },
     {
-      "id": "cp-sat-p2",
+      "version_id": "cp-sat-p2",
       "name": "ORTools CP-SAT (num_workers:2)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:2"
+      "solv_opts": "--params num_workers:2",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p3",
+      "version_id": "cp-sat-p3",
       "name": "ORTools CP-SAT (num_workers:3)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:3"
+      "solv_opts": "--params num_workers:3",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p4",
+      "version_id": "cp-sat-p4",
       "name": "ORTools CP-SAT (num_workers:4)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:4"
+      "solv_opts": "--params num_workers:4",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p5",
+      "version_id": "cp-sat-p5",
       "name": "ORTools CP-SAT (num_workers:5)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:5"
+      "solv_opts": "--params num_workers:5",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p6",
+      "version_id": "cp-sat-p6",
       "name": "ORTools CP-SAT (num_workers:6)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:6"
+      "solv_opts": "--params num_workers:6",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p7",
+      "version_id": "cp-sat-p7",
       "name": "ORTools CP-SAT (num_workers:7)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:7"
+      "solv_opts": "--params num_workers:7",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p7",
+      "version_id": "cp-sat-p7",
       "name": "ORTools CP-SAT (num_workers:7)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:7"
+      "solv_opts": "--params num_workers:7",
+      "parallel": true
     },
     {
-      "id": "cp-sat-p8",
+      "version_id": "cp-sat-p8",
       "name": "ORTools CP-SAT (num_workers:8)",
       "conv_opts": "",
-      "solv_opts": "--params num_workers:8"
+      "solv_opts": "--params num_workers:8",
+      "parallel": true
     }
   ]
 }

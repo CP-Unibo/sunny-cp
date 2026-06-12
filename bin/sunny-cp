@@ -4,7 +4,9 @@ sunny-cp executable module.
 '''
 
 import os
+import re
 import sys
+import copy
 import time
 import fcntl
 import psutil
@@ -160,16 +162,46 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     run_solver(solver, problem)
                     continue
                 else:
+                    assert(len(RUNNING_SOLVERS) > 1)
                     print('%', solver.name(),
                           'reached the maximum number of restarts!')
                     print('% Killing solver', solver.name())
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
                     if len(RUNNING_SOLVERS) == 1:
-                        print(f'% {RUNNING_SOLVERS[0].name()} only survivor')
-                        # FIXME: Do something here?
-                    continue
-
+                        solver = RUNNING_SOLVERS[0]
+                        solv = solver.name()
+                        print(f'% {solv} only survivor')
+                        n = os.cpu_count()
+                        new_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
+                        new_solver = RunningSolver(
+                            solver.solv_dict, problem.solve, new_fzn, 
+                            solver.all_opt, solver.free_opt, solver.wait_time, 
+                            solver.restart_time, max(solver.timeout - 
+                            (time.time() - solver.start_time), 0),
+                            solver.max_restarts
+                        )
+                        solv_id = solver.solv_dict['version_id']
+                        match = re.search(r"^(.*)-p(\d+)$", solv_id)
+                        if match:
+                            # Last solver is running on multiple cores.
+                            n -= int(match.group(2))
+                            print(n)
+                            assert(n > 0)
+                            solv_p = match.group(1) + (f'-p{n}' if n > 1 else '')
+                            tmp_fzn = tempfile.NamedTemporaryFile().name + '.fzn'
+                            new_solver.solv_dict = ALL_SOLVERS[solv_p]
+                        else:
+                            # Last solver is running on single core.
+                            n -= 1                            
+                            solv_p = f'{solver.solv_dict["solver_id"]}' + \
+                                     (f'-p{n}' if n > 1 else '')
+                            print('%',solv_p, ALL_SOLVERS)
+                            if solv_p in ALL_SOLVERS:
+                                new_solver.solv_dict = ALL_SOLVERS[solv_p]
+                            # FIXME: else: run n-1 different copies of solver?
+                        run_solver(new_solver, problem)
+                        continue
 
 def presolve(
     schedule, problem, cores, mem_limit, all_opt, check, extractor=None,
@@ -262,24 +294,15 @@ def presolve(
             if solver.status == 'flatzinc' \
             and problem.bound_better_than(solver.obj_value) \
             and time.time() - solver.solution_time > solver.restart_time:
-                if solver.num_restarts < solver.max_restarts:
-                    solver.num_restarts += 1
-                    send_signal_solver(signal.SIGKILL, solver)
-                    RUNNING_SOLVERS.remove(solver)
-                    print(f'% Restarting {solver.name()} after ' + \
-                          f'{time.time() - solver.solution_time}s inactivity'+ \
-                          f' (restart no. {solver.num_restarts})')
-                    solver.timeout = max(
-                        solver.timeout - (time.time() - solver.start_time), 0
-                    )
-                    run_solver(solver, problem)
-                    continue
-                else:
-                    print(f'% {solver.name()} reached maximum no. of restarts!')
-                    print(f'% Killing solver {solver.name()}')
-                    send_signal_solver(signal.SIGKILL, solver)
-                    RUNNING_SOLVERS.remove(solver)
-                    continue
+                send_signal_solver(signal.SIGKILL, solver)
+                RUNNING_SOLVERS.remove(solver)
+                print(f'% Restarting {solver.name()} after ' + \
+                      f'{time.time() - solver.solution_time}s inactivity')
+                solver.timeout = max(
+                    solver.timeout - (time.time() - solver.start_time), 0
+                )
+                run_solver(solver, problem)
+                continue
 
     return neighbours, time.time() - start_time, black_list
 
@@ -366,7 +389,7 @@ def check_solution(solver, problem, solution, bound):
     if 'model inconsistency detected' in err or not os.path.exists(tmp_fzn):
         return False
 
-    solv = DEF_PFOLIO[solver]
+    solv = ALL_SOLVERS[solver]
     inf = float('inf')
     rs = RunningSolver(
         solv, problem.solve, tmp_fzn, '', inf, inf, inf, False, inf
@@ -637,7 +660,7 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
     global TMP_FILES
     running_schedule = []
     for (s, t) in schedule:
-        so = DEF_PFOLIO[s]
+        so = ALL_SOLVERS[s]
         fzn_path = tmp_id + '.' + s + '.fzn'
         ao = '-a' if all_opt else ''
         fo = '-f' if free_opt else ''
@@ -665,7 +688,7 @@ def main(args):
         print('%%%%% Pre-solving %%%%%')
         if cores >= len(pfolio):
             # If the number of specified cores exceeds the portfolio size, then
-            # no prediction is needed: we simply allocate a core per solver.
+            # no prediction is needed.
             print('% Features extraction not needed!')
             extractor = None
             lims = None
@@ -727,9 +750,6 @@ def main(args):
         schedule = init_schedule(
             par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
         )
-        for s in SUSP_SOLVERS:
-            print(f'% Resetting no. of restarts for {s.name()}')
-            s.num_restarts = 0
         solve(schedule, problem, cores, mem_limit, all_opt, check)
 
     except Exception as e:

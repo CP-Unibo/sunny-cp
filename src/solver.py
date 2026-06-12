@@ -15,7 +15,7 @@ class Solver:
     """
 
     # Id. of the solver, used as argument for the --solver MiniZinc parameter.
-    solver = ''
+    solver_id = ''
     # String representation of the solver, returned by __str__ method.
     name = ''
     # String of additional options for solving the FlatZinc instance.
@@ -114,7 +114,7 @@ class RunningSolver:
             self.obj_value = float('+inf')
         elif solve == 'max':
             self.obj_value = float('-inf')
-
+    
     def name(self):
         """
         Returns the name of the running solver.
@@ -139,14 +139,14 @@ class RunningSolver:
         by using solver-specific redefinitions.
         """
         return (f'minizinc -c --output-ozn-to-file {pb.ozn_path} --solver ' + 
-                f"{self.solv_dict['solver']} {self.solv_dict['conv_opts']} " + 
+                f"{self.solv_dict['solver_id']} {self.solv_dict['conv_opts']} " + 
                 f'{pb.mzn_path} {pb.dzn_path} -o {self.fzn_path}').split()
 
     def flatzinc_cmd(self, pb):
         """
         Returns the command for executing the FlatZinc model.
         """
-        return (f"minizinc --solver {self.solv_dict['solver']} " +
+        return (f"minizinc --solver {self.solv_dict['solver_id']} " +
                 f"{self.solv_dict['solv_opts']} {self.all_opt} {self.free_opt} " +
                 f'{self.fzn_path}').split() #| minizinc --ozn-file {pb.ozn_path}').split()
 

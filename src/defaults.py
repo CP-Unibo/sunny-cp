@@ -11,7 +11,9 @@ DEF_K = -1
 
 DEF_TOUT = 1200
 
-DEF_BACKUP = 'chuffed'
+DEF_PFOLIO = ['cp-sat', 'chuffed', 'gecode', 'highs']
+
+DEF_BACKUP = 'cp-sat'
 
 DEF_STATIC = []
 

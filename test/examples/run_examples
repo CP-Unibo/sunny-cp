@@ -19,7 +19,7 @@ do
   echo "Solving $m: minizinc -c $m --solver gecode --output-ozn-to-file $OZN -o $FZN"
   minizinc -c $m --output-ozn-to-file --solver gecode $OZN -o $FZN
   cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m"
-  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m 1>$OUT 2>$ERR
+  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m | minizinc --ozn-file $OZN 1>$OUT 2>$ERR
   ret=$?
   cat $OUT | grep -v %
   echo '********** Instance: '$cmd >> $OUTPUT

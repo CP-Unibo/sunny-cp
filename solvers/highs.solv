@@ -1,12 +1,13 @@
 {
-  "tag": "highs",
+  "solver_id": "highs",
   
   "versions": [
     {
-      "id": "highs",
+      "version_id": "highs",
       "name": "HiGHS",
       "conv_opts": "-O3",
-      "solv_opts": ""
+      "solv_opts": "",
+      "parallel": false
     }
   ]
 }

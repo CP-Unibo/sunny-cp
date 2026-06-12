@@ -141,6 +141,7 @@ Helper Options
     is ignored if the problem is a COP.
 '''
 
+import os
 import sys
 import getopt
 from socket import gethostname
@@ -157,7 +158,8 @@ def parse_arguments(args):
     """
 
     # Get the arguments and parse the input model to get solve information.
-    pfolio = DEF_PFOLIO.keys()
+    n = os.cpu_count()
+    pfolio = DEF_PFOLIO
     mzn, dzn, opts = get_args(args, pfolio)
     solve = get_solve(mzn)
 
@@ -180,7 +182,7 @@ def parse_arguments(args):
         'wait_time': DEF_WAIT_TIME,
         'restart_time': DEF_RESTART_TIME,
         'max_restarts': DEF_RESTARTS
-    }) for s in pfolio)
+    }) for s in ALL_SOLVERS)
     if solve == 'sat':
         kb = DEF_KB_CSP
         lims = DEF_LIMS_CSP
