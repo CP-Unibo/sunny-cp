@@ -3,6 +3,7 @@
 sunny-cp executable module.
 '''
 
+import errno
 import os
 import re
 import sys
@@ -35,6 +36,12 @@ KEEP = False
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
 SLEEP_TIME = 0.1
+# Bytes read from each solver stdout pipe at a time.
+READ_CHUNK_SIZE = 64 * 1024
+# Avoid spending an entire loop iteration draining one very chatty solver.
+MAX_READ_CHUNKS = 16
+# Partial stdout lines, keyed by child process pid.
+STDOUT_BUFFERS = {}
 # Initial lower bound of the problem to be solved.
 LOWER_BOUND = float('-inf')
 # Initial lower bound of the problem to be solved.
@@ -364,12 +371,56 @@ def run_solver(solver, problem):
 
 def read_lines(proc):
     """
-    Returns the stream of the read lines of a process.
+    Return complete stdout lines currently available from a process.
+
+    FlatZinc solvers are started with stdout=PIPE and the file descriptor is
+    set to non-blocking mode.  A non-blocking read can stop in the middle of a
+    line, so incomplete lines are buffered until the next call.  When EOF is
+    reached, the remaining partial line is flushed.
     """
-    try:
-        return proc.stdout.read()
-    except Exception as _:
-        return ''
+    if proc.stdout is None:
+        return b''
+
+    chunks = []
+    pid = proc.pid
+
+    for _ in range(MAX_READ_CHUNKS):
+        try:
+            chunk = os.read(proc.stdout.fileno(), READ_CHUNK_SIZE)
+        except BlockingIOError:
+            break
+        except InterruptedError:
+            continue
+        except OSError as exc:
+            if exc.errno in {errno.EAGAIN, errno.EWOULDBLOCK}:
+                break
+            if exc.errno == errno.EBADF:
+                tail = STDOUT_BUFFERS.pop(pid, b'')
+                return tail + b''.join(chunks)
+            STDOUT_BUFFERS.pop(pid, None)
+            raise
+
+        if not chunk:
+            # EOF: flush any unterminated final line.
+            tail = STDOUT_BUFFERS.pop(pid, b'')
+            return tail + b''.join(chunks)
+
+        chunks.append(chunk)
+
+    data = STDOUT_BUFFERS.pop(pid, b'') + b''.join(chunks)
+    if not data:
+        return b''
+
+    last_newline = data.rfind(b'\n')
+    if last_newline == -1:
+        STDOUT_BUFFERS[pid] = data
+        return b''
+
+    complete = data[:last_newline + 1]
+    tail = data[last_newline + 1:]
+    if tail:
+        STDOUT_BUFFERS[pid] = tail
+    return complete
 
 
 def check_solution(solver, problem, solution, bound):
