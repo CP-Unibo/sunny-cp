@@ -168,11 +168,11 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     print('% Killing solver', solver.name)
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
-                    if len(RUNNING_SOLVERS) == 1:
+                    n = os.cpu_count()
+                    if len(RUNNING_SOLVERS) == 1 and solver.n_threads <= n:
                         solver = RUNNING_SOLVERS[0]
                         solv_name = solver.name
                         print(f'% {solv_name} only survivor')
-                        n = os.cpu_count()
                         solv_id = solver.version_id
                         match = re.search(r"^(.*)-p(\d+)$", solv_id)
                         prefix = match.group(1) if match else solv_id
@@ -190,25 +190,25 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                             assert (match)
                             assert (int(match.group(2)) == solver.n_threads)
                             new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
-                            new_info = ALL_SOLVERS[new_version]
-                        
-                        new_path = solver.fzn_path.replace(prefix, new_version)
-                        if new_info['version_id'] == solver.version_id:
-                            n = ALL_SOLVERS[new_info['version_id']]['replica_id']
-                            n += 1
-                            if n == 1:
-                                new_info['name'] += f' (replica no. {n})'
-                            else:
-                                new_info['name'] = re.sub(
-                                    r"\(replica no\. (\d+)\)", lambda m :
-                                    f"(replica no. {int(m.group(1)) + 1})",
-                                    new_info['name']
-                                )
-                            ALL_SOLVERS[new_info['version_id']]['replica_id'] = n
-                        new_solv = Solver(new_info, solve, new_path, \
+                            new_info = ALL_SOLVERS[new_version]                        
+                        n = ALL_SOLVERS[new_info['version_id']]['replica_id']
+                        n += 1
+                        if n == 1:
+                            new_info['name'] += f' (replica no. {n})'
+                        else:
+                            new_info['name'] = re.sub(
+                                r"\(replica no\. (\d+)\)", lambda m :
+                                f"(replica no. {int(m.group(1)) + 1})",
+                                new_info['name']
+                            )
+                        ALL_SOLVERS[new_info['version_id']]['replica_id'] = n
+                        new_solv = Solver(new_info, solver.solve, solver.fzn_path, \
                                           solver.all_opt, solver.free_opt, \
                                           solver.wait_time, solver.restart_time, \
-                                          solver.timeout, solver.max_restarts)
+                                          solver.timeout, solver.max_restarts, \
+                                          solver.obj_var)                       
+                        print(f'% Adding {new_solv.name}')
+                        new_solv.status = 'flatzinc'
                         run_solver(new_solv, problem)
                         continue
 
@@ -333,7 +333,7 @@ def run_solver(solver, problem):
         solver.status = 'mzn2fzn'
     elif solver.status == 'mzn2fzn':
         if problem.isCOP() and not solver.obj_var:
-            # Extract and set the objective variable from the FlatZinc model.
+            # Extract and set the objective variable from the FlatZinc instance.
             solver.set_obj_var(problem, LOWER_BOUND, UPPER_BOUND)
         cmd = solver.flatzinc_cmd(problem)
         solver.status = 'flatzinc'
@@ -342,8 +342,7 @@ def run_solver(solver, problem):
            problem.bound_better_than(solver.obj_value):
             # Starts the solver with a better bound.
             bound = problem.best_bound
-            print('% Injecting value', bound, 'to', solver.name,
-                  'FlatZinc model')
+            print('% Injecting value', bound, 'to', solver.name, 'FlatZinc instance')
             solver.inject_bound(bound)
         cmd = solver.flatzinc_cmd(problem)
 

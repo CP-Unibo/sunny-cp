@@ -90,7 +90,7 @@ class Solver:
 
     def __init__(
         self, solver_info, solve, fzn_path, all_opt, free_opt, wait_time,
-        restart_time, timeout, max_restarts
+        restart_time, timeout, max_restarts, obj_var = ''
     ):
         self.name = solver_info['name']
         self.n_threads = solver_info['n_threads']
@@ -109,12 +109,15 @@ class Solver:
         self.timeout = timeout
         self.max_restarts = max_restarts
         
+        self.status = 'ready'
         self.num_restarts = 0
+        if obj_var:
+            self.obj_var = obj_var
         if solve == 'min':
             self.obj_value = float('+inf')
         elif solve == 'max':
             self.obj_value = float('-inf')
-        self.status = 'ready'
+        
        
     def mem_percent(self):
         """
