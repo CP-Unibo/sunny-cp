@@ -13,7 +13,6 @@ class Solver:
     """
     Solver is the abstraction of a solver instance.
     """
-
     # Id. of the solver, used as argument for the --solver MiniZinc parameter.
     solver_id = ''
     # Id. defining a particular version of the solver.
@@ -92,7 +91,7 @@ class Solver:
     def __init__(
         self, solver_info, solve, fzn_path, all_opt, free_opt, wait_time,
         restart_time, timeout, max_restarts
-    ):        
+    ):
         self.name = solver_info['name']
         self.n_threads = solver_info['n_threads']
         self.conv_opts = solver_info['conv_opts']

@@ -170,35 +170,46 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     RUNNING_SOLVERS.remove(solver)
                     if len(RUNNING_SOLVERS) == 1:
                         solver = RUNNING_SOLVERS[0]
-                        print(solver)
                         solv_name = solver.name
                         print(f'% {solv_name} only survivor')
                         n = os.cpu_count()
                         solv_id = solver.version_id
                         match = re.search(r"^(.*)-p(\d+)$", solv_id)
-                        prefix = match.group(1)
+                        prefix = match.group(1) if match else solv_id
+                        n -= solver.n_threads
                         if solver.n_threads == 1:
                             # Last solver is single-threaded.
-                            n -= 1                            
+                            assert (match is None)
                             new_version = f'{solv_id}' + (f'-p{n}' if n > 1 else '')
                             new_info = ALL_SOLVERS[new_version] \
                                 if new_version in ALL_SOLVERS else ALL_SOLVERS[prefix]
                             # FIXME: otherwise run n-1 different copies of solver?
                         else:
                             # Last solver is multi-threaded.
-                            n -= solver.n_threads
                             assert (n > 0)
                             assert (match)
                             assert (int(match.group(2)) == solver.n_threads)
-                            new_version = ALL_SOLVERS[prefix] \
-                               if n == 1 else f'{prefix}-p{n}'                        
+                            new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
                             new_info = ALL_SOLVERS[new_version]
-                        tmp_id = solver.tmp_id.replace(prefix, new_version)
-                        new_solv = Solver(new_info, solve, tmp_id, solver.all_opt, \
-                                          solver.free_opt, solver.wait_time, \
-                                          solver.restart_time, solver.timeout, \
-                                          solver.max_restarts)
-                        run_solver(new_solver, problem)
+                        
+                        new_path = solver.fzn_path.replace(prefix, new_version)
+                        if new_info['version_id'] == solver.version_id:
+                            n = ALL_SOLVERS[new_info['version_id']]['replica_id']
+                            n += 1
+                            if n == 1:
+                                new_info['name'] += f' (replica no. {n})'
+                            else:
+                                new_info['name'] = re.sub(
+                                    r"\(replica no\. (\d+)\)", lambda m :
+                                    f"(replica no. {int(m.group(1)) + 1})",
+                                    new_info['name']
+                                )
+                            ALL_SOLVERS[new_info['version_id']]['replica_id'] = n
+                        new_solv = Solver(new_info, solve, new_path, \
+                                          solver.all_opt, solver.free_opt, \
+                                          solver.wait_time, solver.restart_time, \
+                                          solver.timeout, solver.max_restarts)
+                        run_solver(new_solv, problem)
                         continue
 
 def presolve(

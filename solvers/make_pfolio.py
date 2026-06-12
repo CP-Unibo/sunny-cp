@@ -37,7 +37,8 @@ for solver_file in solver_files:
             'version_id': version_id,            
             'conv_opts': solver['conv_opts'],
             'solv_opts': solver['solv_opts'],
-            'n_threads': solver['n_threads']
+            'n_threads': solver['n_threads'],
+            'replica_id': 0
         }
         cmd = [
             'minizinc', '-c', '--solver', solver_id, '--output-to-stdout',
