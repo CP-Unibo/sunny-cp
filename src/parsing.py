@@ -117,6 +117,9 @@ Solvers Options
   --max-restarts-<SOLVER>
     As above, with the difference that the option is set only for <SOLVER_NAME>
     and not for all the solvers of the portfolio.
+  --kill-idle
+    Kills a solver instead of restarting it again if it has produced no solution
+    and has already been restarted at least once. Unset by default.
 
 Helper Options
 ==============
@@ -176,6 +179,7 @@ def parse_arguments(args):
     mem_limit = DEF_MEM_LIMIT
     all_opt = DEF_ALL
     free_opt = DEF_FREE
+    kill_idle = DEF_KILL_IDLE
     lb = DEF_LB
     ub = DEF_UB
     solver_options = dict((s, {
@@ -282,6 +286,8 @@ def parse_arguments(args):
             all_opt = True
         elif o == '-f':
             free_opt = True
+        elif o == '--kill-idle':
+            kill_idle = True
         elif o == '-l' and solve != 'sat':
             lb = int(a)
         elif o == '-u' and solve != 'sat':
@@ -341,7 +347,7 @@ def parse_arguments(args):
     problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
     return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
         cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, \
-        lb, ub, check
+        lb, ub, check, kill_idle
 
 
 def get_args(args):
@@ -366,7 +372,7 @@ def get_args(args):
         cop_opts = ['cop-' + o + '=' for o in options + long_options] + \
             ['cop-a'] + ['cop-f']
         long_options = [o + '=' for o in long_options]
-        long_noval = ['help', 'keep', 'mzn']
+        long_noval = ['help', 'keep', 'mzn', 'kill-idle']
         long_noval += ['csp-' + o for o in long_noval]
         long_noval += ['cop-' + o for o in long_noval]
         long_options += long_noval + csp_opts + cop_opts

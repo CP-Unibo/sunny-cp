@@ -50,8 +50,8 @@ class Problem:
         Returns True iff the current best bound is better than bound.
         """
         return self.isCOP() and bound is not None and (
-            self.solve == 'min' and self.best_bound < bound or
-            self.solve == 'max' and self.best_bound > bound
+            (self.solve == 'min' and self.best_bound < bound) or
+            (self.solve == 'max' and self.best_bound > bound)
         )
 
     def bound_worse_than(self, bound):
@@ -60,8 +60,8 @@ class Problem:
         this means that the current best bound should be updated.
         """
         return self.isCOP() and bound is not None and (
-            self.solve == 'min' and self.best_bound > bound or
-            self.solve == 'max' and self.best_bound < bound
+            (self.solve == 'min' and self.best_bound > bound) or
+            (self.solve == 'max' and self.best_bound < bound)
         )
 
     def __init__(self, mzn_path, dzn_path, ozn_path, solve):

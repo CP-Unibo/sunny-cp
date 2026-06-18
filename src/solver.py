@@ -85,6 +85,9 @@ class Solver:
     # Maximum number of solver restarts allowed.
     max_restarts = -1
 
+    # The solver has found at least a solution.
+    found_solution = False
+
     def __init__(self):
         pass
 

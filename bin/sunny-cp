@@ -35,7 +35,7 @@ KEEP = False
 # List of temporary file paths.
 TMP_FILES = []
 # Sleep time (in seconds) for multiprocessing.
-SLEEP_TIME = 0.1
+SLEEP_TIME = 0.01
 # Bytes read from each solver stdout pipe at a time.
 READ_CHUNK_SIZE = 64 * 1024
 # Avoid spending an entire loop iteration draining one very chatty solver.
@@ -97,7 +97,7 @@ def clean():
                 os.remove(f)
 
 
-def solve(schedule, problem, cores, mem_limit, all_opt, check):
+def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
     """
     Runs (possibly in parallel on different cores) the solving phase.
     """
@@ -131,7 +131,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                                    schedule)
                 if not p:
                     continue
-
+                    
             # Solver process terminated.
             if solver.process.poll() is not None:
                 if solver.status == 'flatzinc':
@@ -156,6 +156,21 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
             if solver.status == 'flatzinc' \
             and problem.bound_better_than(solver.obj_value) \
             and time.time() - solver.solution_time > solver.restart_time:
+            
+                if kill_idle and solver.num_restarts >= 1 \
+                             and not solver.found_solution:
+                    print(f'% Killing idle solver {solver.name}: '
+                          f'no solution after {solver.num_restarts} restart(s)')
+                    assert (solver.num_restarts == 1)
+                    send_signal_solver(signal.SIGKILL, solver)
+                    RUNNING_SOLVERS.remove(solver)
+                    if schedule:
+                        new_solver = schedule.pop(0)
+                        new_solver.timeout += max(solver.timeout - (time.time() - solver.start_time), 0)
+                        run_solver(new_solver, problem)
+                    continue
+
+            
                 if solver.num_restarts < solver.max_restarts:
                     solver.num_restarts += 1
                     send_signal_solver(signal.SIGKILL, solver)
@@ -176,6 +191,13 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                     send_signal_solver(signal.SIGKILL, solver)
                     RUNNING_SOLVERS.remove(solver)
                     n = os.cpu_count()
+                    
+                    if schedule:
+                        new_solver = schedule.pop(0)
+                        new_solver.timeout += max(solver.timeout - (time.time() - solver.start_time), 0)
+                        run_solver(new_solver, problem)
+                        continue
+                        
                     if len(RUNNING_SOLVERS) == 1 and solver.n_threads <= n:
                         solver = RUNNING_SOLVERS[0]
                         solv_name = solver.name
@@ -193,7 +215,6 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                             # FIXME: otherwise run n-1 different copies of solver?
                         else:
                             # Last solver is multi-threaded.
-                            assert (n > 0)
                             assert (match)
                             assert (int(match.group(2)) == solver.n_threads)
                             new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
@@ -213,9 +234,37 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check):
                                           solver.all_opt, solver.free_opt, \
                                           solver.wait_time, solver.restart_time, \
                                           solver.timeout, solver.max_restarts, \
-                                          solver.obj_var)                       
+                                          None)                       
                         print(f'% Adding {new_solv.name}')
-                        new_solv.status = 'flatzinc'
+                        if new_solv.solver_id == 'cp-sat':                            
+                            # FIXME: Experimental support for cp-sat warm start.
+                            ws_vars = ''
+                            ws_vals = ''
+                            for var, val in solver.solution.items():
+                                if 'X_INTRODUCED_' not in var and '%' not in var:
+                                     ws_vars += (var if '[' in val else '[' + var + ']') + ' ++ '
+                                     ws_vals += (val if '[' in val else '[' + val + ']') + ' ++ '
+                            warm_start = f':: warm_start({ws_vars + "[]"}, {ws_vals + "[]"})'
+                            tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
+                            with open(problem.mzn_path, 'r') as infile:
+                                with open(tmp_mzn, 'w') as outfile:
+                                    for line in infile.readlines():
+                                        line = line.strip()
+                                        if not line or line.startswith('%'):
+                                            continue
+                                        tokens = line.replace('::', ' ').replace(';', '').split()
+                                        if 'solve' in tokens:
+                                            line = line.replace('solve', f'solve {warm_start} ')
+                                        outfile.write(f'{line}\n')
+                                    i = '<' if problem.solve == 'min' else '>'
+                                    outfile.write(f'constraint _objective {i}= {problem.best_bound};\n')
+                                    new_solv.obj_value = problem.best_bound
+                            problem.mzn_path = tmp_mzn
+                            new_solv.solv_opts += " --params repair_hint:true --params hint_conflict_limit:100000 "
+                            new_solv.status = 'ready'
+                            print(f'% New mzn: {tmp_mzn}')
+                        else:
+                            new_solv.status = 'flatzinc'
                         run_solver(new_solv, problem)
                         continue
 
@@ -471,6 +520,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
     else:
         trusted_solver = None
     for line in lines.decode().split('\n'):
+        
         if line == '----------':
             if problem.isCSP():
                 print('%', solver.name, 'found a solution')
@@ -521,11 +571,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         if var != solver.obj_var or solver.output_var:
                             print(var + ' = ' + val + ';')
                     print(line)
-                    solver.solution = {}
+                    #solver.solution = {}
                 problem.best_solver = solver.name
-#            else:
-#                print(f'% {solver.name} found sub-optimal solution with ' +
-#                      f'objective bound {solver.obj_value}')
             solver.solution_time = time.time()
             
         elif line == '==========' or line == '=====UNSATISFIABLE=====':
@@ -569,11 +616,19 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
             clean()
             sys.exit(0)
         elif ' = ' in line:
+            solver.found_solution = True
             idx = line.index(' = ')
             val = line[idx + 3:].split(';')[0]
             var = line[:idx]
             if val and var == solver.obj_var:
                 solver.obj_value = int(val)
+                if problem.best_bound == solver.obj_value or \
+                   problem.bound_better_than(solver.obj_value):
+#                    print(f'% {solver.name} found sub-optimal solution with ' +
+#                      f'objective bound {solver.obj_value}')
+                    solver.solution_time = time.time()
+                    solver.solution = {}
+                    return True
             solver.solution[var] = val
             solver.solution_time = time.time()
     return True
@@ -735,7 +790,7 @@ def main(args):
         # Input arguments parsing and initialization.
         problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
             cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
-            LOWER_BOUND, UPPER_BOUND, check = parse_arguments(args)
+            LOWER_BOUND, UPPER_BOUND, check, kill_idle = parse_arguments(args)
         TMP_FILES = [problem.ozn_path]
         static = init_schedule(
             static, solver_options, problem.solve, tmp_id, all_opt, free_opt
@@ -806,7 +861,7 @@ def main(args):
         schedule = init_schedule(
             par_sched, solver_options, problem.solve, tmp_id, all_opt, free_opt
         )
-        solve(schedule, problem, cores, mem_limit, all_opt, check)
+        solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle)
 
     except Exception as e:
         print('% Unexpected Termination of sunny-cp.', file=sys.stderr)
