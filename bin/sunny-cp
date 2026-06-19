@@ -234,7 +234,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                         new_solv = Solver(new_info, solver.solve, solver.fzn_path, \
                                           solver.all_opt, solver.free_opt, \
                                           solver.wait_time, solver.restart_time, \
-                                          solver.timeout, solver.max_restarts, \
+                                          solver.timeout, 0, \
                                           None)                       
                         log(f'Adding {new_solv.name}')
                         if new_solv.solver_id == 'cp-sat':                            
