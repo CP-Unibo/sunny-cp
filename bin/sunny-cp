@@ -261,7 +261,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                                     outfile.write(f'constraint _objective {i}= {problem.best_bound};\n')
                                     new_solv.obj_value = problem.best_bound
                             problem.mzn_path = tmp_mzn
-                            new_solv.solv_opts += " --params repair_hint:true --params hint_conflict_limit:100000 "
+                            new_solv.solv_opts += " --params repair_hint:true --params hint_conflict_limit:100000 --params random_seed:42"
                             new_solv.status = 'ready'
                             log(f'New mzn: {tmp_mzn}')
                         else:
