@@ -57,6 +57,62 @@
       "conv_opts": "",
       "solv_opts": "--params num_workers:8",
       "n_threads": 8
+    },
+    {
+      "version_id": "cp-sat-lin",
+      "name": "ORTools CP-SAT (linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "",
+      "n_threads": 1
+    },
+    {
+      "version_id": "cp-sat-p2-lin",
+      "name": "ORTools CP-SAT (num_workers:2, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:2",
+      "n_threads": 2
+    },
+    {
+      "version_id": "cp-sat-p3-lin",
+      "name": "ORTools CP-SAT (num_workers:3, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:3",
+      "n_threads": 3
+    },
+    {
+      "version_id": "cp-sat-p4-lin",
+      "name": "ORTools CP-SAT (num_workers:4, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:4",
+      "n_threads": 4
+    },
+    {
+      "version_id": "cp-sat-p5-lin",
+      "name": "ORTools CP-SAT (num_workers:5, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:5",
+      "n_threads": 5
+    },
+    {
+      "version_id": "cp-sat-p6-lin",
+      "name": "ORTools CP-SAT (num_workers:6, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:6",
+      "n_threads": 6
+    },
+    {
+      "version_id": "cp-sat-p7-lin",
+      "name": "ORTools CP-SAT (num_workers:7, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:7",
+      "n_threads": 7
+    },
+    {
+      "version_id": "cp-sat-p8-lin",
+      "name": "ORTools CP-SAT (num_workers:8, linear encoding)",
+      "conv_opts": " -G linear --time-limit 60000 ",
+      "solv_opts": "--params num_workers:8",
+      "n_threads": 8
     }
   ]
 }

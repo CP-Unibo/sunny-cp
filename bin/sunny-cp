@@ -11,6 +11,7 @@ import copy
 import time
 import fcntl
 import psutil
+import shutil
 import signal
 import tempfile
 import traceback
@@ -211,6 +212,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             # Last solver is single-threaded.
                             assert (match is None)
                             new_version = f'{solv_id}' + (f'-p{n}' if n > 1 else '')
+                            if solver.solver_id == 'cp-sat' and \
+                            not solver.version_id.endswith('-lin'):
+                                new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version] \
                                 if new_version in ALL_SOLVERS else ALL_SOLVERS[prefix]
                             # FIXME: otherwise run n-1 different copies of solver?
@@ -219,6 +223,9 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             assert (match)
                             assert (int(match.group(2)) == solver.n_threads)
                             new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
+                            if solver.solver_id == 'cp-sat' and \
+                            not solver.version_id.endswith('-lin'):
+                                new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version]                        
                         n = ALL_SOLVERS[new_info['version_id']]['replica_id']
                         n += 1
@@ -234,35 +241,43 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                         new_solv = Solver(new_info, solver.solve, solver.fzn_path, \
                                           solver.all_opt, solver.free_opt, \
                                           solver.wait_time, solver.restart_time, \
-                                          solver.timeout, 0, \
-                                          None)                       
+                                          solver.timeout, solver.max_restarts,
+                                          solver.obj_var)
                         log(f'Adding {new_solv.name}')
-                        if new_solv.solver_id == 'cp-sat':                            
-                            # FIXME: Experimental support for cp-sat warm start.
-                            ws_vars = ''
-                            ws_vals = ''
-                            for var, val in solver.solution.items():
-                                if 'X_INTRODUCED_' not in var and '%' not in var:
-                                     ws_vars += (var if '[' in val else '[' + var + ']') + ' ++ '
-                                     ws_vals += (val if '[' in val else '[' + val + ']') + ' ++ '
-                            warm_start = f':: warm_start({ws_vars + "[]"}, {ws_vals + "[]"})'
+                        if new_solv.solver_id == 'cp-sat' and not solver.version_id.endswith('-lin'):
                             tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
-                            with open(problem.mzn_path, 'r') as infile:
-                                with open(tmp_mzn, 'w') as outfile:
-                                    for line in infile.readlines():
-                                        line = line.strip()
-                                        if not line or line.startswith('%'):
-                                            continue
-                                        tokens = line.replace('::', ' ').replace(';', '').split()
-                                        if 'solve' in tokens:
-                                            line = line.replace('solve', f'solve {warm_start} ')
-                                        outfile.write(f'{line}\n')
-                                    i = '<' if problem.solve == 'min' else '>'
-                                    outfile.write(f'constraint _objective {i}= {problem.best_bound};\n')
-                                    new_solv.obj_value = problem.best_bound
+                            shutil.copyfile(problem.mzn_path, tmp_mzn)
+                            with open(tmp_mzn, 'a') as outfile:
+                                i = '<' if problem.solve == 'min' else '>'
+                                outfile.write(f'constraint _objective {i} {problem.best_bound};\n')
+                            new_solv.obj_var = None
                             problem.mzn_path = tmp_mzn
-                            new_solv.solv_opts += " --params repair_hint:true --params hint_conflict_limit:100000 --params random_seed:42"
-                            new_solv.status = 'ready'
+                                              
+                            # FIXME: Experimental support for cp-sat warm start on linearised problem.
+#                            ws_vars = ''
+#                            ws_vals = ''
+#                            for var, val in solver.solution.items():
+#                                if 'X_INTRODUCED_' not in var and '%' not in var:
+#                                     ws_vars += (var if '[' in val else '[' + var + ']') + ' ++ '
+#                                     ws_vals += (val if '[' in val else '[' + val + ']') + ' ++ '
+#                            warm_start = f':: warm_start({ws_vars + "[]"}, {ws_vals + "[]"})'
+#                            tmp_mzn = tempfile.NamedTemporaryFile().name + '.mzn'
+#                            with open(problem.mzn_path, 'r') as infile:
+#                                with open(tmp_mzn, 'w') as outfile:
+#                                    for line in infile.readlines():
+#                                        line = line.strip()
+#                                        if not line or line.startswith('%'):
+#                                            continue
+#                                        tokens = line.replace('::', ' ').replace(';', '').split()
+#                                        if 'solve' in tokens:
+#                                            line = line.replace('solve', f'solve {warm_start} ')
+#                                        outfile.write(f'{line}\n')
+#                                    i = '<' if problem.solve == 'min' else '>'
+#                                    outfile.write(f'constraint _objective {i}= {problem.best_bound};\n')
+#                                    new_solv.obj_value = problem.best_bound                            
+#                            problem.mzn_path = tmp_mzn
+#                            new_solv.solv_opts += " --params repair_hint:true --params hint_conflict_limit:100000 --params random_seed:42"                            
+                            new_solv.status = 'ready'                            
                             log(f'New mzn: {tmp_mzn}')
                         else:
                             new_solv.status = 'flatzinc'
