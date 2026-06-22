@@ -213,7 +213,8 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             assert (match is None)
                             new_version = f'{solv_id}' + (f'-p{n}' if n > 1 else '')
                             if solver.solver_id == 'cp-sat' and \
-                            not solver.version_id.endswith('-lin'):
+                            not solver.version_id.endswith('-lin') \
+                            and new_version + 'lin' in ALL_SOLVERS:
                                 new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version] \
                                 if new_version in ALL_SOLVERS else ALL_SOLVERS[prefix]
@@ -631,8 +632,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
             var = line[:idx]
             if val and var == solver.obj_var:
                 solver.obj_value = int(val)
-                if problem.best_bound == solver.obj_value or \
-                   problem.bound_better_than(solver.obj_value):
+                if problem.bound_better_than(solver.obj_value):
 #                    log(f'{solver.name} found sub-optimal solution with ' +
 #                      f'objective bound {solver.obj_value}')
                     solver.solution_time = time.time()
@@ -660,6 +660,16 @@ def solver_terminated(solver, problem, schedule):
         else:
             log(f'Error! MiniZinc model not converted by {solver.name}')
             del ALL_SOLVERS[solver.version_id]
+            print(f'% Removing solver {solver.name}')
+            if solver.version_id.endswith('-lin'):
+                bad_solvers = [
+                    s for (s, item) in ALL_SOLVERS.items() if s.endswith('-lin') \
+                    and item['solver_id'] == solver.solver_id
+                ]
+                for s in bad_solvers:
+                    print(f'% Removing also solver {s}')
+                    del ALL_SOLVERS[s]
+
             # Launch a new solver if any.
             for s in schedule + SUSP_SOLVERS:
                 if s.name == solver.name:
