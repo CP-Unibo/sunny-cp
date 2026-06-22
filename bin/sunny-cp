@@ -224,7 +224,8 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             assert (int(match.group(2)) == solver.n_threads)
                             new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
                             if solver.solver_id == 'cp-sat' and \
-                            not solver.version_id.endswith('-lin'):
+                            not solver.version_id.endswith('-lin') \
+                            and new_version + 'lin' in ALL_SOLVERS:
                                 new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version]                        
                         n = ALL_SOLVERS[new_info['version_id']]['replica_id']
@@ -658,6 +659,7 @@ def solver_terminated(solver, problem, schedule):
             run_solver(solver, problem)
         else:
             log(f'Error! MiniZinc model not converted by {solver.name}')
+            del ALL_SOLVERS[solver.version_id]
             # Launch a new solver if any.
             for s in schedule + SUSP_SOLVERS:
                 if s.name == solver.name:
