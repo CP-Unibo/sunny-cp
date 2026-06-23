@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --output-mode)
+      shift 2
+      ;;
+
+    --output-mode=*)
+      shift
+      ;;
+
+    --output-objective)
+      shift
+      ;;
+
+    --output-objective=*)
+      shift
+      ;;
+
+    --ozn-file)
+      shift 2
+      ;;
+
+    --ozn-file=*)
+      shift
+      ;;
+
+    --parallel)
+      # Consumed from /minizinc/par.mpc.
+      # Do not pass to SUNNY-CP.
+      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
+        shift 2
+      else
+        shift
+      fi
+      ;;
+
+    --parallel=*)
+      shift
+      ;;
+
+    -p)
+      # Also consume MiniZinc-style parallel flag if it appears.
+      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
+        shift 2
+      else
+        shift
+      fi
+      ;;
+
+    -p*)
+      shift
+      ;;
+
+    *)
+      ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ "${#ARGS[@]}" -lt 1 ]]; then
+  echo "Usage: minifolio <MZNfile> [<DZNfile> ...]" >&2
+  exit 2
+fi
+
+if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
+  printf 'MiniFolio command:' >&2
+  printf ' %q' sunny-cp \
+    -f \
+    --cop-a \
+    -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
+    --wait-time 10 \
+    --restart-time-gecode 10 \
+    --restart-time-chuffed 30 \
+    --restart-time-cp-sat-p3-lin 30 \
+    --restart-time-cp-sat-p3 300 \
+    --max-restarts-gecode 1 \
+    --max-restarts-chuffed 1 \
+    --max-restarts-cp-sat-p3-lin 2 \
+    --max-restarts-cp-sat-p3 2 \
+    "${ARGS[@]}" >&2
+  printf '\n' >&2
+fi
+
+exec sunny-cp \
+  -f \
+  --cop-a \
+  -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
+  --wait-time 10 \
+  --restart-time-gecode 10 \
+  --restart-time-chuffed 30 \
+  --restart-time-cp-sat-p3-lin 30 \
+  --restart-time-cp-sat-p3 300 \
+  --max-restarts-gecode 1 \
+  --max-restarts-chuffed 1 \
+  --max-restarts-cp-sat-p3-lin 2 \
+  --max-restarts-cp-sat-p3 2 \
+  "${ARGS[@]}"
