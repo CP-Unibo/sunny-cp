@@ -214,7 +214,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             new_version = f'{solv_id}' + (f'-p{n}' if n > 1 else '')
                             if solver.solver_id == 'cp-sat' and \
                             not solver.version_id.endswith('-lin') \
-                            and new_version + 'lin' in ALL_SOLVERS:
+                            and new_version + '-lin' in ALL_SOLVERS:
                                 new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version] \
                                 if new_version in ALL_SOLVERS else ALL_SOLVERS[prefix]
@@ -226,7 +226,7 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                             new_version = f'{prefix}' + (f'-p{n}' if n > 1 else '')
                             if solver.solver_id == 'cp-sat' and \
                             not solver.version_id.endswith('-lin') \
-                            and new_version + 'lin' in ALL_SOLVERS:
+                            and new_version + '-lin' in ALL_SOLVERS:
                                 new_version += '-lin'
                             new_info = ALL_SOLVERS[new_version]                        
                         n = ALL_SOLVERS[new_info['version_id']]['replica_id']
