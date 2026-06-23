@@ -660,14 +660,14 @@ def solver_terminated(solver, problem, schedule):
         else:
             log(f'Error! MiniZinc model not converted by {solver.name}')
             del ALL_SOLVERS[solver.version_id]
-            print(f'% Removing solver {solver.name}')
+            log(f'% Removing solver {solver.name}')
             if solver.version_id.endswith('-lin'):
                 bad_solvers = [
                     s for (s, item) in ALL_SOLVERS.items() if s.endswith('-lin') \
                     and item['solver_id'] == solver.solver_id
                 ]
                 for s in bad_solvers:
-                    print(f'% Removing also solver {s}')
+                    log(f'% Removing also solver {s}')
                     del ALL_SOLVERS[s]
 
             # Launch a new solver if any.
