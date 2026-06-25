@@ -74,7 +74,7 @@ fi
 echo 'OK!'
 
 echo 'Compiling python sources...'
-for f in `find src -name *.py` `find kb -name *.py` ./bin/sunny-cp
+for f in `find src -name *.py` `find kb -name *.py` `find bin -name *.py`
 do
   echo -n 'Compiling '$f'...'
   python3 $f --help 1>/dev/null
