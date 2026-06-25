@@ -6,7 +6,11 @@ ARGS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output-mode)
-      shift 2
+      if [[ $# -ge 2 ]]; then
+        shift 2
+      else
+        shift
+      fi
       ;;
 
     --output-mode=*)
@@ -14,7 +18,11 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --output-objective)
-      shift
+      if [[ $# -ge 2 ]]; then
+        shift 2
+      else
+        shift
+      fi
       ;;
 
     --output-objective=*)
@@ -22,7 +30,11 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --ozn-file)
-      shift 2
+      if [[ $# -ge 2 ]]; then
+        shift 2
+      else
+        shift
+      fi
       ;;
 
     --ozn-file=*)
@@ -30,8 +42,6 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --parallel)
-      # Consumed from /minizinc/par.mpc.
-      # Do not pass to SUNNY-CP.
       if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
         shift 2
       else
@@ -44,7 +54,6 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     -p)
-      # Also consume MiniZinc-style parallel flag if it appears.
       if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
         shift 2
       else
@@ -68,6 +77,28 @@ if [[ "${#ARGS[@]}" -lt 1 ]]; then
   exit 2
 fi
 
+TMPDIR="${TMPDIR:-/tmp}"
+WORKDIR="$(mktemp -d "$TMPDIR/minifolio.XXXXXX")"
+
+cleanup() {
+  rm -rf "$WORKDIR"
+}
+
+trap cleanup EXIT
+
+FZN_FILE="$WORKDIR/model.fzn"
+OZN_FILE="$WORKDIR/model.ozn"
+SUNNY_ERR="$WORKDIR/sunny.err"
+
+minizinc \
+  -c \
+  --solver gecode \
+  --output-ozn-to-file "$OZN_FILE" \
+  -o "$FZN_FILE" \
+  "${ARGS[@]}"
+
+rm -f "$FZN_FILE"
+
 if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
   printf 'MiniFolio command:' >&2
   printf ' %q' sunny-cp \
@@ -84,10 +115,12 @@ if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
     --max-restarts-cp-sat-p3-lin 2 \
     --max-restarts-cp-sat-p3 2 \
     "${ARGS[@]}" >&2
-  printf '\n' >&2
+  printf ' | minizinc --ozn-file %q\n' "$OZN_FILE" >&2
 fi
 
-exec sunny-cp \
+set +e
+
+env PYTHONUNBUFFERED=1 sunny-cp \
   -f \
   --cop-a \
   -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
@@ -100,4 +133,28 @@ exec sunny-cp \
   --max-restarts-chuffed 1 \
   --max-restarts-cp-sat-p3-lin 2 \
   --max-restarts-cp-sat-p3 2 \
-  "${ARGS[@]}"
+  "${ARGS[@]}" 2>"$SUNNY_ERR" | solns2out "$OZN_FILE"
+
+PIPE_STATUS=("${PIPESTATUS[@]}")
+
+set -e
+
+SUNNY_STATUS="${PIPE_STATUS[0]}"
+OZN_STATUS="${PIPE_STATUS[1]}"
+
+if [[ "$OZN_STATUS" -ne 0 ]]; then
+  cat "$SUNNY_ERR" >&2
+  exit "$OZN_STATUS"
+fi
+
+if [[ "$SUNNY_STATUS" -ne 0 ]]; then
+  if grep -q 'BrokenPipeError' "$SUNNY_ERR"; then
+    exit 0
+  fi
+
+  cat "$SUNNY_ERR" >&2
+  exit "$SUNNY_STATUS"
+fi
+
+cat "$SUNNY_ERR" >&2
+exit 0

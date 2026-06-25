@@ -16,14 +16,14 @@ echo '' > $ERRORS
 
 for m in `ls *.mzn | grep -v model`
 do
-  echo "Solving $m: minizinc -c $m --solver gecode --output-ozn-to-file $OZN -o $FZN"
-  minizinc -c $m --output-ozn-to-file --solver gecode $OZN -o $FZN
-  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m"
-  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn $m | minizinc --ozn-file $OZN 1>$OUT 2>$ERR
+  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --ozn-file $OZN --mzn $m | solns2out $OZN"
+  echo "Testing $m"
+  echo "Command: $cmd"
+  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --ozn-file $OZN --mzn $m | solns2out $OZN 1>$OUT 2>$ERR
   ret=$?
   cat $OUT | grep -v %
-  echo '********** Instance: '$cmd >> $OUTPUT
-  echo '********** Instance: '$cmd >> $ERRORS
+  echo '********** Command: '$cmd >> $OUTPUT
+  echo '********** Command: '$cmd >> $ERRORS
   cat $OUT >> $OUTPUT
   cat $ERR >> $ERRORS
   if
@@ -41,8 +41,9 @@ do
   fi
     
   echo -e "$m processed!\n"
+  sleep 0.1
 done
-rm $OZN $OUT $ERR $FZN
+rm $OZN $OUT $ERR
 rm *.fzn *.ozn 2>/dev/null
 echo "All the examples processed without errors."
 echo "Have a look at the log files $OUTPUT and $ERRORS"

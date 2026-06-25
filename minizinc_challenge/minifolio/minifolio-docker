@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+IMAGE="${MINIFOLIO_IMAGE:-ramadini/minifolio:2026}"
+ENTRYPOINT="${MINIFOLIO_ENTRYPOINT:-/usr/local/bin/minifolio}"
+
+usage() {
+  echo "Usage: minifolio-docker <model.mzn> [data.dzn ...]" >&2
+  echo "" >&2
+  echo "Example:" >&2
+  echo "  minifolio-docker cp_model_roberto.mzn data/coffee_table.dzn" >&2
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 2
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Error: docker command not found." >&2
+  exit 1
+fi
+
+DOCKER=(docker)
+
+# If normal docker access fails, try sudo docker.
+if ! docker info >/dev/null 2>&1; then
+  if command -v sudo >/dev/null 2>&1; then
+    DOCKER=(sudo docker)
+  fi
+fi
+
+ARGS=()
+MOUNTS=()
+FIRST_DIR=""
+
+declare -A SEEN_DIRS=()
+
+for arg in "$@"; do
+  if [[ ! -e "$arg" ]]; then
+    echo "Error: file not found: $arg" >&2
+    exit 1
+  fi
+
+  abs="$(realpath "$arg")"
+  dir="$(dirname "$abs")"
+
+  if [[ -z "$FIRST_DIR" ]]; then
+    FIRST_DIR="$dir"
+  fi
+
+  if [[ -z "${SEEN_DIRS[$dir]+x}" ]]; then
+    MOUNTS+=("-v" "$dir:$dir:rw")
+    SEEN_DIRS["$dir"]=1
+  fi
+
+  ARGS+=("$abs")
+done
+
+exec "${DOCKER[@]}" run --rm \
+  -e PYTHONUNBUFFERED=1 \
+  "${MOUNTS[@]}" \
+  -w "$FIRST_DIR" \
+  --entrypoint "$ENTRYPOINT" \
+  "$IMAGE" \
+  "${ARGS[@]}"

@@ -120,6 +120,9 @@ Solvers Options
   --kill-idle
     Kills a solver instead of restarting it again if it has produced no solution
     and has already been restarted at least once. Unset by default.
+  --ozn-file <OZN_FILE>
+    Use the specified MiniZinc output model (.ozn) file to translate FlatZinc 
+    solutions to MiniZinc output.
 
 Helper Options
 ==============
@@ -182,6 +185,7 @@ def parse_arguments(args):
     kill_idle = DEF_KILL_IDLE
     lb = DEF_LB
     ub = DEF_UB
+    ozn_file = None
     solver_options = dict((s, {
         'wait_time': DEF_WAIT_TIME,
         'restart_time': DEF_RESTART_TIME,
@@ -323,6 +327,8 @@ def parse_arguments(args):
             else:
                 for item in list(solver_options.values()):
                     item['max_restarts'] = int(a)
+        elif o == '--ozn-file':
+            ozn_file = a
         elif o == '--keep':
             keep = True
         elif o == '--check-solvers':
@@ -342,9 +348,9 @@ def parse_arguments(args):
                 opts.append(['-' + o[6], a])
             else:
                 opts.append(['--' + o[6:], a])
-
+    
     tmp_id = tmp_dir + '/' + gethostname() + '_' + str(os.getpid())
-    problem = Problem(mzn, dzn, tmp_id + '.ozn', solve)
+    problem = Problem(mzn, dzn, ozn_file, solve)
     return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
         cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, \
         lb, ub, check, kill_idle
@@ -361,7 +367,7 @@ def get_args(args):
             'u'
         ]
         long_options = [
-            'fzn-options', 'wait-time', 'restart-time', 'max-restarts'
+            'fzn-options', 'wait-time', 'restart-time', 'max-restarts', 'ozn-file'
         ]
         long_options += [
             o + '-' + s for o in long_options for s in ALL_SOLVERS

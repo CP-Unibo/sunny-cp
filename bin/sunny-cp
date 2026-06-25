@@ -50,6 +50,11 @@ UPPER_BOUND = float('+inf')
 # Initial starting time of the algorithm.
 STARTING_TIME = time.time()
 
+try:
+    sys.stdout.reconfigure(line_buffering=True, write_through=True)
+except AttributeError:
+    pass
+
 def log(*args, file=sys.stderr):
     # TODO: Add -v, --verbose option to avoid logging.
     print(f"% {' '.join([str(x) for x in args])}", file=file)
@@ -554,8 +559,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         solver_terminated(solver, problem, schedule)
                         return
                 for (var, val) in list(solver.solution.items()):
-                    print(var + ' = ' + val + ';')
-                print(line)
+                    print(var + ' = ' + val + ';', flush=True)
+                print(line, flush=True)
                 if not all_opt:
                     log(f'Search completed by {solver.name}')
                     log(f'Search completed at time: {time.time() - STARTING_TIME}')
@@ -582,8 +587,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                 if solver.all_opt:
                     for (var, val) in list(solver.solution.items()):
                         if var != solver.obj_var or solver.output_var:
-                            print(var + ' = ' + val + ';')
-                    print(line)
+                            print(var + ' = ' + val + ';', flush=True)
+                    print(line, flush=True)
                     #solver.solution = {}
                 problem.best_solver = solver.name
             solver.solution_time = time.time()
@@ -599,8 +604,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         log('Success!')
                         for (var, val) in list(solver.solution.items()):
                             if var != solver.obj_var or solver.output_var:
-                                print(var + ' = ' + val + ';')
-                        print('----------')
+                                print(var + ' = ' + val + ';', flush=True)
+                        print('----------', flush=True)
                         if problem.isCSP():
                             log(f'Search completed by {solver.name}')
                             log(f'Search completed at time: {time.time() - STARTING_TIME}')
@@ -613,14 +618,14 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         return False
                 return True
             if not problem.has_bound():
-                print(line)
+                print(line, flush=True)
             else:
                 if not all_opt:
                     for (var, val) in list(solver.solution.items()):
                         if var != solver.obj_var or solver.output_var:
-                            print(var + ' = ' + val + ';')
-                    print('----------')
-                print('==========')
+                            print(var + ' = ' + val + ';', flush=True)
+                    print('----------', flush=True)
+                print('==========', flush=True)
             log(f'Search completed by {solver.name}')
             log(f'Search completed at time: {time.time() - STARTING_TIME}')
             clean()
@@ -808,7 +813,9 @@ def main(args):
         problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
             cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
             LOWER_BOUND, UPPER_BOUND, check, kill_idle = parse_arguments(args)
-        TMP_FILES = [problem.ozn_path]
+        if problem.ozn_path is None:
+            problem.ozn_path = tmp_id + '.ozn'
+            TMP_FILES = [problem.ozn_path]
         static = init_schedule(
             static, solver_options, problem.solve, tmp_id, all_opt, free_opt
         )

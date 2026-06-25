@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+import os
+import pty
+import queue
+import subprocess
+import sys
+import threading
+import time
+
+
+def usage():
+    print("Usage: solns2out <file.ozn>", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("Reads FlatZinc solution output from stdin and streams it through:", file=sys.stderr)
+    print("  minizinc --ozn-file <file.ozn>", file=sys.stderr)
+
+
+def file_signature(path):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+
+    return (
+        st.st_dev,
+        st.st_ino,
+        st.st_size,
+        st.st_mtime_ns,
+        st.st_ctime_ns,
+    )
+
+
+def wait_for_fresh_ozn(path, wait_seconds, poll_interval, stable_checks):
+    initial_signature = file_signature(path)
+
+    deadline = time.monotonic() + wait_seconds
+    last_signature = None
+    stable_count = 0
+
+    while time.monotonic() < deadline:
+        sig = file_signature(path)
+
+        if sig is None:
+            stable_count = 0
+            last_signature = None
+            time.sleep(poll_interval)
+            continue
+
+        size = sig[2]
+
+        if size <= 0:
+            stable_count = 0
+            last_signature = sig
+            time.sleep(poll_interval)
+            continue
+
+        # If the file existed before solns2out started, do not accept
+        # exactly that old file. Wait until SUNNY-CP rewrites/replaces it.
+        if initial_signature is not None and sig == initial_signature:
+            stable_count = 0
+            last_signature = sig
+            time.sleep(poll_interval)
+            continue
+
+        # Wait until the file looks stable for a few polls.
+        if sig == last_signature:
+            stable_count += 1
+        else:
+            stable_count = 0
+            last_signature = sig
+
+        if stable_count >= stable_checks:
+            return True
+
+        time.sleep(poll_interval)
+
+    return False
+
+
+def copy_pty_output(master_fd):
+    while True:
+        try:
+            data = os.read(master_fd, 4096)
+        except OSError:
+            break
+
+        if not data:
+            break
+
+        try:
+            sys.stdout.buffer.write(data)
+            sys.stdout.buffer.flush()
+        except BrokenPipeError:
+            break
+
+
+def converter_worker(ozn_file, lines, status):
+    wait_seconds = float(os.environ.get("OZN_WAIT_SECONDS", "30"))
+    poll_interval = float(os.environ.get("OZN_POLL_INTERVAL", "0.001"))
+    stable_checks = int(os.environ.get("OZN_STABLE_CHECKS", "2"))
+
+    ready = wait_for_fresh_ozn(
+        ozn_file,
+        wait_seconds=wait_seconds,
+        poll_interval=poll_interval,
+        stable_checks=stable_checks,
+    )
+
+    if not ready:
+        print(f"Error: timed out waiting for fresh OZN file: {ozn_file}", file=sys.stderr)
+
+        # Keep draining SUNNY-CP so it does not get BrokenPipe.
+        while True:
+            item = lines.get()
+            if item is None:
+                break
+
+        status["code"] = 1
+        return
+
+    master_fd, slave_fd = pty.openpty()
+
+    proc = subprocess.Popen(
+        ["minizinc", "--ozn-file", ozn_file],
+        stdin=subprocess.PIPE,
+        stdout=slave_fd,
+        stderr=slave_fd,
+        bufsize=0,
+        close_fds=True,
+    )
+
+    os.close(slave_fd)
+
+    output_thread = threading.Thread(
+        target=copy_pty_output,
+        args=(master_fd,),
+        daemon=True,
+    )
+    output_thread.start()
+
+    converter_closed = False
+
+    while True:
+        item = lines.get()
+
+        if item is None:
+            break
+
+        if converter_closed:
+            continue
+
+        try:
+            proc.stdin.write(item.encode())
+            proc.stdin.flush()
+        except BrokenPipeError:
+            # MiniZinc has finished converting output.
+            # Keep consuming SUNNY-CP output, but stop writing to MiniZinc.
+            converter_closed = True
+
+    if not converter_closed:
+        try:
+            proc.stdin.close()
+        except BrokenPipeError:
+            pass
+
+    status["code"] = proc.wait()
+
+    try:
+        os.close(master_fd)
+    except OSError:
+        pass
+
+    output_thread.join(timeout=1)
+
+
+def main():
+    if len(sys.argv) != 2:
+        usage()
+        return 2
+
+    ozn_file = sys.argv[1]
+
+    lines = queue.Queue()
+    status = {"code": 0}
+
+    worker = threading.Thread(
+        target=converter_worker,
+        args=(ozn_file, lines, status),
+        daemon=False,
+    )
+    worker.start()
+
+    try:
+        for line in sys.stdin:
+            lines.put(line)
+    finally:
+        lines.put(None)
+
+    worker.join()
+    return status["code"]
+
+
+if __name__ == "__main__":
+    sys.exit(main())
