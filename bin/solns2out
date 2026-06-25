@@ -1,203 +1,210 @@
 #!/usr/bin/env python3
 import os
-import pty
-import queue
+import shutil
 import subprocess
 import sys
-import threading
 import time
 
 
+OZN_MARKER = "%%%SOLNS2OUT-OZN-FILE "
+REMOVE_OZN_MARKER = "%%%SOLNS2OUT-REMOVE-OZN-FILE "
+
+
 def usage():
-    print("Usage: solns2out <file.ozn>", file=sys.stderr)
+    print("Usage: solns2out", file=sys.stderr)
     print("", file=sys.stderr)
-    print("Reads FlatZinc solution output from stdin and streams it through:", file=sys.stderr)
-    print("  minizinc --ozn-file <file.ozn>", file=sys.stderr)
+    print("Reads a FlatZinc solution stream from stdin.", file=sys.stderr)
+    print("OZN files are selected using marker lines of the form:", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("    %%%SOLNS2OUT-OZN-FILE <file.ozn>", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("OZN files can be removed at the end using marker lines:", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("    %%%SOLNS2OUT-REMOVE-OZN-FILE <file.ozn>", file=sys.stderr)
 
 
-def file_signature(path):
-    try:
-        st = os.stat(path)
-    except OSError:
-        return None
-
-    return (
-        st.st_dev,
-        st.st_ino,
-        st.st_size,
-        st.st_mtime_ns,
-        st.st_ctime_ns,
-    )
-
-
-def wait_for_fresh_ozn(path, wait_seconds, poll_interval, stable_checks):
-    initial_signature = file_signature(path)
+def wait_for_ozn(path):
+    wait_seconds = float(os.environ.get("OZN_WAIT_SECONDS", "30"))
+    poll_interval = float(os.environ.get("OZN_POLL_INTERVAL", "0.001"))
 
     deadline = time.monotonic() + wait_seconds
-    last_signature = None
-    stable_count = 0
 
     while time.monotonic() < deadline:
-        sig = file_signature(path)
-
-        if sig is None:
-            stable_count = 0
-            last_signature = None
-            time.sleep(poll_interval)
-            continue
-
-        size = sig[2]
-
-        if size <= 0:
-            stable_count = 0
-            last_signature = sig
-            time.sleep(poll_interval)
-            continue
-
-        # If the file existed before solns2out started, do not accept
-        # exactly that old file. Wait until SUNNY-CP rewrites/replaces it.
-        if initial_signature is not None and sig == initial_signature:
-            stable_count = 0
-            last_signature = sig
-            time.sleep(poll_interval)
-            continue
-
-        # Wait until the file looks stable for a few polls.
-        if sig == last_signature:
-            stable_count += 1
-        else:
-            stable_count = 0
-            last_signature = sig
-
-        if stable_count >= stable_checks:
-            return True
+        try:
+            if os.path.getsize(path) > 0:
+                return True
+        except OSError:
+            pass
 
         time.sleep(poll_interval)
 
     return False
 
 
-def copy_pty_output(master_fd):
-    while True:
-        try:
-            data = os.read(master_fd, 4096)
-        except OSError:
-            break
+def minizinc_cmd(ozn_file):
+    cmd = ["minizinc", "--ozn-file", ozn_file]
 
-        if not data:
-            break
+    if shutil.which("stdbuf") is not None:
+        return ["stdbuf", "-o0", "-e0"] + cmd
+
+    return cmd
+
+
+class OznConverter:
+    def __init__(self, ozn_file):
+        self.ozn_file = ozn_file
+        self.closed = False
+
+        if not wait_for_ozn(ozn_file):
+            raise RuntimeError(f"timed out waiting for OZN file: {ozn_file}")
+
+        self.proc = subprocess.Popen(
+            minizinc_cmd(ozn_file),
+            stdin=subprocess.PIPE,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+            text=True,
+            bufsize=1,
+        )
+
+    def write(self, line):
+        if self.closed:
+            return
 
         try:
-            sys.stdout.buffer.write(data)
-            sys.stdout.buffer.flush()
+            self.proc.stdin.write(line)
+            self.proc.stdin.flush()
         except BrokenPipeError:
-            break
+            self.closed = True
 
-
-def converter_worker(ozn_file, lines, status):
-    wait_seconds = float(os.environ.get("OZN_WAIT_SECONDS", "1200"))
-    poll_interval = float(os.environ.get("OZN_POLL_INTERVAL", "0.001"))
-    stable_checks = int(os.environ.get("OZN_STABLE_CHECKS", "2"))
-
-    ready = wait_for_fresh_ozn(
-        ozn_file,
-        wait_seconds=wait_seconds,
-        poll_interval=poll_interval,
-        stable_checks=stable_checks,
-    )
-
-    if not ready:
-        print(f"Error: timed out waiting for fresh OZN file: {ozn_file}", file=sys.stderr)
-
-        # Keep draining SUNNY-CP so it does not get BrokenPipe.
-        while True:
-            item = lines.get()
-            if item is None:
-                break
-
-        status["code"] = 1
-        return
-
-    master_fd, slave_fd = pty.openpty()
-
-    proc = subprocess.Popen(
-        ["minizinc", "--ozn-file", ozn_file],
-        stdin=subprocess.PIPE,
-        stdout=slave_fd,
-        stderr=slave_fd,
-        bufsize=0,
-        close_fds=True,
-    )
-
-    os.close(slave_fd)
-
-    output_thread = threading.Thread(
-        target=copy_pty_output,
-        args=(master_fd,),
-        daemon=True,
-    )
-    output_thread.start()
-
-    converter_closed = False
-
-    while True:
-        item = lines.get()
-
-        if item is None:
-            break
-
-        if converter_closed:
-            continue
+    def close(self):
+        if self.closed:
+            return self.proc.wait()
 
         try:
-            proc.stdin.write(item.encode())
-            proc.stdin.flush()
-        except BrokenPipeError:
-            # MiniZinc has finished converting output.
-            # Keep consuming SUNNY-CP output, but stop writing to MiniZinc.
-            converter_closed = True
-
-    if not converter_closed:
-        try:
-            proc.stdin.close()
+            self.proc.stdin.close()
         except BrokenPipeError:
             pass
 
-    status["code"] = proc.wait()
+        self.closed = True
+        return self.proc.wait()
 
-    try:
-        os.close(master_fd)
-    except OSError:
-        pass
+    def alive(self):
+        return not self.closed and self.proc.poll() is None
 
-    output_thread.join(timeout=1)
+
+def safe_remove_ozn_files(paths):
+    if os.environ.get("SOLNS2OUT_KEEP_OZN", "0") == "1":
+        return
+
+    for path in sorted(paths):
+        # Safety guard: solns2out should only remove .ozn files.
+        if not path.endswith(".ozn"):
+            print(
+                f"Warning: refusing to remove non-.ozn file: {path}",
+                file=sys.stderr,
+                flush=True,
+            )
+            continue
+
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            print(
+                f"Warning: could not remove OZN file {path}: {e}",
+                file=sys.stderr,
+                flush=True,
+            )
 
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 1:
         usage()
         return 2
 
-    ozn_file = sys.argv[1]
+    current_ozn = None
+    converter = None
+    exit_status = 0
 
-    lines = queue.Queue()
-    status = {"code": 0}
-
-    worker = threading.Thread(
-        target=converter_worker,
-        args=(ozn_file, lines, status),
-        daemon=False,
-    )
-    worker.start()
+    used_ozn_files = set()
+    remove_ozn_files = set()
 
     try:
         for line in sys.stdin:
-            lines.put(line)
-    finally:
-        lines.put(None)
+            if line.startswith(OZN_MARKER):
+                new_ozn = line[len(OZN_MARKER):].strip()
 
-    worker.join()
-    return status["code"]
+                if new_ozn == "":
+                    print("Error: empty OZN marker", file=sys.stderr, flush=True)
+                    exit_status = 1
+                    continue
+
+                used_ozn_files.add(new_ozn)
+
+                if converter is not None and new_ozn != current_ozn:
+                    status = converter.close()
+                    if status != 0:
+                        exit_status = status
+                    converter = None
+
+                current_ozn = new_ozn
+
+                if converter is None or not converter.alive():
+                    try:
+                        converter = OznConverter(current_ozn)
+                    except RuntimeError as e:
+                        print(f"Error: {e}", file=sys.stderr, flush=True)
+                        converter = None
+                        exit_status = 1
+
+                continue
+
+            if line.startswith(REMOVE_OZN_MARKER):
+                path = line[len(REMOVE_OZN_MARKER):].strip()
+
+                if path == "":
+                    print("Error: empty REMOVE-OZN marker", file=sys.stderr, flush=True)
+                    exit_status = 1
+                    continue
+
+                remove_ozn_files.add(path)
+                continue
+
+            stripped = line.strip()
+
+            if current_ozn is None or converter is None:
+                print(line, end="", flush=True)
+                continue
+
+            if stripped.startswith("%"):
+                print(line, end="", flush=True)
+                continue
+
+            converter.write(line)
+
+            if stripped == "==========":
+                status = converter.close()
+                if status != 0:
+                    exit_status = status
+                converter = None
+
+    finally:
+        if converter is not None:
+            status = converter.close()
+            if status != 0:
+                exit_status = status
+
+        # Remove both:
+        #   1. files explicitly requested by SUNNY-CP,
+        #   2. files actually used by solns2out.
+        #
+        # The explicit remove marker is useful for .ozn files generated by
+        # solvers that never produced a solution.
+        safe_remove_ozn_files(used_ozn_files | remove_ozn_files)
+
+    return exit_status
 
 
 if __name__ == "__main__":

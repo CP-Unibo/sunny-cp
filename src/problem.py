@@ -14,9 +14,6 @@ class Problem:
     # Absolute path of the data of the problem.
     dzn_path = ''
 
-    # Absolute path of the output file.
-    ozn_path = ''
-
     # Can be either 'sat', 'min', or 'max' for satisfaction, minimization, or
     # maximization problems respectively.
     solve = ''
@@ -64,13 +61,12 @@ class Problem:
             (self.solve == 'max' and self.best_bound < bound)
         )
 
-    def __init__(self, mzn_path, dzn_path, ozn_path, solve):
+    def __init__(self, mzn_path, dzn_path, solve):
         """
         Class Constructor.
         """
         self.mzn_path = mzn_path
         self.dzn_path = dzn_path
-        self.ozn_path = ozn_path
         assert solve in ['sat', 'min', 'max']
         self.solve = solve
         self.best_bound = float('+inf') if solve == 'min' else float('-inf')

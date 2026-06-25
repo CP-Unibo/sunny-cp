@@ -3,7 +3,6 @@
 
 IN_PATH=`dirname "$(readlink -f ${BASH_SOURCE[0]})"`
 FZN=$IN_PATH/tmp.fzn
-OZN=$IN_PATH/tmp.ozn
 OUT=$IN_PATH/out
 ERR=$IN_PATH/err
 CORES=2
@@ -16,10 +15,10 @@ echo '' > $ERRORS
 
 for m in `ls *.mzn | grep -v model`
 do
-  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --ozn-file $OZN --mzn $m | solns2out $OZN"
+  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn-output --mzn $m | solns2out"
   echo "Testing $m"
   echo "Command: $cmd"
-  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --ozn-file $OZN --mzn $m | solns2out $OZN 1>$OUT 2>$ERR
+  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn-output --mzn $m | solns2out 1>$OUT 2>$ERR
   ret=$?
   cat $OUT | grep -v %
   echo '********** Command: '$cmd >> $OUTPUT

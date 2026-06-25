@@ -52,3 +52,5 @@ DEF_CHECK = {}
 DEF_KILL_IDLE = False
 
 DEF_VERBOSE = False
+
+DEF_MZN_OUTPUT = False

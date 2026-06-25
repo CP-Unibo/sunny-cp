@@ -49,8 +49,9 @@ LOWER_BOUND = float('-inf')
 UPPER_BOUND = float('+inf')
 # Initial starting time of the algorithm.
 STARTING_TIME = time.time()
-# Verbose option.
+# Output options.
 VERBOSE = None
+MZN_OUTPUT = None
 
 try:
     sys.stdout.reconfigure(line_buffering=True, write_through=True)
@@ -104,7 +105,10 @@ def clean():
     if not KEEP:
         for f in TMP_FILES:
             if os.path.exists(f):
-                os.remove(f)
+                if MZN_OUTPUT and f.endswith('.ozn'):
+                    print(f'%%%SOLNS2OUT-REMOVE-OZN-FILE {f}')
+                else:
+                    os.remove(f)
 
 
 def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
@@ -247,7 +251,8 @@ def solve(schedule, problem, cores, mem_limit, all_opt, check, kill_idle=False):
                                 new_info['name']
                             )
                         ALL_SOLVERS[new_info['version_id']]['replica_id'] = n
-                        new_solv = Solver(new_info, solver.solve, solver.fzn_path, \
+                        new_solv = Solver(new_info, solver.solve, \
+                                          solver.fzn_path, solver.ozn_path, \
                                           solver.all_opt, solver.free_opt, \
                                           solver.wait_time, solver.restart_time, \
                                           solver.timeout, solver.max_restarts,
@@ -543,9 +548,11 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
         trusted_solver = check[solver.name]
     else:
         trusted_solver = None
+    
     for line in lines.decode().split('\n'):
-        
+    
         if line == '----------':
+            first_assignment = True
             if problem.isCSP():
                 log(solver.name, 'found a solution')
                 if trusted_solver:
@@ -560,6 +567,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         send_signal_solver(signal.SIGKILL, solver)
                         solver_terminated(solver, problem, schedule)
                         return
+                if MZN_OUTPUT:
+                    print(f'%%%SOLNS2OUT-OZN-FILE {solver.ozn_path}')
                 for (var, val) in list(solver.solution.items()):
                     print(var + ' = ' + val + ';', flush=True)
                 print(line, flush=True)
@@ -586,6 +595,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                 problem.best_bound = solver.obj_value
                 log(f'Current Best Bound: {solver.obj_value}')
                 log(f'Current Solution Time: {time.time() - STARTING_TIME}')
+                if MZN_OUTPUT:
+                    print(f'%%%SOLNS2OUT-OZN-FILE {solver.ozn_path}')
                 if solver.all_opt:
                     for (var, val) in list(solver.solution.items()):
                         if var != solver.obj_var or solver.output_var:
@@ -619,6 +630,8 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
                         solver_terminated(solver, problem, schedule)
                         return False
                 return True
+            if MZN_OUTPUT:
+                print(f'%%%SOLNS2OUT-OZN-FILE {solver.ozn_path}')
             if not problem.has_bound():
                 print(line, flush=True)
             else:
@@ -632,7 +645,7 @@ def process_output(solver, problem, lines, all_opt, check, schedule):
             log(f'Search completed at time: {time.time() - STARTING_TIME}')
             clean()
             sys.exit(0)
-        elif ' = ' in line:
+        elif ' = ' in line:            
             solver.found_solution = True
             idx = line.index(' = ')
             val = line[idx + 3:].split(';')[0]
@@ -798,27 +811,29 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
     fo = '-f' if free_opt else ''
     for (s, t) in schedule:
         solver_info = ALL_SOLVERS[s] 
-        fzn_path = tmp_id + '.' + s + '.fzn'        
+        fzn_path = tmp_id + '.' + s + '.fzn'
+        ozn_path = tmp_id + '.' + s + '.ozn'
         wt = options[s]['wait_time']
         rt = options[s]['restart_time']
         mr = options[s]['max_restarts']
-        solver = Solver(solver_info, solve, fzn_path, ao, fo, wt, rt, t, mr)
+        solver = Solver(
+            solver_info, solve, fzn_path, ozn_path, ao, fo, wt, rt, t, mr
+        )
         running_schedule.append(solver)
         TMP_FILES.append(fzn_path)
+        TMP_FILES.append(ozn_path)
     return running_schedule
 
 
 def main(args):
-    global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND, VERBOSE
+    global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND, VERBOSE, MZN_OUTPUT
     try:
         # Input arguments parsing and initialization.
         problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
             cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
-            LOWER_BOUND, UPPER_BOUND, check, kill_idle, VERBOSE = parse_arguments(args)
-        
-        if problem.ozn_path is None:
-            problem.ozn_path = tmp_id + '.ozn'
-            TMP_FILES = [problem.ozn_path]
+            LOWER_BOUND, UPPER_BOUND, check, kill_idle, VERBOSE, MZN_OUTPUT = \
+                parse_arguments(args)
+
         static = init_schedule(
             static, solver_options, problem.solve, tmp_id, all_opt, free_opt
         )

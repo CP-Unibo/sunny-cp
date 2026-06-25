@@ -93,3 +93,5 @@ RUN command -v minizinc && \
     ldd /opt/minizinc-bundle/bin/fzn-gecode | grep "not found" && exit 1 || true
 
 WORKDIR /work
+
+ENTRYPOINT ["/usr/local/bin/minifolio"]

@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+terminate_container_processes() {
+  trap - INT TERM HUP
+
+  echo "MiniFolio: received termination signal, killing container processes..." >&2
+
+  kill -TERM -1 2>/dev/null || true
+  sleep 1
+  kill -KILL -1 2>/dev/null || true
+
+  exit 130
+}
+
+trap terminate_container_processes INT TERM HUP
+
 ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -86,22 +100,14 @@ cleanup() {
 
 trap cleanup EXIT
 
-FZN_FILE="$WORKDIR/model.fzn"
 OZN_FILE="$WORKDIR/model.ozn"
 SUNNY_ERR="$WORKDIR/sunny.err"
 
-minizinc \
-  -c \
-  --solver gecode \
-  --output-ozn-to-file "$OZN_FILE" \
-  -o "$FZN_FILE" \
-  "${ARGS[@]}"
-
-rm -f "$FZN_FILE"
-
 if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
+  echo "MiniFolio OZN file: $OZN_FILE" >&2
   printf 'MiniFolio command:' >&2
   printf ' %q' sunny-cp \
+    -v \
     -f \
     --cop-a \
     -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
@@ -114,13 +120,15 @@ if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
     --max-restarts-chuffed 1 \
     --max-restarts-cp-sat-p3-lin 2 \
     --max-restarts-cp-sat-p3 2 \
+    --ozn-file "$OZN_FILE" \
     "${ARGS[@]}" >&2
-  printf ' | minizinc --ozn-file %q\n' "$OZN_FILE" >&2
+  printf ' | solns2out %q\n' "$OZN_FILE" >&2
 fi
 
 set +e
 
-env PYTHONUNBUFFERED=1 sunny-cp \
+sunny-cp \
+  -v \
   -f \
   --cop-a \
   -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
@@ -133,6 +141,7 @@ env PYTHONUNBUFFERED=1 sunny-cp \
   --max-restarts-chuffed 1 \
   --max-restarts-cp-sat-p3-lin 2 \
   --max-restarts-cp-sat-p3 2 \
+  --ozn-file "$OZN_FILE" \
   "${ARGS[@]}" 2>"$SUNNY_ERR" | solns2out "$OZN_FILE"
 
 PIPE_STATUS=("${PIPESTATUS[@]}")
@@ -140,11 +149,11 @@ PIPE_STATUS=("${PIPESTATUS[@]}")
 set -e
 
 SUNNY_STATUS="${PIPE_STATUS[0]}"
-OZN_STATUS="${PIPE_STATUS[1]}"
+SOLNS2OUT_STATUS="${PIPE_STATUS[1]}"
 
-if [[ "$OZN_STATUS" -ne 0 ]]; then
+if [[ "$SOLNS2OUT_STATUS" -ne 0 ]]; then
   cat "$SUNNY_ERR" >&2
-  exit "$OZN_STATUS"
+  exit "$SOLNS2OUT_STATUS"
 fi
 
 if [[ "$SUNNY_STATUS" -ne 0 ]]; then

@@ -51,8 +51,11 @@ class Solver:
     # Time in seconds (since the epoch) when the solver found last solution.
     solution_time = -1
 
-    # Absolute path of the FlatZinc model on which solver is run.
+    # Absolute path of the FlatZinc instance on which solver is run.
     fzn_path = ''
+    
+    # Absolute path of the the MiniZinc output model for formatting output.
+    ozn_path = ''
 
     # Flag for printing all the solutions.
     all_opt = ''
@@ -92,8 +95,8 @@ class Solver:
         pass
 
     def __init__(
-        self, solver_info, solve, fzn_path, all_opt, free_opt, wait_time,
-        restart_time, timeout, max_restarts, obj_var = ''
+        self, solver_info, solve, fzn_path, ozn_path, all_opt, free_opt, 
+        wait_time, restart_time, timeout, max_restarts, obj_var = ''
     ):
         self.name = solver_info['name']
         self.n_threads = solver_info['n_threads']
@@ -105,6 +108,7 @@ class Solver:
         
         self.solve = solve
         self.fzn_path = fzn_path
+        self.ozn_path = ozn_path
         self.all_opt = all_opt
         self.free_opt = free_opt
         self.wait_time = wait_time
@@ -139,7 +143,7 @@ class Solver:
         Returns the command for converting a given MiniZinc model to FlatZinc
         by using solver-specific redefinitions.
         """
-        return (f'minizinc -c --output-ozn-to-file {pb.ozn_path} --solver ' + 
+        return (f'minizinc -c --output-ozn-to-file {self.ozn_path} --solver ' + 
                 f"{self.solver_id} {self.conv_opts} " + 
                 f'{pb.mzn_path} {pb.dzn_path} -o {self.fzn_path}').split()
 
