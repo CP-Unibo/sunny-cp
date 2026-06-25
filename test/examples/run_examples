@@ -15,10 +15,10 @@ echo '' > $ERRORS
 
 for m in `ls *.mzn | grep -v model`
 do
-  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn-output --mzn $m | solns2out"
+  cmd="timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT $m"
   echo "Testing $m"
   echo "Command: $cmd"
-  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT --mzn-output --mzn $m | solns2out 1>$OUT 2>$ERR
+  timeout $TIMEOUT sunny-cp -p $CORES -T $TIMEOUT $m 1>$OUT 2>$ERR
   ret=$?
   cat $OUT | grep -v %
   echo '********** Command: '$cmd >> $OUTPUT

@@ -1,13 +1,19 @@
 '''
 SUNNY-CP is a parallel portfolio solver that allows one to solve constraint
 satisfaction/optimization problems defined in the MiniZinc language.
+By default, solutions are printed in MiniZinc-formatted output.
 
 USAGE: sunny-cp [OPTIONS] <MODEL.mzn> [DATA.dzn]
 
-By default, sunny-cp prints the raw FlatZinc solution output produced by the 
-selected solver. To obtain MiniZinc-formatted output, use:
+Internally, SUNNY-CP solves FlatZinc instances. The low-level solver
+    sunny-cp-fzn emits raw FlatZinc solution streams. The sunny-cp wrapper runs:
 
-        sunny-cp --mzn-output ... | solns2out
+        sunny-cp-fzn --mzn-output ... | solns2out
+
+    where solns2out translates FlatZinc solutions back to MiniZinc output using
+    solver-specific .ozn files.
+
+    Use --fzn-output to print the raw FlatZinc solution stream instead.
 
 WARNING: the order in [OPTIONS] matters! For instance, by typing the command:
          sunny-cp -p 1 -p 2 <MODEL.mzn> [DATA.dzn] the option -p will be set to
@@ -126,9 +132,8 @@ Solvers Options
     Kills a solver instead of restarting it again if it has produced no solution
     and has already been restarted at least once. Unset by default.
   --mzn-output
-    Annotate the FlatZinc solution stream with the MiniZinc output model (.ozn)
-    file needed to translate a solver solution back to MiniZinc output format.
-    To be used in combination with solns2out.
+    Annotate the raw FlatZinc solution stream with solver-specific .ozn files
+    so that it can be translated by solns2out.
 
 Helper Options
 ==============
@@ -375,7 +380,7 @@ def get_args(args):
             'u'
         ]
         long_options = [
-            'fzn-options', 'wait-time', 'restart-time', 'max-restarts', 'mzn-output'
+            'fzn-options', 'wait-time', 'restart-time', 'max-restarts'
         ]
         long_options += [
             o + '-' + s for o in long_options for s in ALL_SOLVERS
@@ -386,7 +391,7 @@ def get_args(args):
         cop_opts = ['cop-' + o + '=' for o in options + long_options] + \
             ['cop-a'] + ['cop-f']
         long_options = [o + '=' for o in long_options]
-        long_noval = ['help', 'keep', 'mzn', 'kill-idle', 'verbose']
+        long_noval = ['help', 'keep', 'mzn', 'kill-idle', 'verbose', 'mzn-output']
         long_noval += ['csp-' + o for o in long_noval]
         long_noval += ['cop-' + o for o in long_noval]
         long_options += long_noval + csp_opts + cop_opts
