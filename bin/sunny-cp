@@ -49,6 +49,8 @@ LOWER_BOUND = float('-inf')
 UPPER_BOUND = float('+inf')
 # Initial starting time of the algorithm.
 STARTING_TIME = time.time()
+# Verbose option.
+VERBOSE = None
 
 try:
     sys.stdout.reconfigure(line_buffering=True, write_through=True)
@@ -56,8 +58,8 @@ except AttributeError:
     pass
 
 def log(*args, file=sys.stderr):
-    # TODO: Add -v, --verbose option to avoid logging.
-    print(f"% {' '.join([str(x) for x in args])}", file=file)
+    if VERBOSE:
+        print(f"% {' '.join([str(x) for x in args])}", file=file, flush=True)
 
 def handler(signum=None, frame=None):
     """
@@ -807,12 +809,13 @@ def init_schedule(schedule, options, solve, tmp_id, all_opt, free_opt):
 
 
 def main(args):
-    global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND
+    global KEEP, TMP_FILES, LOWER_BOUND, UPPER_BOUND, VERBOSE
     try:
         # Input arguments parsing and initialization.
         problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
             cores, solver_options, tmp_id, mem_limit, KEEP, all_opt, free_opt, \
-            LOWER_BOUND, UPPER_BOUND, check, kill_idle = parse_arguments(args)
+            LOWER_BOUND, UPPER_BOUND, check, kill_idle, VERBOSE = parse_arguments(args)
+        
         if problem.ozn_path is None:
             problem.ozn_path = tmp_id + '.ozn'
             TMP_FILES = [problem.ozn_path]

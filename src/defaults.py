@@ -50,3 +50,5 @@ DEF_RESTARTS = float('+inf')
 DEF_CHECK = {}
 
 DEF_KILL_IDLE = False
+
+DEF_VERBOSE = False

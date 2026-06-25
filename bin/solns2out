@@ -95,7 +95,7 @@ def copy_pty_output(master_fd):
 
 
 def converter_worker(ozn_file, lines, status):
-    wait_seconds = float(os.environ.get("OZN_WAIT_SECONDS", "30"))
+    wait_seconds = float(os.environ.get("OZN_WAIT_SECONDS", "1200"))
     poll_interval = float(os.environ.get("OZN_POLL_INTERVAL", "0.001"))
     stable_checks = int(os.environ.get("OZN_STABLE_CHECKS", "2"))
 

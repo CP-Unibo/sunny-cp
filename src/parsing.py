@@ -168,7 +168,6 @@ from features import *
 from problem import *
 from pfolio_solvers import *
 
-
 def parse_arguments(args):
     """
     Parse the options specified by the user and returns the corresponding
@@ -191,6 +190,7 @@ def parse_arguments(args):
     cores = DEF_CORES
     tmp_dir = DEF_TMP_DIR
     keep = DEF_KEEP
+    verbose = DEF_VERBOSE
     mem_limit = DEF_MEM_LIMIT
     all_opt = DEF_ALL
     free_opt = DEF_FREE
@@ -343,6 +343,8 @@ def parse_arguments(args):
             ozn_file = a
         elif o == '--keep':
             keep = True
+        if o in ('-v', '--verbose'):
+            verbose = True
         elif o == '--check-solvers':
             s = a.split(',')
             for i in range(0, len(s) // 2):
@@ -365,7 +367,7 @@ def parse_arguments(args):
     problem = Problem(mzn, dzn, ozn_file, solve)
     return problem, k, timeout, pfolio, backup, kb, lims, static, extractor, \
         cores, solver_options, tmp_id, mem_limit, keep, all_opt, free_opt, \
-        lb, ub, check, kill_idle
+        lb, ub, check, kill_idle, verbose
 
 
 def get_args(args):
@@ -390,12 +392,12 @@ def get_args(args):
         cop_opts = ['cop-' + o + '=' for o in options + long_options] + \
             ['cop-a'] + ['cop-f']
         long_options = [o + '=' for o in long_options]
-        long_noval = ['help', 'keep', 'mzn', 'kill-idle']
+        long_noval = ['help', 'keep', 'mzn', 'kill-idle', 'verbose']
         long_noval += ['csp-' + o for o in long_noval]
         long_noval += ['cop-' + o for o in long_noval]
         long_options += long_noval + csp_opts + cop_opts
         opts, args = getopt.getopt(
-            args, 'hafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
+            args, 'hvafT:k:b:K:s:d:p:e:x:m:l:u:P:R:A:', long_options
         )
     except getopt.error as msg:
         print(msg)
