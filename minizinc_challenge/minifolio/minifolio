@@ -1,30 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-terminate_container_processes() {
-  trap - INT TERM HUP
-
-  echo "MiniFolio: received termination signal, killing container processes..." >&2
-
-  kill -TERM -1 2>/dev/null || true
-  sleep 1
-  kill -KILL -1 2>/dev/null || true
-
-  exit 130
-}
-
-trap terminate_container_processes INT TERM HUP
+# MiniZinc Challenge wrapper for MiniFolio.
+#
+# The new SUNNY-CP interface is:
+#   sunny-cp      -> user-facing command, MiniZinc-formatted output by default
+#   sunny-cp-fzn  -> low-level command, raw FlatZinc solution stream
+#
+# Therefore this wrapper must NOT create/pass --ozn-file and must NOT call
+# solns2out directly. It simply invokes sunny-cp with the desired portfolio.
 
 ARGS=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --output-mode)
-      if [[ $# -ge 2 ]]; then
-        shift 2
-      else
-        shift
-      fi
+      if [[ $# -ge 2 ]]; then shift 2; else shift; fi
       ;;
 
     --output-mode=*)
@@ -32,11 +23,7 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --output-objective)
-      if [[ $# -ge 2 ]]; then
-        shift 2
-      else
-        shift
-      fi
+      if [[ $# -ge 2 ]]; then shift 2; else shift; fi
       ;;
 
     --output-objective=*)
@@ -44,11 +31,7 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --ozn-file)
-      if [[ $# -ge 2 ]]; then
-        shift 2
-      else
-        shift
-      fi
+      if [[ $# -ge 2 ]]; then shift 2; else shift; fi
       ;;
 
     --ozn-file=*)
@@ -56,11 +39,9 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     --parallel)
-      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
-        shift 2
-      else
-        shift
-      fi
+      # Consumed from /minizinc/par.mpc.
+      # Do not pass MiniZinc-style parallel flags to SUNNY-CP.
+      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then shift 2; else shift; fi
       ;;
 
     --parallel=*)
@@ -68,11 +49,8 @@ while [[ $# -gt 0 ]]; do
       ;;
 
     -p)
-      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then
-        shift 2
-      else
-        shift
-      fi
+      # Also consume MiniZinc-style parallel flag if it appears.
+      if [[ $# -ge 2 && "$2" =~ ^[0-9]+$ ]]; then shift 2; else shift; fi
       ;;
 
     -p*)
@@ -91,79 +69,28 @@ if [[ "${#ARGS[@]}" -lt 1 ]]; then
   exit 2
 fi
 
-TMPDIR="${TMPDIR:-/tmp}"
-WORKDIR="$(mktemp -d "$TMPDIR/minifolio.XXXXXX")"
-
-cleanup() {
-  rm -rf "$WORKDIR"
-}
-
-trap cleanup EXIT
-
-OZN_FILE="$WORKDIR/model.ozn"
-SUNNY_ERR="$WORKDIR/sunny.err"
+SUNNY_ARGS=(
+  -f
+  --cop-a
+  -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin
+  --wait-time 10
+  --restart-time-gecode 10
+  --restart-time-chuffed 30
+  --restart-time-cp-sat-p3-lin 30
+  --restart-time-cp-sat-p3 300
+  --max-restarts-gecode 1
+  --max-restarts-chuffed 1
+  --max-restarts-cp-sat-p3-lin 2
+  --max-restarts-cp-sat-p3 2
+)
 
 if [[ "${MINIFOLIO_DEBUG:-0}" = "1" ]]; then
-  echo "MiniFolio OZN file: $OZN_FILE" >&2
+  SUNNY_ARGS=(-v "${SUNNY_ARGS[@]}")
+
   printf 'MiniFolio command:' >&2
-  printf ' %q' sunny-cp \
-    -v \
-    -f \
-    --cop-a \
-    -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
-    --wait-time 10 \
-    --restart-time-gecode 10 \
-    --restart-time-chuffed 30 \
-    --restart-time-cp-sat-p3-lin 30 \
-    --restart-time-cp-sat-p3 300 \
-    --max-restarts-gecode 1 \
-    --max-restarts-chuffed 1 \
-    --max-restarts-cp-sat-p3-lin 2 \
-    --max-restarts-cp-sat-p3 2 \
-    --ozn-file "$OZN_FILE" \
-    "${ARGS[@]}" >&2
-  printf ' | solns2out %q\n' "$OZN_FILE" >&2
+  printf ' %q' sunny-cp "${SUNNY_ARGS[@]}" "${ARGS[@]}" >&2
+  printf '\n' >&2
 fi
 
-set +e
-
-sunny-cp \
-  -v \
-  -f \
-  --cop-a \
-  -P chuffed,gecode,cp-sat-p3,cp-sat-p3-lin \
-  --wait-time 10 \
-  --restart-time-gecode 10 \
-  --restart-time-chuffed 30 \
-  --restart-time-cp-sat-p3-lin 30 \
-  --restart-time-cp-sat-p3 300 \
-  --max-restarts-gecode 1 \
-  --max-restarts-chuffed 1 \
-  --max-restarts-cp-sat-p3-lin 2 \
-  --max-restarts-cp-sat-p3 2 \
-  --ozn-file "$OZN_FILE" \
-  "${ARGS[@]}" 2>"$SUNNY_ERR" | solns2out "$OZN_FILE"
-
-PIPE_STATUS=("${PIPESTATUS[@]}")
-
-set -e
-
-SUNNY_STATUS="${PIPE_STATUS[0]}"
-SOLNS2OUT_STATUS="${PIPE_STATUS[1]}"
-
-if [[ "$SOLNS2OUT_STATUS" -ne 0 ]]; then
-  cat "$SUNNY_ERR" >&2
-  exit "$SOLNS2OUT_STATUS"
-fi
-
-if [[ "$SUNNY_STATUS" -ne 0 ]]; then
-  if grep -q 'BrokenPipeError' "$SUNNY_ERR"; then
-    exit 0
-  fi
-
-  cat "$SUNNY_ERR" >&2
-  exit "$SUNNY_STATUS"
-fi
-
-cat "$SUNNY_ERR" >&2
-exit 0
+# Use exec so Docker sends signals directly to sunny-cp.
+exec sunny-cp "${SUNNY_ARGS[@]}" "${ARGS[@]}"

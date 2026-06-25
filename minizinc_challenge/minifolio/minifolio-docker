@@ -57,10 +57,22 @@ for arg in "$@"; do
   ARGS+=("$abs")
 done
 
-exec "${DOCKER[@]}" run --rm \
+RUN_OPTS=(--rm --init)
+
+# Use a TTY only for interactive terminal runs. This makes Ctrl+C nicer
+# locally without breaking non-interactive scripts/CI.
+if [[ -t 0 && -t 1 ]]; then
+  RUN_OPTS+=(-it)
+fi
+
+if [[ -n "$ENTRYPOINT" ]]; then
+  RUN_OPTS+=(--entrypoint "$ENTRYPOINT")
+fi
+
+exec "${DOCKER[@]}" run \
+  "${RUN_OPTS[@]}" \
   -e PYTHONUNBUFFERED=1 \
   "${MOUNTS[@]}" \
   -w "$FIRST_DIR" \
-  --entrypoint "$ENTRYPOINT" \
   "$IMAGE" \
   "${ARGS[@]}"

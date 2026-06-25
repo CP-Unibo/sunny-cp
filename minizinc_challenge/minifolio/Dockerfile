@@ -54,7 +54,11 @@ RUN git clone --depth 1 https://github.com/CP-Unibo/mzn2feat.git /opt/mzn2feat &
 
 ENV PATH="/opt/mzn2feat/bin:${PATH}"
 
-# Install SUNNY-CP.
+# Install the latest SUNNY-CP.
+# Expected command layout:
+#   sunny-cp      = user-facing command, MiniZinc output by default
+#   sunny-cp-fzn  = low-level command, raw FlatZinc solution stream
+#   solns2out     = helper used by sunny-cp to convert raw solutions
 RUN git clone --depth 1 https://github.com/CP-Unibo/sunny-cp.git /opt/sunny-cp && \
     cd /opt/sunny-cp && \
     bash install.sh
@@ -89,6 +93,8 @@ RUN chmod +x /usr/local/bin/minifolio && \
 RUN command -v minizinc && \
     minizinc --solvers && \
     command -v sunny-cp && \
+    command -v sunny-cp-fzn && \
+    command -v solns2out && \
     command -v minifolio && \
     ldd /opt/minizinc-bundle/bin/fzn-gecode | grep "not found" && exit 1 || true
 
